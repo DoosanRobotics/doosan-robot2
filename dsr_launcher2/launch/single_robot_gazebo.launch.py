@@ -69,13 +69,13 @@ def generate_launch_description():
         output='screen',
         condition=IfCondition(PythonExpression(["'", LaunchConfiguration('mode'), "' == 'virtual'"]))
     )
-    
+
     # Static TF
     static_tf = Node(package='tf2_ros',
                      executable='static_transform_publisher',
                      name='static_transform_publisher',
                      output='log',
-                     arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'base', 'base_0'])
+                     arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'world', 'base_0'])
 
     # robot_state_publisher
     robot_state_publisher = Node(package='robot_state_publisher',
@@ -109,10 +109,11 @@ def generate_launch_description():
                     )
 
     # gazebo2
-    gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-             )
+    gazebo = ExecuteProcess(
+                cmd=['gazebo', '--verbose', '-s', 'libgazebo_ros_factory.so'],
+                output='screen'
+                )
+
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description', '-entity', 'm1013'],
                         output='screen'
