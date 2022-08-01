@@ -40,19 +40,19 @@ ARGUMENTS = [
         default_value='white',
         description='Robot Color'
     )
-]	
+]
 
 
 def generate_launch_description():
     #use_sim_time = LaunchConfiguration('use_sim_time', default='True')
 
-    xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
+    xacro_path = os.path.join(get_package_share_directory('dsr_description2'), 'xacro')
 
     return LaunchDescription(ARGUMENTS + [
-        IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-             ),
+        ExecuteProcess(
+            cmd=['gazebo', '--verbose', '-s', 'libgazebo_ros_factory.so'],
+            output='screen'
+            ),
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',

@@ -1,5 +1,5 @@
 import os
-
+import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
@@ -75,7 +75,7 @@ def generate_launch_description():
                      executable='static_transform_publisher',
                      name='static_transform_publisher',
                      output='log',
-                     arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'base', 'base_0'])
+                     arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'world', 'base_0'])
 
     # robot_state_publisher
     robot_state_publisher = Node(package='robot_state_publisher',
@@ -109,16 +109,16 @@ def generate_launch_description():
                     )
 
     # gazebo2
-    gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-             )
+    gazebo = ExecuteProcess(
+                cmd=['gazebo', '--verbose', '-s', 'libgazebo_ros_factory.so'],
+                output='screen'
+                )
+
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description', '-entity', 'm1013'],
                         output='screen'
                     )
 
-   
     return LaunchDescription(args + [
         #change_permission,
         DRCF_node,
