@@ -20,7 +20,7 @@ class ConnectionNode(Node):
         self.declare_parameter('command', True)
         self.declare_parameter('host', '127.0.0.1')
         self.declare_parameter('port', 12345)
-        self.declare_parameter('mode', 'real')
+        self.declare_parameter('mode', 'virtual')
         self.declare_parameter('model', 'm1013')
         self.declare_parameter('gripper', 'none')
         self.declare_parameter('mobile', 'none')
@@ -45,28 +45,30 @@ class ConnectionNode(Node):
         run_script_path = os.path.join(
             get_package_share_directory("common2"), "bin"
         )
-        os.makedirs(current_file_path, exist_ok=True)
-        
-            # exec(command)
-            # print(command)
-            # eval("{}/run_drcf.sh ".format(run_script_path), host, str(port), name)
-        
+        os.makedirs(current_file_path, exist_ok=True)     
         with open(os.path.join(current_file_path, 'parameters.yaml'), 'w') as file:
             yaml.dump(parameters, file)
-        if parameters['mode'] == 'virtual':
-            port = parameters['port']
-            model = parameters['model']
-            name = parameters['name']
-            command = "{}/run_drcf.sh ".format(run_script_path) +" "+ str(port)+" "+ model +" " +name
-            # import os
-            self.get_logger().info('@@@@@@@@@@@@@@@@@@@@@@@@@@@ run_drcf')
-            os.system(command)
+
+        # if parameters['mode'] == 'virtual':
+            # run emulator 
+        self.get_logger().info('@@@@@@@@@@@@@@@@@@@@@@@@@@@ run_drcf')
+        port, model, name = parameters['port'], parameters['model'], parameters['name']
+        command = "{}/run_drcf.sh ".format(run_script_path) +" "+ str(port)+" "+ model +" " +name
+        os.system(command)
+        ### Register to context doest not work 
+        # refer to : https://github.com/ros2/rclpy/issues/1287
+        # self.context.on_shutdown(lambda comm : os.system("docker ps -a --filter name=emulator -q | xargs -r docker stop"))
+
 
 def main(args=None):
     rclpy.init(args=args)
     node = ConnectionNode()
-    rclpy.spin_once(node)
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except:
+        ### Register on_shutdown to context doest not work properly. so we put here.
+        os.system("docker ps -a --filter name=emulator -q | xargs -r docker stop")
+    rclpy.try_shutdown()
 
 
 if __name__ == '__main__':
