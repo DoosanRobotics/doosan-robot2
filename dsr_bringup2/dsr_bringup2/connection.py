@@ -9,6 +9,9 @@ from ament_index_python.packages import get_package_share_directory
 import yaml
 
 
+
+emulator_name = ''
+
 class ConnectionNode(Node):
     def __init__(self):
         super().__init__('connection_node')
@@ -55,6 +58,8 @@ class ConnectionNode(Node):
         port, model, name = parameters['port'], parameters['model'], parameters['name']
         command = "{}/run_drcf.sh ".format(run_script_path) +" "+ str(port)+" "+ model +" " +name
         os.system(command)
+        global emulator_name
+        emulator_name = parameters['name'] + "_emulator"
         ### Register to context doest not work 
         # refer to : https://github.com/ros2/rclpy/issues/1287
         # self.context.on_shutdown(lambda comm : os.system("docker ps -a --filter name=emulator -q | xargs -r docker stop"))
@@ -66,8 +71,9 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except:
+        global emulator_name
         ### Register on_shutdown to context doest not work properly. so we put here.
-        os.system("docker ps -a --filter name=emulator -q | xargs -r docker stop")
+        os.system("docker ps -a --filter name={} -q | xargs -r docker stop".format(emulator_name))
     rclpy.try_shutdown()
 
 
