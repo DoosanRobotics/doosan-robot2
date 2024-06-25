@@ -17,13 +17,13 @@
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_0_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_0_0.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_0_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_0_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -46,37 +46,37 @@
             <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_1_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_1_0.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_1_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_1_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_1_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_1_1.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
             <visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_1_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_1_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_1_2.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_1_2.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
             <visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_1_2.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_1_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -99,37 +99,37 @@
             <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_2_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_2_0.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_2_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_2_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_2_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_2_1.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_2_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_2_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_2_2.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_2_2.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_2_2.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_2_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -153,25 +153,25 @@
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_3_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_3_0.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_3_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_3_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_3_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_3_1.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
             <visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_3_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_3_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -194,25 +194,25 @@
             <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_4_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_4_0.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_4_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_4_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_4_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_4_1.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_4_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_4_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -236,25 +236,25 @@
             <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_5_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_5_0.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_5_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_5_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_5_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_5_1.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
             <visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_5_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_5_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -278,13 +278,13 @@
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_6_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_collision/A0509_6_0.dae" scale="0.001 0.001 0.001" />
                 </geometry>
             </collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/a0509_blue/A0509_6_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/a0509_blue/A0509_6_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>

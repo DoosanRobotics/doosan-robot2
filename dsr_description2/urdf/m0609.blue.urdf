@@ -16,7 +16,7 @@
 	<visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_0_0.dae" scale="0.001 0.001 0.001"/>
+        <mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_0_0.dae" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
   </link>
@@ -38,7 +38,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_1_0.dae" scale="0.001 0.001 0.001"/>
+        <mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_1_0.dae" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
   </link>
@@ -60,19 +60,19 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_2_0.dae" scale="0.001 0.001 0.001"/>
+        <mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_2_0.dae" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>     
-		<mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_2_1.dae" scale="0.001 0.001 0.001"/>
+		<mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_2_1.dae" scale="0.001 0.001 0.001"/>
       </geometry>
 	  </visual>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>     
-		<mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_2_2.dae" scale="0.001 0.001 0.001"/>
+		<mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_2_2.dae" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>	
   </link>
@@ -94,7 +94,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>     
-		<mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_3_0.dae" scale="0.001 0.001 0.001"/>
+		<mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_3_0.dae" scale="0.001 0.001 0.001"/>
       </geometry>      
     </visual>
   </link>
@@ -116,14 +116,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>     
-		<mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_4_0.dae" scale="0.001 0.001 0.001"/>
+		<mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_4_0.dae" scale="0.001 0.001 0.001"/>
       </geometry>
       
     </visual>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>     
-		<mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_4_1.dae" scale="0.001 0.001 0.001"/>
+		<mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_4_1.dae" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
   </link>
@@ -145,7 +145,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>     
-		<mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_5_0.dae" scale="0.001 0.001 0.001"/>
+		<mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_5_0.dae" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
   </link>
@@ -167,7 +167,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>     
-		<mesh filename="package://dsr_description2/meshes/m0609_blue/MF0609_6_0.dae" scale="0.001 0.001 0.001"/>
+		<mesh filename="$(find dsr_description2)/meshes/m0609_blue/MF0609_6_0.dae" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
   </link>

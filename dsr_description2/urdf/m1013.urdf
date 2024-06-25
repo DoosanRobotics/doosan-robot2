@@ -9,13 +9,13 @@
     <collision>
 			<origin rpy="0 0 0" xyz="0 0 0" />
 			<geometry>
-				<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_0_0.dae" scale="0.001 0.001 0.001" />
+				<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_0_0.dae" scale="0.001 0.001 0.001" />
 			</geometry>
 		</collision>
 		<visual>
 			<origin rpy="0 0 0" xyz="0 0 0" />
 			<geometry>
-				<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_0_0.dae" scale="0.001 0.001 0.001" />
+				<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_0_0.dae" scale="0.001 0.001 0.001" />
 			</geometry>
 		</visual>
   </link>
@@ -43,13 +43,13 @@
     <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_1_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_1_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_1_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_1_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
   </link>
@@ -71,37 +71,37 @@
     <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_2_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_2_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_2_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_2_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_2_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_2_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_2_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_2_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_2_2.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_2_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_2_2.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_2_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
   </link>
@@ -123,13 +123,13 @@
     <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_3_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_3_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
             <visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_3_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_3_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
   </link>
@@ -151,25 +151,25 @@
     <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_4_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_4_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_4_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_4_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_4_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_4_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_4_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_4_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
   </link>
@@ -191,13 +191,13 @@
     <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_5_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_5_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_5_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_5_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
   </link>
@@ -219,13 +219,13 @@
     <collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_6_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_collision/MF1013_6_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_6_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="$(find dsr_description2)/meshes/m1013_white/MF1013_6_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
   </link>
