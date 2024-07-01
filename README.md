@@ -37,49 +37,71 @@
     $ . install/setup.bash
 
 
-# Tutorial
-## 0. Mode Option
-### Real Mode 
-Use __real mode__ to drive a real robot   
-The default IP of the robot controller is _192.168.127.100_ and the port is _12345_.
+## Launch Parameters
+### *mode*
+- Pass __move:=real__ arguement over launch to drive a robot in reality.   
+The default IP and port of our robot controller are _192.168.127.100_ and _12345_.
 
-### Virtual Mode
-Use __dsr_emulator__ to drive a virtual robot
-Ww use docker container to activate virtal robot.
-The default IP of the virtual emulator is _127.0.0.1_ and the port is _12345_.
-
-### Launch Parameters
-#### *name* 
-Robot Namespace (Default dsr01)
-#### *host* 
-Robot Ip Address (Default 192.168.137.100)
-#### *port* 
-Robot Port (Default 12345)
-#### *mode* 
-virtual/real 
-#### *model*
-Model Inforamtion (Doosan robot model name)
-#### *color*
-Select WHile/Blue (Only WHile in case of E0609)
-#### *gui*
-Activate/Deactivate GUI (true/false)
-#### *gz*
-Activate/Deactivate Gazebo Sim (true/false) 
+- Pass __move:=virtual__ argument over launch to drive a robot virtually.   
+Our emulators are automatically started and terminated according to launch lifetime.   
+The default IP and port of the virtual emulator are _127.0.0.1_ and _12345_.   
+( Users need to install previously by running 'install_emulator.sh' )
 
 
+### *name* 
+- Robot Namespace (Default dsr01)
 
+### *host* 
+- Ip Address of Doosan Robotics Controller  (Default 192.168.137.100)   
+If users would like to launch virtually, you need to specify host:=127.0.0.1 (the emulator is installed in localhost)
+
+### *port* 
+- Port of Doosan Robotics Controller (Default 12345)
+
+### *model*
+- Model Inforamtion (Doosan robot model name)
+
+### *color*
+- Select WHile/Blue (Only WHile in case of E0609)
+
+### *gui*
+- Activate/Deactivate GUI (true/false)
+
+### *gz*
+- Activate/Deactivate Gazebo Sim (true/false) 
+
+
+## Tutorial
 ## 1. Robot Visualization 
-### Run Rviz2
+### Launch With Rviz2
 ```bash
-$ ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=real host:=192.168.137.100 model:=m1013
+// Real Mode
+// User needs to match host and port according to real controller's
+$ ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=real host:=192.168.137.100 port:=12345 model:=m1013
+```
+
+```bash
+// Virtual Mode
+// User need to specify port (the virtual controller automatically starts on it)
+$ ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=virtual host:=127.0.0.1 port:=12345 model:=m1013
 ```
 
 
 ## 2. Gazebo Sim 
-### Run Gazebo Sim
+### Launch With Gazebo Sim
 ```bash
+// Real Mode
 $ ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=real host:=192.168.137.100 model:=m1013
 ```
+```bash
+// Virtual Mode
+$ ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12346 name:=dsr01 x:=0 y:=0
+
+// Additionally, you can add adittional arms for multi controls by spawning sperate ones. 
+// Keep in mind. you need to distinguish 'port' for controller, 'name' for robot namespace, location for loading on gazebo without collisions. 
+$ ros2 launch dsr_bringup2 dsr_bringup2_spawn_on_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12347 name:=dsr02 x:=2 y:=2
+```
+
 
 ## 3. Moveit2 
 ### Run Moveit2
