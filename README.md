@@ -45,7 +45,7 @@ The default IP and port of our robot controller are _192.168.127.100_ and _12345
 - Pass __move:=virtual__ argument over launch to drive a robot virtually.   
 Our emulators are automatically started and terminated according to launch lifetime.   
 The default IP and port of the virtual emulator are _127.0.0.1_ and _12345_.   
-( Users need to install previously by running 'install_emulator.sh' )
+( Users need to install the emulator by 'install_emulator.sh' )
 
 
 ### *name* 
@@ -62,7 +62,7 @@ If users would like to launch virtually, you need to specify host:=127.0.0.1 (th
 - Model Inforamtion (Doosan robot model name)
 
 ### *color*
-- Select WHile/Blue (Only WHile in case of E0609)
+- Select white/blue (Only white in case of E0609)
 
 ### *gui*
 - Activate/Deactivate GUI (true/false)
@@ -72,7 +72,9 @@ If users would like to launch virtually, you need to specify host:=127.0.0.1 (th
 
 
 ## Tutorial
-## 1. Robot Visualization 
+[Screencast from 07-01-2024 08:19:33 PM.webm](https://github.com/leeminju531/doosan-robot2/assets/70446214/70ece15c-248e-4e67-bf6f-0b23f07577ff)
+
+---
 ### Launch With Rviz2
 ```bash
 // Real Mode
@@ -86,8 +88,7 @@ $ ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=real host:=192.168.
 $ ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=virtual host:=127.0.0.1 port:=12345 model:=m1013
 ```
 
-
-## 2. Gazebo Sim 
+---
 ### Launch With Gazebo Sim
 ```bash
 // Real Mode
@@ -102,9 +103,8 @@ $ ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=virtual host:=127
 $ ros2 launch dsr_bringup2 dsr_bringup2_spawn_on_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12347 name:=dsr02 x:=2 y:=2
 ```
 
-
-## 3. Moveit2 
-### Run Moveit2
+---
+### Launch With Moveit2
 #### Caution : If you use Moveit2 function, Controller version should be required over 2.12.
 ```bash
 $ ros2 launch dsr_bringup2 dsr_bringup2_moveit2.launch.py mode:=real host:=192.168.137.100 model:=m1013
