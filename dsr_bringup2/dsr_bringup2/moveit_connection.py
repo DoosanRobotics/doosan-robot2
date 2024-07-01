@@ -21,8 +21,8 @@ class Moveit2Follower(Node):
             get_package_share_directory("dsr_hardware2"), "config"
         )
         os.makedirs(current_file_path, exist_ok=True)
-
-        with open(os.path.join(current_file_path, 'parameters.yaml'), 'r', encoding='utf-8') as file:
+        param_name = self.get_namespace()[1:] +'_parameters.yaml'
+        with open(os.path.join(current_file_path, param_name), 'r', encoding='utf-8') as file:
             data = yaml.safe_load(file)
         name_value = data.get('name')
         print(f"The 'name' parameter value is: {name_value}")
