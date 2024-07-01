@@ -9,29 +9,18 @@ import yaml
 class GazeboConnection(Node):
 
     def __init__(self):
-        super().__init__('gazebo_connection')
-        current_file_path = os.path.join(
-            get_package_share_directory("dsr_hardware2"), "config"
-        )
-        os.makedirs(current_file_path, exist_ok=True)
-
-        with open(os.path.join(current_file_path, 'parameters.yaml'), 'r', encoding='utf-8') as file:
-            data = yaml.safe_load(file)
-        name_value = data.get('name')
-        print(f"The 'name' parameter value is: {name_value}")
-        
+        super().__init__('gazebo_connection')        
         self.subscription = self.create_subscription(
             JointState,
-            f'{name_value}/joint_states',
+            'joint_states',
             self.listener_callback,
             10
         )
         self.publisher = self.create_publisher(
             Float64MultiArray,
-            '/dsr_position_controller/commands',
+            'gz/dsr_position_controller/commands',
             10
         )
-
         self.buffer = 0
 
     def listener_callback(self, msg):

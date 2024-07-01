@@ -22,18 +22,21 @@ from ament_index_python.packages import get_package_share_directory
 
 
 ARGUMENTS =[ 
-    DeclareLaunchArgument('name',  default_value = 'dsr01',     description = 'NAME_SPACE'     ),
-    DeclareLaunchArgument('host',  default_value = '127.0.0.1', description = 'ROBOT_IP'       ),
-    DeclareLaunchArgument('port',  default_value = '12345',     description = 'ROBOT_PORT'     ),
-    DeclareLaunchArgument('mode',  default_value = 'real',   description = 'OPERATION MODE' ),
+    DeclareLaunchArgument('name',  default_value = '',     description = 'NAME_SPACE'     ),
     DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
     DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
     DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
     DeclareLaunchArgument('use_gazebo',   default_value = 'true',     description = 'Start Gazebo'    ),
+
+    DeclareLaunchArgument('x',   default_value = '0',     description = 'Location x on Gazebo '    ),
+    DeclareLaunchArgument('y',   default_value = '0',     description = 'Location y on Gazebo'    ),
+    DeclareLaunchArgument('z',   default_value = '0',     description = 'Location z on Gazebo'    ),
+    DeclareLaunchArgument('R',   default_value = '0',     description = 'Location Roll on Gazebo'    ),
+    DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
+    DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
 ]
 
 def generate_launch_description():
-    
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
 
@@ -49,13 +52,26 @@ def generate_launch_description():
         package="ros_gz_sim",
         executable="create",
         output="screen",
+        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
         arguments=[
             "-topic",
-            "/robot_description",
+            "robot_description",
             "-name",
             LaunchConfiguration('model'),
             "-allow_renaming",
             "true",
+            "-x",
+            LaunchConfiguration('x'),
+            "-y",
+            LaunchConfiguration('y'),
+            "-z",
+            LaunchConfiguration('z'),
+            "-R",
+            LaunchConfiguration('R'),
+            "-P",
+            LaunchConfiguration('P'),
+            "-Y",
+            LaunchConfiguration('Y'),
         ],
     )
 
@@ -74,8 +90,10 @@ def generate_launch_description():
             ".urdf.xacro",
             " ",
             "use_gazebo:=",
-            LaunchConfiguration('use_gazebo')
-            
+            LaunchConfiguration('use_gazebo'),
+            " ",
+            "namespace:=",
+            PathJoinSubstitution([LaunchConfiguration('name'), "gz"])
         ]
     )
     
@@ -87,6 +105,7 @@ def generate_launch_description():
     node_robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
+        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
         output="screen",
         parameters=[robot_description],
     )
@@ -94,16 +113,15 @@ def generate_launch_description():
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        # namespace="dsr",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
+        arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
     )
     
-
     dsr_position_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        # namespace="dsr",
-        arguments=["dsr_position_controller", "--controller-manager", "/controller_manager"],
+        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
+        arguments=["dsr_position_controller", "--controller-manager", "controller_manager"],
     )
     rviz_node = Node(
         package="rviz2",

@@ -48,7 +48,7 @@ int nDelay = 5000;
 #define STABLE_BAND_JNT     0.05
 #define DSR_CTL_PUB_RATE    100  //[hz] 10ms <----- 퍼블리싱 주기, but OnMonitoringDataCB() 은 100ms 마다 불려짐을 유의!   
 void* get_drfl(){
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"[dsr_hw_interface2] %p", &Drfl);
+    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"[DRFL address] %p", &Drfl);
     return &Drfl;
 }
 void* get_s_node_(){
@@ -60,10 +60,9 @@ bool init_check = true;
 void threadFunction() {
     s_node_ = rclcpp::Node::make_shared("dsr_hw_interface2");
     
-    // YAML 파일 경로 설정
+    std::string param_name = std::string(s_node_->get_namespace()) + "_parameters.yaml";
     std::string package_directory = ament_index_cpp::get_package_share_directory("dsr_hardware2");
-    std::string yaml_file_path = package_directory + "/config/parameters.yaml";
-    RCLCPP_INFO(s_node_->get_logger(), "Failed to open YAML file: %s", yaml_file_path.c_str());
+    std::string yaml_file_path = package_directory + "/config" + param_name;
 
     std::ifstream fin(yaml_file_path);
     if (!fin) {
@@ -74,7 +73,7 @@ void threadFunction() {
     // YAML 파일 파싱
     YAML::Node yaml_node = YAML::Load(fin);
     fin.close();
-
+    
     // 파싱된 YAML 노드에서 파라미터 읽기
     if (yaml_node["name"]) {
         m_name = yaml_node["name"].as<std::string>();
@@ -116,24 +115,8 @@ void threadFunction() {
         m_mobile = yaml_node["mobile"].as<std::string>();
         RCLCPP_INFO(s_node_->get_logger(), "mobile: %s", m_mobile.c_str());
     }
-
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    name = %s",m_name.c_str());
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    host = %s",m_host.c_str());
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    port = %d",m_port);
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    command = %d",m_command);
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    mode = %s",m_mode.c_str());
-
-    rclcpp::spin(s_node_);
-
 }
-void threadFunctionUpdate(const sensor_msgs::msg::JointState& msg){
-    m_node_ = rclcpp::Node::make_shared("dsr_hw_interface_update");
-    auto qos = rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
-    m_joint_state_pub_ = m_node_->create_publisher<sensor_msgs::msg::JointState>(m_name+"/joint_states", qos);
-    m_joint_state_pub_->publish(msg);
-    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface_update"),"on update joint");
-    rclcpp::spin_some(m_node_);
-}
+
 
 namespace dsr_hardware2{
 
@@ -144,7 +127,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     {
         return CallbackReturn::ERROR;
     }
-    sleep(1.5);
+    sleep(8);
 
     // robot has 6 joints and 2 interfaces
     joint_position_.assign(6, 0);
@@ -172,11 +155,11 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     size_t i = 0;
     for (auto & joint_name : joint_names)
     {
-        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"joint_name = %s",joint_name);
+        // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"joint_name = %s", joint_name);
         ++i;
     }
     std::thread t(threadFunction);
-    t.detach();
+    t.join(); // need to make sure termination of the thread.
 
 //-----------------------------------------------------------------------------------------------------
     
@@ -195,7 +178,9 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     Drfl.set_on_monitoring_access_control(DSRInterface::OnMonitoringAccessControlCB);
     Drfl.set_on_log_alarm(DSRInterface::OnLogAlarm);
     
-
+    m_node_ = rclcpp::Node::make_shared("dsr_hw_interface_update");
+    auto qos = rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
+    m_joint_state_pub_ = m_node_->create_publisher<sensor_msgs::msg::JointState>("joint_states", qos);
     //------------------------------------------------------------------------------
     // await for values from ros parameters
     while(m_host == "")
@@ -316,14 +301,17 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
     now_ns = spec.tv_nsec;
     msg.header.stamp.sec = (long)now_sec;
     msg.header.stamp.nanosec = now_ns;
+
     msg.name.push_back("joint_1");
     msg.name.push_back("joint_2");
     msg.name.push_back("joint_3");
     msg.name.push_back("joint_4");
     msg.name.push_back("joint_5");
     msg.name.push_back("joint_6");
-    
     LPROBOT_POSE pose = Drfl.GetCurrentPose();
+    // for (int i = 0; i < 6; i++){
+    //     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), " : %.2f", pose->_fPosition[i]);
+    // }
     for (auto i = 0ul; i < joint_velocities_command_.size(); i++)
     {
         joint_velocities_[i] = joint_velocities_command_[i];
@@ -338,8 +326,7 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
         msg.velocity.push_back(0);
         msg.effort.push_back(0);
     }
-    std::thread t2(threadFunctionUpdate, msg);
-    t2.detach();
+    m_joint_state_pub_->publish(msg);
     msg.position.clear();
     msg.velocity.clear();
     msg.effort.clear();

@@ -21,7 +21,7 @@ from launch.actions import IncludeLaunchDescription
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
-
+from launch.launch_context import LaunchContext
 
 def print_launch_configuration_value(context, *args, **kwargs):
     # LaunchConfiguration 값을 평가합니다.
@@ -32,14 +32,20 @@ def print_launch_configuration_value(context, *args, **kwargs):
 
 def generate_launch_description():
     ARGUMENTS =[ 
-        DeclareLaunchArgument('name',  default_value = 'dsr',     description = 'NAME_SPACE'     ),
-        DeclareLaunchArgument('host',  default_value = '192.168.137.100', description = 'ROBOT_IP'       ),
+        DeclareLaunchArgument('name',  default_value = 'dsr01',     description = 'NAME_SPACE'     ),
+        DeclareLaunchArgument('host',  default_value = '127.0.0.1', description = 'ROBOT_IP'       ),
         DeclareLaunchArgument('port',  default_value = '12345',     description = 'ROBOT_PORT'     ),
-        DeclareLaunchArgument('mode',  default_value = 'real',   description = 'OPERATION MODE' ),
+        DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
         DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',    default_value = 'true',     description = 'USE GAZEBO SIM'    ),
+        DeclareLaunchArgument('x',   default_value = '0',     description = 'Location x on Gazebo '    ),
+        DeclareLaunchArgument('y',   default_value = '0',     description = 'Location y on Gazebo'    ),
+        DeclareLaunchArgument('z',   default_value = '0',     description = 'Location z on Gazebo'    ),
+        DeclareLaunchArgument('R',   default_value = '0',     description = 'Location Roll on Gazebo'    ),
+        DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
+        DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # Initialize Arguments
@@ -76,6 +82,7 @@ def generate_launch_description():
     connection_node = Node(
         package="dsr_bringup2",
         executable="connection",
+        namespace=LaunchConfiguration('name'),
         parameters=[
             {"name":    LaunchConfiguration('name')  }, 
             {"rate":    100         },
@@ -95,13 +102,14 @@ def generate_launch_description():
     gazebo_connection_node = Node(
         package="dsr_bringup2",
         executable="gazebo_connection",
+        namespace=LaunchConfiguration('name'),
         output="log",
     )
 
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        # namespace=LaunchConfiguration('name'),
+        namespace=LaunchConfiguration('name'),
         parameters=[robot_description, robot_controllers],
         # output="both",
     )
@@ -111,12 +119,6 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        # remappings=[
-        #     (
-        #         "/joint_states",
-        #         "/dsr/joint_states",
-        #     ),
-        # ],
         parameters=[{
         'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
     }])
@@ -132,23 +134,23 @@ def generate_launch_description():
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
-        # namespace=LaunchConfiguration('name'),
+        namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        arguments=["joint_state_broadcaster", "-c", "controller_manager"],
     )
 
     robot_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "/controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager"],
     )
-    
+
     joint_trajectory_controller_spawner = Node(
         package="controller_manager",
-        # namespace=LaunchConfiguration('name'),
+        namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_joint_trajectory", "-c", "/controller_manager"],
+        arguments=["dsr_joint_trajectory", "-c", "controller_manager"],
     )
 
     # Delay gazebo_connection start after 'connection`
@@ -188,7 +190,15 @@ def generate_launch_description():
     # launch_arguments를 사용하여 namespace를 설정합니다.
     included_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(included_launch_file_path),
-        launch_arguments={'use_gazebo': LaunchConfiguration('gz')}.items(),
+        launch_arguments={'use_gazebo': LaunchConfiguration('gz'), 
+                          'name' : LaunchConfiguration('name'),
+                          'x' :LaunchConfiguration('x'),
+                          'y' :LaunchConfiguration('y'),
+                          'z' :LaunchConfiguration('z'),
+                          'R' :LaunchConfiguration('R'),
+                          'P' :LaunchConfiguration('P'),
+                          'Y' :LaunchConfiguration('Y')
+                          }.items(),
     )
     
 

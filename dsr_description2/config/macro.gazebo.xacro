@@ -5,7 +5,11 @@
     <!-- ros_control plugin -->
     <gazebo>
       <plugin filename="ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+        <ros>
+          <namespace>$(arg namespace)</namespace>
+        </ros>
         <parameters>$(find dsr_controller2)/config/dsr_controller2_gz.yaml</parameters>
+        <!-- <controller_manager_name>asd</controller_manager_name> -->
       </plugin>
     </gazebo>
     <!-- Base -->

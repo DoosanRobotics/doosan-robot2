@@ -76,6 +76,7 @@ def generate_launch_description():
     connection_node = Node(
         package="dsr_bringup2",
         executable="connection",
+        namespace=LaunchConfiguration('name'),
         parameters=[
             {"name":    LaunchConfiguration('name')  }, 
             {"rate":    100         },
@@ -95,10 +96,11 @@ def generate_launch_description():
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        # namespace=LaunchConfiguration('name'),
+        namespace=LaunchConfiguration('name'),
         parameters=[robot_description, robot_controllers],
         output="both",
     )
+
     robot_state_pub_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -126,24 +128,24 @@ def generate_launch_description():
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
-        # namespace=LaunchConfiguration('name'),
+        namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        arguments=["joint_state_broadcaster", "-c", "controller_manager"],
     )
 
     robot_controller_spawner = Node(
         package="controller_manager",
-        # namespace=LaunchConfiguration('name'),
+        namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "/controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager"],
     )
     
-    joint_trajectory_controller_spawner = Node(
-        package="controller_manager",
-        # namespace=LaunchConfiguration('name'),
-        executable="spawner",
-        arguments=["dsr_joint_trajectory", "-c", "/controller_manager"],
-    )
+    # joint_trajectory_controller_spawner = Node(
+    #     package="controller_manager",
+    #     # namespace=LaunchConfiguration('name'),
+    #     executable="spawner",
+    #     arguments=["dsr_joint_trajectory", "-c", "dsr/controller_manager", "-n", "dsr"],
+    # )
 
 
     # Delay rviz start after `joint_state_broadcaster`
@@ -167,6 +169,7 @@ def generate_launch_description():
         control_node,
         robot_state_pub_node,
         robot_controller_spawner,
+        joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         # delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
     ]

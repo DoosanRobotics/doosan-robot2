@@ -22,12 +22,11 @@
     <xacro:dsr_transmission />
     <xacro:dsr_gazebo namespace="${namespace}" />
     <ros2_control name="${model}" type="system">
-
       <hardware>
           <plugin>ign_ros2_control/IgnitionSystem</plugin>
       </hardware>
 
-      <joint name="${namespace}joint_1">
+      <joint name="joint_1">
         <command_interface name="position">
           <param name="min">{-2*pi}</param>
           <param name="max">{2*pi}</param>
@@ -38,7 +37,7 @@
         <state_interface name="velocity"/>
       </joint>
 
-      <joint name="${namespace}joint_2">
+      <joint name="joint_2">
         <command_interface name="position">
           <param name="min">{-2*pi}</param>
           <param name="max">{2*pi}</param>
@@ -49,7 +48,7 @@
         <state_interface name="velocity"/>
       </joint>
 
-      <joint name="${namespace}joint_3">
+      <joint name="joint_3">
         <command_interface name="position">
           <param name="min">{-pi}</param>
           <param name="max">{pi}</param>
@@ -60,7 +59,7 @@
         <state_interface name="velocity"/>
       </joint>
 
-      <joint name="${namespace}joint_4">
+      <joint name="joint_4">
         <command_interface name="position">
           <param name="min">{-2*pi}</param>
           <param name="max">{2*pi}</param>
@@ -71,7 +70,7 @@
         <state_interface name="velocity"/>
       </joint>
 
-      <joint name="${namespace}joint_5">
+      <joint name="joint_5">
         <command_interface name="position">
           <param name="min">{-2*pi}</param>
           <param name="max">{2*pi}</param>
@@ -82,7 +81,7 @@
         <state_interface name="velocity"/>
       </joint>
 
-      <joint name="${namespace}joint_6">
+      <joint name="joint_6">
         <command_interface name="position">
           <param name="min">{-2*pi}</param>
           <param name="max">{2*pi}</param>
