@@ -15,12 +15,7 @@
   mobile:=none
   use_gazebo:=false
   ">
-    <xacro:include filename="$(find dsr_description2)/config/macro.gazebo.xacro" />
-    <xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
-    <xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
-    <xacro:dsr_materials />
-    <xacro:dsr_transmission />
-    <xacro:dsr_gazebo namespace="${namespace}" />
+
 
     <ros2_control name="${model}" type="system">
 

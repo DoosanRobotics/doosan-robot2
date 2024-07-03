@@ -17,12 +17,14 @@
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_0_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_0_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 		</link>
 		<!-- joint 1 -->
@@ -32,62 +34,71 @@
 			<origin rpy="0 0 0" xyz="0 0 0.2045"/>
       <axis xyz="0 0 1"/>
       <limit effort="194" lower="-6.2832" upper="6.2832" velocity="3.1416"/>
-			<dynamics friction="0" />
+		<dynamics friction="0" />
 		</joint>
 		<link name="link_1">
-			<inertial>
-        <mass value="5.75"/>
-        <origin xyz="1e-06    0.049633   -0.049635"/>
-        <inertia ixx="0.046214" ixy="1.4982e-05" ixz="1.281e-05" iyy="0.032573" iyz="-0.013997" izz="0.030999"/>
-      </inertial>
-            <collision>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_1_1.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</collision>
+		<inertial>
+			<mass value="5.75"/>
+			<origin xyz="1e-06    0.049633   -0.049635"/>
+			<inertia ixx="0.046214" ixy="1.4982e-05" ixz="1.281e-05" iyy="0.032573" iyz="-0.013997" izz="0.030999"/>
+		</inertial>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_1_1.dae" scale="0.001 0.001 0.001" 
+				/>
+			</geometry>
+			<material name="dr_white" />
+		</collision>
       		<visual>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_1_1.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</visual>
-			<collision>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_1_2.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</collision>
-            <visual>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_1_2.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</visual>
-			<collision>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_1_3.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_1_1.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+			<material name="dr_white" />
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_1_2.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+			<material name="dr_white" />
+		</collision>
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_1_2.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+			<material name="dr_white" />
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_1_3.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+			<material name="dr_white" />
+		</collision>
       		<visual>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_1_3.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</visual>
-			<collision>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_1_4.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</collision>
-            <visual>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_1_4.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</visual>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_1_3.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+			<material name="dr_white" />
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_1_4.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+			<material name="dr_white" />
+		</collision>
+            	<visual>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_1_4.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+			<material name="dr_white" />
+		</visual>
 		</link>
 		<!-- joint2 -->
 		<joint name="joint_2" type="revolute">
@@ -109,24 +120,28 @@
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_2_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_2_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_2_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_2_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 		</link>
 		<!-- joint3 -->
@@ -149,24 +164,28 @@
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_3_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_3_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_3_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
             <visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_3_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 		</link>
 		<!-- joint4 -->
@@ -189,24 +208,28 @@
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_4_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_4_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_4_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_4_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 		</link>
 		<!-- joint5 -->
@@ -229,24 +252,28 @@
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_5_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_5_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 			<collision>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_5_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
             <visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_5_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 		</link>
 		<!-- joint6 -->
@@ -269,12 +296,14 @@
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_collision/E0509_6_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
 					<mesh filename="package://dsr_description2/meshes/e0509_white/E0509_6_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
+				<material name="dr_white" />
 			</visual>
 		</link>
 		<xacro:dsr_transmission />
