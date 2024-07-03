@@ -120,8 +120,9 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         output='both',
         parameters=[{
-        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
+        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])
     }])
+    
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -192,6 +193,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(included_launch_file_path),
         launch_arguments={'use_gazebo': LaunchConfiguration('gz'), 
                           'name' : LaunchConfiguration('name'),
+                          'color' : LaunchConfiguration('color'),
                           'x' :LaunchConfiguration('x'),
                           'y' :LaunchConfiguration('y'),
                           'z' :LaunchConfiguration('z'),

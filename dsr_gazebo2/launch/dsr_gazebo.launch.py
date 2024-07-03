@@ -92,6 +92,9 @@ def generate_launch_description():
             "use_gazebo:=",
             LaunchConfiguration('use_gazebo'),
             " ",
+            "color:=",
+            LaunchConfiguration('color'),
+            " ",
             "namespace:=",
             PathJoinSubstitution([LaunchConfiguration('name'), "gz"])
         ]
