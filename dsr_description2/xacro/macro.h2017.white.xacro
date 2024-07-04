@@ -3,9 +3,9 @@
 <robot name="h2017" xmlns:xacro="http://www.ros.org/wiki/xacro">
 	<xacro:include filename="$(find dsr_description2)/config/macro.gazebo.xacro" />
 	<xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
-	<!--xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" /-->
+	<xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
 	<xacro:macro name="h2017" params="namespace">
-		<!--xacro:dsr_materials /-->
+		<xacro:dsr_materials />
 		<link name="base_link">
 			<inertial>
 				<mass value="8.537"/>
