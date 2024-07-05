@@ -14,6 +14,17 @@ pulling() {
     done
     echo "\n -> Completed $1"
 }
+
+## Docker engine should be installed previously
+if ! command -v docker &> /dev/null
+then
+    echo "Emulator installing failure..."
+    echo "Please install docker engine first...."
+    echo "Docker engine installation : https://docs.docker.com/engine/install/ubuntu/"
+    exit 1
+fi
+
+
 ## all container names have 'emulator' as suffix to detect and run it. see run_drcf.sh  
 if docker ps -a --format '{{.Names}}' | grep -q emulator; then
     echo "$emulator_name is already installed"
