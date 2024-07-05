@@ -504,7 +504,7 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::GetCurrentPose>::SharedPtr          m_nh_srv_get_current_pose;
   rclcpp::Service<dsr_msgs2::srv::SetSafeStopResetType>::SharedPtr    m_nh_srv_set_safe_stop_reset_type;
   rclcpp::Service<dsr_msgs2::srv::GetLastAlarm>::SharedPtr            m_nh_srv_get_last_alarm;
-  
+  rclcpp::Service<dsr_msgs2::srv::ServoOff>::SharedPtr                m_nh_srv_servo_off;
   //----- MOTION
   rclcpp::Service<dsr_msgs2::srv::MoveJoint>::SharedPtr               m_nh_srv_move_joint;
   rclcpp::Service<dsr_msgs2::srv::MoveLine>::SharedPtr                m_nh_srv_move_line;
