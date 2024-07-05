@@ -33,6 +33,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/system/SetSafeStopResetType.srv"
   "srv/system/GetLastAlarm.srv"
   "srv/system/GetRobotState.srv"
+  "srv/system/ServoOff.srv"
 
   "srv/motion/MoveJoint.srv"
   "srv/motion/MoveLine.srv"

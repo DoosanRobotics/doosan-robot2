@@ -203,6 +203,13 @@ auto get_last_alarm_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetLastAla
     res->success = true;
     return true;
 };
+auto servo_off_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ServoOff::Request> /*req*/, std::shared_ptr<dsr_msgs2::srv::ServoOff::Response> res) -> bool   
+{
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"servo_off_cb() called and calling Drfl->servo_off()");
+    res->stop_type = Drfl->servo_off();
+    res->success = true;
+    return true;
+};
 
 
 //----- MOTION Service Call-back functions ------------------------------------------------------------
@@ -1694,16 +1701,17 @@ auto set_tool_shape_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetToolSha
 };
   
   
-  m_nh_srv_set_robot_mode             = get_node()->create_service<dsr_msgs2::srv::SetRobotMode>("dsr_test/system/set_robot_mode", set_robot_mode_cb);
-  m_nh_srv_get_robot_mode             = get_node()->create_service<dsr_msgs2::srv::GetRobotMode>("system/get_robot_mode", get_robot_mode_cb);     
-  m_nh_srv_set_robot_system           = get_node()->create_service<dsr_msgs2::srv::SetRobotSystem>("system/set_robot_system", set_robot_system_cb);         
-  m_nh_srv_get_robot_system           = get_node()->create_service<dsr_msgs2::srv::GetRobotSystem>("system/get_robot_system", get_robot_system_cb);         
-  m_nh_srv_get_robot_state            = get_node()->create_service<dsr_msgs2::srv::GetRobotState>("system/get_robot_state", get_robot_state_cb);        
-  m_nh_srv_set_robot_speed_mode       = get_node()->create_service<dsr_msgs2::srv::SetRobotSpeedMode>("system/set_robot_speed_mode", set_robot_speed_mode_cb);    
-  m_nh_srv_get_robot_speed_mode       = get_node()->create_service<dsr_msgs2::srv::GetRobotSpeedMode>("system/get_robot_speed_mode", get_robot_speed_mode_cb);       
-  m_nh_srv_get_current_pose           = get_node()->create_service<dsr_msgs2::srv::GetCurrentPose>("system/get_current_pose", get_current_pose_cb);   
-  m_nh_srv_set_safe_stop_reset_type   = get_node()->create_service<dsr_msgs2::srv::SetSafeStopResetType>("system/set_safe_stop_reset_type", set_safe_stop_reset_type_cb);           
-  m_nh_srv_get_last_alarm             = get_node()->create_service<dsr_msgs2::srv::GetLastAlarm>("system/get_last_alarm", get_last_alarm_cb);   
+  m_nh_srv_set_robot_mode             = get_node()->create_service<dsr_msgs2::srv::SetRobotMode>(m_name+"/dsr_test/system/set_robot_mode", set_robot_mode_cb);
+  m_nh_srv_get_robot_mode             = get_node()->create_service<dsr_msgs2::srv::GetRobotMode>(m_name+"/system/get_robot_mode", get_robot_mode_cb);     
+  m_nh_srv_set_robot_system           = get_node()->create_service<dsr_msgs2::srv::SetRobotSystem>(m_name+"/system/set_robot_system", set_robot_system_cb);         
+  m_nh_srv_get_robot_system           = get_node()->create_service<dsr_msgs2::srv::GetRobotSystem>(m_name+"/system/get_robot_system", get_robot_system_cb);         
+  m_nh_srv_get_robot_state            = get_node()->create_service<dsr_msgs2::srv::GetRobotState>(m_name+"/system/get_robot_state", get_robot_state_cb);        
+  m_nh_srv_set_robot_speed_mode       = get_node()->create_service<dsr_msgs2::srv::SetRobotSpeedMode>(m_name+"/system/set_robot_speed_mode", set_robot_speed_mode_cb);    
+  m_nh_srv_get_robot_speed_mode       = get_node()->create_service<dsr_msgs2::srv::GetRobotSpeedMode>(m_name+"/system/get_robot_speed_mode", get_robot_speed_mode_cb);       
+  m_nh_srv_get_current_pose           = get_node()->create_service<dsr_msgs2::srv::GetCurrentPose>(m_name+"/system/get_current_pose", get_current_pose_cb);   
+  m_nh_srv_set_safe_stop_reset_type   = get_node()->create_service<dsr_msgs2::srv::SetSafeStopResetType>(m_name+"/system/set_safe_stop_reset_type", set_safe_stop_reset_type_cb);           
+  m_nh_srv_get_last_alarm             = get_node()->create_service<dsr_msgs2::srv::GetLastAlarm>(m_name+"/system/get_last_alarm", get_last_alarm_cb);   
+  m_nh_srv_servo_off                  = get_node()->create_service<dsr_msgs2::srv::GetLastAlarm>(m_name+"/system/servo_off", servo_off_cb);   
 
   //  motion Operations
   m_nh_srv_move_joint                 = get_node()->create_service<dsr_msgs2::srv::MoveJoint>("motion/move_joint", movej_cb);                                

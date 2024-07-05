@@ -44,6 +44,7 @@
 #include "dsr_msgs2/srv/get_current_pose.hpp"
 #include "dsr_msgs2/srv/set_safe_stop_reset_type.hpp"
 #include "dsr_msgs2/srv/get_last_alarm.hpp"
+#include "dsr_msgs2/srv/servo_off.hpp"
 
 // motion
 #include "dsr_msgs2/srv/move_joint.hpp"
