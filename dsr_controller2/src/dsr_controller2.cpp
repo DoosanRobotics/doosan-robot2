@@ -211,6 +211,22 @@ auto servo_off_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ServoOff::Reque
     return true;
 };
 
+auto set_robot_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetRobotControl::Request> req, std::shared_ptr<dsr_msgs2::srv::SetRobotControl::Response> res) -> bool   
+{
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_robot_control_cb() called and calling Drfl->servo_off()");
+    Drfl->set_robot_control((ROBOT_CONTROL)req->robot_control);
+    res->success = true;
+    return true;
+};
+
+auto change_collision_sensitivity_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ChangeCollisionSensitivity::Request> req, std::shared_ptr<dsr_msgs2::srv::ChangeCollisionSensitivity::Response> res) -> bool   
+{
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"change_collision_sensitivity_cb() called and calling Drfl->servo_off()");
+    float sensitivity = 
+    Drfl->change_collision_sensitivity((float)req->sensitivity);
+    res->success = true;
+    return true;
+};
 
 //----- MOTION Service Call-back functions ------------------------------------------------------------
 auto movej_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveJoint::Request> req, std::shared_ptr<dsr_msgs2::srv::MoveJoint::Response> res) -> bool
@@ -1712,6 +1728,8 @@ auto set_tool_shape_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetToolSha
   m_nh_srv_set_safe_stop_reset_type   = get_node()->create_service<dsr_msgs2::srv::SetSafeStopResetType>("system/set_safe_stop_reset_type", set_safe_stop_reset_type_cb);           
   m_nh_srv_get_last_alarm             = get_node()->create_service<dsr_msgs2::srv::GetLastAlarm>("system/get_last_alarm", get_last_alarm_cb);   
   m_nh_srv_servo_off                  = get_node()->create_service<dsr_msgs2::srv::ServoOff>("system/servo_off", servo_off_cb);   
+  m_nh_srv_set_robot_control          = get_node()->create_service<dsr_msgs2::srv::SetRobotControl>("system/set_robot_control", set_robot_control_cb);
+  m_nh_srv_change_collision_sensitivity = get_node()->create_service<dsr_msgs2::srv::ChangeCollisionSensitivity>("system/change_collision_sensitivity", change_collision_sensitivity_cb);   
 
   //  motion Operations
   m_nh_srv_move_joint                 = get_node()->create_service<dsr_msgs2::srv::MoveJoint>("motion/move_joint", movej_cb);                                

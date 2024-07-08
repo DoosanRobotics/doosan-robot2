@@ -34,6 +34,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/system/GetLastAlarm.srv"
   "srv/system/GetRobotState.srv"
   "srv/system/ServoOff.srv"
+  "srv/system/SetRobotControl.srv"
+  "srv/system/ChangeCollisionSensitivity.srv"
 
   "srv/motion/MoveJoint.srv"
   "srv/motion/MoveLine.srv"

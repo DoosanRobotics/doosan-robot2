@@ -45,6 +45,8 @@
 #include "dsr_msgs2/srv/set_safe_stop_reset_type.hpp"
 #include "dsr_msgs2/srv/get_last_alarm.hpp"
 #include "dsr_msgs2/srv/servo_off.hpp"
+#include "dsr_msgs2/srv/set_robot_control.hpp"
+#include "dsr_msgs2/srv/change_collision_sensitivity.hpp"
 
 // motion
 #include "dsr_msgs2/srv/move_joint.hpp"
@@ -505,6 +507,8 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::SetSafeStopResetType>::SharedPtr    m_nh_srv_set_safe_stop_reset_type;
   rclcpp::Service<dsr_msgs2::srv::GetLastAlarm>::SharedPtr            m_nh_srv_get_last_alarm;
   rclcpp::Service<dsr_msgs2::srv::ServoOff>::SharedPtr                m_nh_srv_servo_off;
+  rclcpp::Service<dsr_msgs2::srv::SetRobotControl>::SharedPtr         m_nh_srv_set_robot_control;
+  rclcpp::Service<dsr_msgs2::srv::ChangeCollisionSensitivity>::SharedPtr m_nh_srv_change_collision_sensitivity;
   //----- MOTION
   rclcpp::Service<dsr_msgs2::srv::MoveJoint>::SharedPtr               m_nh_srv_move_joint;
   rclcpp::Service<dsr_msgs2::srv::MoveLine>::SharedPtr                m_nh_srv_move_line;
