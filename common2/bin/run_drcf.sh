@@ -18,12 +18,16 @@ echo "ns:" "$3"
 
 
 cd "$(dirname "$0")"
-# doosan emulator name
+# Doosan emulator name
 # We need to use 'emulator' as suffix. some parts addresses it to detect or delete containers.
-suffix=_emulator
-container_name="$3""$suffix"
-
+# TODO(leeminju) namespace mangling conversion needed ("/" division error prone at container name.)
+container_name=emulator
+if [ -n "$3" ];  then
+    container_name="$3_""$container_name"
+fi
 echo "run : '$container_name' ..."
+
+
 # check 
 if [ "$(docker ps -q -f name=$container_name)" ]; then
     echo "The emulator '$container_name' is already running."
