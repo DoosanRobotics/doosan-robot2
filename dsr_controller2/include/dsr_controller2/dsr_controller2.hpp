@@ -526,7 +526,6 @@ public:
   CONTROLLER_INTERFACE_PUBLIC
   controller_interface::CallbackReturn on_shutdown(
     const rclcpp_lifecycle::State & previous_state) override;
-  // rclcpp::Node::SharedPtr m_node_;
   
 protected:
   std::vector<std::string> joint_names_;

@@ -29,7 +29,7 @@ using namespace DRAFramework;
 
 extern void* get_drfl();
 CDRFLEx *Drfl = (CDRFLEx*)get_drfl();
-rclcpp::Node::SharedPtr m_node_ = nullptr;
+
 
 bool g_bIsEmulatorMode = FALSE;
 bool g_bHasControlAuthority = FALSE;
@@ -102,14 +102,6 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 
 controller_interface::CallbackReturn RobotController::on_activate(const rclcpp_lifecycle::State &)
 {
-//   m_node_ = rclcpp::Node::make_shared("dsr_test");
-//   auto callback =
-//     [this](const std::shared_ptr<trajectory_msgs::msg::JointTrajectory> traj_msg) -> void
-//   {
-//     traj_msg_external_point_ptr_.writeFromNonRT(traj_msg);
-//     new_msg_ = true;
-//   };
-
     auto callback =
         [this](const std::shared_ptr<trajectory_msgs::msg::JointTrajectory> traj_msg) -> void
     {
@@ -218,7 +210,6 @@ auto set_robot_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetRobo
 auto change_collision_sensitivity_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ChangeCollisionSensitivity::Request> req, std::shared_ptr<dsr_msgs2::srv::ChangeCollisionSensitivity::Response> res)-> void
 {
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"change_collision_sensitivity_cb() called and calling Drfl->servo_off()");
-    float sensitivity = 
     Drfl->change_collision_sensitivity((float)req->sensitivity);
     res->success = true;
 };
@@ -2167,19 +2158,6 @@ controller_interface::return_type RobotController::update(
 
 controller_interface::CallbackReturn RobotController::on_deactivate(const rclcpp_lifecycle::State &)
 {
-  if (m_node_) {
-    RCLCPP_INFO(rclcpp::get_logger("dsr_test"),"on deactivate");
-    m_node_.reset();
-    m_node_ = nullptr;
-    if (m_node_) {
-        m_node_.reset();
-        m_node_ = nullptr;
-        RCLCPP_INFO(rclcpp::get_logger("dsr_test"),"on deactivate");
-        // m_node_가 유효한 경우에 실행할 코드
-    } else {
-        // m_node_가 유효하지 않은 경우에 실행할 코드
-    }
-  }
   release_interfaces();
 
   return CallbackReturn::SUCCESS;
@@ -2187,9 +2165,7 @@ controller_interface::CallbackReturn RobotController::on_deactivate(const rclcpp
 
 controller_interface::CallbackReturn RobotController::on_cleanup(const rclcpp_lifecycle::State &)
 {
-    RCLCPP_INFO(rclcpp::get_logger("dsr_test"),"on deactivate");
-    m_node_.reset();
-    m_node_ = nullptr;
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"on deactivate");
   return CallbackReturn::SUCCESS;
 }
 
@@ -2200,9 +2176,7 @@ controller_interface::CallbackReturn RobotController::on_error(const rclcpp_life
 
 controller_interface::CallbackReturn RobotController::on_shutdown(const rclcpp_lifecycle::State &)
 {
-    RCLCPP_INFO(rclcpp::get_logger("dsr_test"),"on deactivate");
-    m_node_.reset();
-    m_node_ = nullptr;
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"on deactivate");
   return CallbackReturn::SUCCESS;
 }
 
