@@ -147,13 +147,6 @@ def generate_launch_description():
         arguments=["dsr_controller2", "-c", "controller_manager"],
     )
 
-    joint_trajectory_controller_spawner = Node(
-        package="controller_manager",
-        namespace=LaunchConfiguration('name'),
-        executable="spawner",
-        arguments=["dsr_joint_trajectory", "-c", "controller_manager"],
-    )
-
     # Delay gazebo_connection start after 'connection`
     delay_gazebo_connection_node_after_connection_node = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -170,15 +163,6 @@ def generate_launch_description():
         )
     )
 
-    # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[robot_controller_spawner],
-        )
-    )
-
-    
 
     # 두 번째 Launch 파일의 경로를 설정합니다.
     included_launch_file_path = os.path.join(
@@ -217,8 +201,8 @@ def generate_launch_description():
         control_node,
         robot_state_pub_node,
         robot_controller_spawner,
+        joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
-        delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         included_launch_after_robot_controller_spawner
     ]
 
