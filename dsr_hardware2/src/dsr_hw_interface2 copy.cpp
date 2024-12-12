@@ -30,10 +30,10 @@ using namespace std;
 using namespace chrono;
 using namespace DRAFramework;
 rclcpp::Node::SharedPtr s_node_ = nullptr;
-
+rclcpp::Node::SharedPtr m_node_ = nullptr; //ROS2
 CDRFLEx Drfl;
 //TODO Serial_comm ser_comm;
-
+sensor_msgs::msg::JointState msg;
 bool g_bIsEmulatorMode = FALSE;
 bool g_bHasControlAuthority = FALSE;
 bool g_bTpInitailizingComplted = FALSE;
@@ -52,7 +52,7 @@ int init_count;
 
 int nDelay = 5000;
 #define STABLE_BAND_JNT     0.05
-
+#define DSR_CTL_PUB_RATE    100  //[hz] 10ms <----- 퍼블리싱 주기, but OnMonitoringDataCB() 은 100ms 마다 불려짐을 유의!   
 void* get_drfl(){
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"[DRFL address] %p", &Drfl);
     return &Drfl;
@@ -133,7 +133,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     {
         return CallbackReturn::ERROR;
     }
-    // TODO(leeminju531) Workaround sleep. replace with the event come out from drcf.
     sleep(8);
 
     // robot has 6 joints and 2 interfaces
@@ -142,55 +141,38 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     joint_position_command_.assign(6, 0);
     joint_velocities_command_.assign(6, 0);
 
-    if(6 != info_.joints.size()) {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), 
-            "[on_init] Hardware joint size : %zu, expected : 6", info.joints.size());
-        return CallbackReturn::ERROR;
-    }
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), 
-            "[on_init] Hardware name : %s, type : %s, class type : %s",
-            info_.name.c_str(), info_.type.c_str(), info_.hardware_class_type.c_str());
-
     for (const auto & joint : info_.joints)
     {
-        RCLCPP_DEBUG(rclcpp::get_logger("dsr_hw_interface2"), 
-            "[on_init] joint name : %s, type : %s,",
-            joint.name.c_str(), joint.type.c_str());
         for (const auto & interface : joint.state_interfaces)
         {
-            RCLCPP_DEBUG(rclcpp::get_logger("dsr_hw_interface2"), 
-                "[on_init] joint state interface name : %s ", 
-                interface.name.c_str());
-						if(interface.name == "effort") {
-							RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), 
-								"[on_init] Not Implemented effort interface.. ignored");
-							continue;
-						}
-            joint_interfaces[interface.name].push_back(joint.name);
-        }
-        for (const auto & interface : joint.command_interfaces)
-        {
-            RCLCPP_DEBUG(rclcpp::get_logger("dsr_hw_interface2"), 
-                "[on_init] joint command_interfaces name : %s ", 
-                interface.name.c_str());
-							if(interface.name == "effort") {
-								RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), 
-										"[on_init] Not Implemented effort interface.. ignored");
-								continue;
-							}
-            joint_comm_interfaces[interface.name].push_back(joint.name);
+        joint_interfaces[interface.name].push_back(joint.name);
         }
     }
+    
+    auto joint_names = {
+        "joint_1",
+        "joint_2",
+        "joint_3",
+        "joint_4",
+        "joint_5",
+        "joint_6",
+    };
 
-    // TODO(Song-ms, leeminju): This thread is present for parameter reading... 
-    //? Parameter concept is proper for hardware interface ? (Interface doesn't inherit node.
+    size_t i = 0;
+    for (auto & joint_name : joint_names)
+    {
+        // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"joint_name = %s", joint_name);
+        ++i;
+    }
     std::thread t(threadFunction);
     t.join(); // need to make sure termination of the thread.
 
 //-----------------------------------------------------------------------------------------------------
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
+    
+
+    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    INITAILIZE");
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
+    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
     //--- doosan API's call-back fuctions : Only work within 50msec in call-back functions
     Drfl.set_on_tp_initializing_completed(DSRInterface::OnTpInitializingCompletedCB);
     Drfl.set_on_homming_completed(DSRInterface::OnHommingCompletedCB);
@@ -202,44 +184,43 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     Drfl.set_on_monitoring_access_control(DSRInterface::OnMonitoringAccessControlCB);
     Drfl.set_on_log_alarm(DSRInterface::OnLogAlarm);
     
+    m_node_ = rclcpp::Node::make_shared("dsr_hw_interface_update");
+    auto qos = rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
+    m_joint_state_pub_ = m_node_->create_publisher<sensor_msgs::msg::JointState>("joint_states", qos);
     //------------------------------------------------------------------------------
     // await for values from ros parameters
-    while(m_host == "") //! attached handling with above thread.
+    while(m_host == "")
     {
         usleep(nDelay);
     }
-
-    if(!Drfl.open_connection(m_host, m_port))
+    if(Drfl.open_connection(m_host, m_port))
     {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),"    DSRInterface::init() DRCF connecting ERROR!!!");
-        return CallbackReturn::ERROR;
-    }
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    OPEN CONNECTION");
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");   
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    OPEN CONNECTION");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");   
 
-    //--- connect Emulator ? ------------------------------    
-    if(m_host == "127.0.0.1") g_bIsEmulatorMode = true; 
-    else                    g_bIsEmulatorMode = false;
+        //--- connect Emulator ? ------------------------------    
+        if(m_host == "127.0.0.1") g_bIsEmulatorMode = true; 
+        else                    g_bIsEmulatorMode = false;
 
-    //--- Get version -------------------------------------            
-    SYSTEM_VERSION tSysVerion = {'\0', };
-    assert(Drfl.get_system_version(&tSysVerion));
+        //--- Get version -------------------------------------            
+        SYSTEM_VERSION tSysVerion = {'\0', };
+        assert(Drfl.get_system_version(&tSysVerion));
 
-    //--- Get DRCF version & convert to integer  ----------            
-    m_nVersionDRCF = 0; 
-    int k=0;
-    for(int i=strlen(tSysVerion._szController); i>0; i--)
-        if(tSysVerion._szController[i]>='0' && tSysVerion._szController[i]<='9')
-            m_nVersionDRCF += (tSysVerion._szController[i]-'0')*pow(10.0,k++);
-    if(m_nVersionDRCF < 100000) m_nVersionDRCF += 100000; 
+        //--- Get DRCF version & convert to integer  ----------            
+        m_nVersionDRCF = 0; 
+        int k=0;
+        for(int i=strlen(tSysVerion._szController); i>0; i--)
+            if(tSysVerion._szController[i]>='0' && tSysVerion._szController[i]<='9')
+                m_nVersionDRCF += (tSysVerion._szController[i]-'0')*pow(10.0,k++);
+        if(m_nVersionDRCF < 100000) m_nVersionDRCF += 100000; 
 
-    if(g_bIsEmulatorMode) RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    Emulator Mode");
-    else                  RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    Real Robot Mode");
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRCF version = %s",tSysVerion._szController);
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRFL version = %s",Drfl.get_library_version());
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    m_nVersionDRCF = %d", m_nVersionDRCF);  //ex> M2.40 = 120400, M2.50 = 120500  
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");   
+        if(g_bIsEmulatorMode) RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    Emulator Mode");
+        else                  RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    Real Robot Mode");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRCF version = %s",tSysVerion._szController);
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRFL version = %s",Drfl.get_library_version());
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    m_nVersionDRCF = %d", m_nVersionDRCF);  //ex> M2.40 = 120400, M2.50 = 120500  
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");   
 
         if(m_nVersionDRCF >= 120500 && m_nVersionDRCF < 3000000)    //M2.5 or later        
         {
@@ -254,58 +235,60 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
             Drfl.setup_monitoring_version(1);                        //Enabling extended monitoring functions 
         }
 
-    //--- Check Robot State : STATE_STANDBY ---               
-    while ((Drfl.GetRobotState() != STATE_STANDBY)){
+        //--- Check Robot State : STATE_STANDBY ---               
+        while ((Drfl.GetRobotState() != STATE_STANDBY)){
+            usleep(nDelay);
+        }
+
+        //--- Set Robot mode : MANUAL or AUTO
+        assert(Drfl.SetRobotMode(ROBOT_MODE_AUTONOMOUS));
+
+        //--- Set Robot mode : virual or real 
+        ROBOT_SYSTEM eTargetSystem = ROBOT_SYSTEM_VIRTUAL;
+        if(m_mode == "real") eTargetSystem = ROBOT_SYSTEM_REAL;
+        assert(Drfl.SetRobotSystem(eTargetSystem));
+        Drfl.connect_rt_control();
+        string version = "v1.0";
+        float period = 0.001; // 1 msec
+        int losscount = 4;
+        Drfl.set_rt_control_output(version, period, losscount);
         usleep(nDelay);
-    }
+        Drfl.start_rt_control();
 
-    //--- Set Robot mode : MANUAL or AUTO
-    if(!Drfl.SetRobotMode(ROBOT_MODE_AUTONOMOUS)) {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "ROBOT_MODE_AUTONOMOUS Setting Failure !!"); 
-        return CallbackReturn::ERROR;
-    }
+        Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
 
-    //--- Set Robot mode : virual or real 
-    ROBOT_SYSTEM eTargetSystem = ROBOT_SYSTEM_VIRTUAL;
-    if(m_mode == "real") eTargetSystem = ROBOT_SYSTEM_REAL;
-    if(!Drfl.SetRobotSystem(eTargetSystem)) {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "SetRobotSystem {%s} Setting Failure !!",
-            m_mode.c_str()); 
-        return CallbackReturn::ERROR;
-    }
-    // Drfl.connect_rt_control();
-    // string version = "v1.0";
-    // float period = 0.001; // 1 msec
-    // int losscount = 4;
-    // Drfl.set_rt_control_output(version, period, losscount);
-    // usleep(nDelay);
-    // Drfl.start_rt_control();
+        // to compare with g_joints[].cmd
+        for(int i = 0; i < NUM_JOINT; i++){
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    [init]::read %d-pos: %7.3f", i, g_joints[i].cmd);
+            m_fCmd_[i] = g_joints[i].cmd;
+        }
 
-    Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
-
-    // to compare with g_joints[].cmd
-    for(int i = 0; i < NUM_JOINT; i++){
-        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    [init]::read %d-pos: %7.3f", i, g_joints[i].cmd);
-        m_fCmd_[i] = g_joints[i].cmd;
+        return CallbackReturn::SUCCESS;
     }
-    return CallbackReturn::SUCCESS;
+    RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),"    DSRInterface::init() DRCF connecting ERROR!!!");
+
+  return CallbackReturn::ERROR;
+// return CallbackReturn::SUCCESS;
 }
 
 std::vector<hardware_interface::StateInterface> DRHWInterface::export_state_interfaces()
 {
   std::vector<hardware_interface::StateInterface> state_interfaces;
-	
-	for(size_t i=0; i<joint_interfaces["position"].size(); i++) {
-		state_interfaces.emplace_back(joint_interfaces["position"][i], "position", &joint_position_[i]);
-	}
-	// TODO(songms, leeminju) support velocity control.
-    for(size_t i=0; i<joint_interfaces["velocity"].size(); i++) {
-		state_interfaces.emplace_back(joint_interfaces["velocity"][i], "velocity", &joint_velocities_[i]);
-	}
-	// TODO(songms, leeminju) support effort control.
-	for(size_t i=0; i<joint_interfaces["effort"].size(); i++) {
-		state_interfaces.emplace_back(joint_interfaces["effort"][i], "effort", &joint_effort_[i]);
-	}
+
+  int ind = 0;
+  for (const auto & joint_name : joint_interfaces["position"])
+  {
+    cout << "[callback StateInterface] StateInterface state_interfaces: " << joint_position_[ind] << endl;
+
+    state_interfaces.emplace_back(joint_name, "position", &joint_position_[ind++]);
+  }
+
+  ind = 0;
+  for (const auto & joint_name : joint_interfaces["velocity"])
+  {
+    state_interfaces.emplace_back(joint_name, "velocity", &joint_velocities_[ind++]);
+  }
+
   return state_interfaces;
 }
 
@@ -313,37 +296,127 @@ std::vector<hardware_interface::CommandInterface> DRHWInterface::export_command_
 {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
 
-	for(size_t i=0; i<joint_comm_interfaces["position"].size(); i++) {
-		command_interfaces.emplace_back(joint_comm_interfaces["position"][i], "position", &joint_position_command_[i]);
-	}
-	for(size_t i=0; i<joint_comm_interfaces["velocity"].size(); i++) {
-		command_interfaces.emplace_back(joint_comm_interfaces["velocity"][i], "velocity", &joint_velocities_command_[i]);
-	}
-	// TODO(songms, leeminju) support effort control.
-	for(size_t i=0; i<joint_comm_interfaces["effort"].size(); i++) {
-		command_interfaces.emplace_back(joint_comm_interfaces["effort"][i], "effort", &joint_effort_command_[i]);
-	}
+  int ind = 0;
+  for (const auto & joint_name : joint_interfaces["position"])
+  {
+    cout << "[callback CommandInterface] CommandInterface joint_position_command_: " << joint_position_command_[ind] << endl;
+    command_interfaces.emplace_back(joint_name, "position", &joint_position_command_[ind++]);
+  }
+
+  ind = 0;
+  for (const auto & joint_name : joint_interfaces["velocity"])
+  {
+    command_interfaces.emplace_back(joint_name, "velocity", &joint_velocities_command_[ind++]);
+  }
+
   return command_interfaces;
 }
 
 
-return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
+    double now_sec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    long int now_ns;
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+    now_ns = spec.tv_nsec;
+    msg.header.stamp.sec = (long)now_sec;
+    msg.header.stamp.nanosec = now_ns;
 
+    msg.name.push_back("joint_1");
+    msg.name.push_back("joint_2");
+    msg.name.push_back("joint_3");
+    msg.name.push_back("joint_4");
+    msg.name.push_back("joint_5");
+    msg.name.push_back("joint_6");
     LPROBOT_POSE pose = Drfl.GetCurrentPose();
-    if(nullptr == pose) {
-      RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
-				"[read] GetCurrentPose retrieves nullptr");
-      return return_type::ERROR; //? what effection of this to control node 
+    // for (int i = 0; i < 6; i++){
+    //     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), " : %.2f", pose->_fPosition[i]);
+    // }
+    for (auto i = 0ul; i < joint_velocities_command_.size(); i++)
+    {
+        joint_velocities_[i] = joint_velocities_command_[i];
+        joint_position_[i] += joint_velocities_command_[i] * period.seconds();
     }
-    for(int i=0;i<6;i++){
-      joint_position_[i] = deg2rad(pose->_fPosition[i]);
-    //   RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "joint_pos[%d] : %.3f ", i, joint_position_[i]);
+    for (auto i = 0ul; i < joint_position_command_.size(); i++)
+    {
+        joint_position_[i] = joint_position_command_[i];
+        g_joints[i].pos = deg2rad(pose->_fPosition[i]);
+        msg.position.push_back(g_joints[i].pos);
+        msg.velocity.push_back(0);
+        msg.effort.push_back(0);
     }
-  return return_type::OK;
+    m_joint_state_pub_->publish(msg);
+    msg.position.clear();
+    msg.velocity.clear();
+    msg.effort.clear();
+    msg.name.clear();
+    return return_type::OK;
 }
 
 
+//  void JointTrajectoryAction::trajectoryCallback(const control_msgs::FollowJointTrajectoryGoalConstPtr &goal)
+//     {
+//         ROS_INFO("callback: Trajectory received");
+//         ROS_INFO("  goal->trajectory.points.size() =%d", (int)goal->trajectory.points.size());           //=10 가변젹
+//         ROS_INFO("  goal->trajectory.joint_names.size() =%d", (int)goal->trajectory.joint_names.size()); //=6
+
+//         float preTargetTime = 0.0;
+//         float targetTime = 0.0;
+//         int nCntTargetPos = goal->trajectory.points.size();
+//         float fTargetPos[nCntTargetPos][NUM_JOINT] = {
+//             0.0,
+//         };
+//         double dt = 0.0;
+
+//         ros::Time begin = ros::Time::now();
+//         Drfl.set_safety_mode((SAFETY_MODE)1, (SAFETY_MODE_EVENT)1);
+
+//         for (int i = 0; i < nCntTargetPos; i++) //=10
+//         {
+//             std::array<float, NUM_JOINT> degrees;
+//             ros::Duration d(goal->trajectory.points[i].time_from_start);
+//             targetTime = d.toSec();
+//             ROS_INFO("[trajectory] preTargetTime: %7.3f", preTargetTime);
+//             ROS_INFO("[trajectory] TargetTime: %7.3f", targetTime);
+//             dt = targetTime - preTargetTime;
+//             preTargetTime = targetTime;
+//             ROS_INFO("[trajectory] dt: %7.3f", dt);
+
+//             for (int j = 0; j < goal->trajectory.joint_names.size(); j++) //=6
+//             {
+//                 degrees[j] = rad2deg(goal->trajectory.points[i].positions[j]);
+//                 fTargetPos[i][j] = degrees[j];
+//             }
+
+//             ros::Duration step_duration = d - (ros::Time::now() - begin);
+//             float blending_radius = 50;
+
+//             if (as_.isPreemptRequested() || !ros::ok())
+//             {
+//                 ROS_INFO("%s: Preempted", action_name_.c_str());
+//                 // set the action state to preempted
+//                 as_.setPreempted();
+//                 return;
+//             }
+//             ROS_INFO("[trajectory] [%02d : %.3f : %.3f] %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f", i, dt, step_duration.toSec(), rad2deg(goal->trajectory.points[i].positions[0]), rad2deg(goal->trajectory.points[i].positions[1]), rad2deg(goal->trajectory.points[i].positions[2]), rad2deg(goal->trajectory.points[i].positions[3]), rad2deg(goal->trajectory.points[i].positions[4]), rad2deg(goal->trajectory.points[i].positions[5]));
+//             float TargetVel[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
+//             float TargetAcc[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
+
+//             Drfl.servoj(degrees.data(), TargetVel, TargetAcc, dt);
+//             int delay;
+//             ros::param::param<int>("~standby", delay, 5000);
+//             usleep(delay);
+            
+//             if(i == nCntTargetPos-1){
+//                 while ((Drfl.get_robot_state() != STATE_STANDBY)){
+//                    usleep(delay);
+//                 }
+//                 Drfl.set_safety_mode((SAFETY_MODE)1, (SAFETY_MODE_EVENT)2);
+//                 as_.setSucceeded(result_);
+//             }
+//         }       
+//     }
 std::vector<float> previous_joint_position_command_float(6, std::numeric_limits<float>::quiet_NaN()); // 초기값 NaN
 
 
@@ -361,10 +434,13 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         if (std::isnan(previous_joint_position_command_float[i]) || 
             previous_joint_position_command_float[i] != joint_position_command_float[i]) {
             is_identical = false;
-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
             break;
         }
+        else{
+            init_count = 0;
+        }
     }
+    
     auto currentTime = steady_clock::now();
     auto duration = duration_cast<seconds>(currentTime - startTime); // 경과 시간 측정
 
@@ -375,20 +451,36 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     else{
         if (!is_identical)
         {
+
+            // if (init_count <3){
+            //     init_joint_position_command.push_back(joint_position_command_float);
+            //     if (init_count == 2){
+            //         for(const auto& command : init_joint_position_command) {
+            //             float t[6];
+            //             for(int i=0;i<6;i++) {
+            //                 t[i] = command[i];
+            //             }
+            //             Drfl.servoj(t, TargetVel, TargetAcc, float(dt.seconds()), DR_SERVO_QUEUE);
+            //         }
+            //         init_joint_position_command.clear();
+            //     }
+                
+            //     init_count++;
+            // }
+            // else
+            // {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "dt : %.2f", float(dt.seconds()));
             for (int i = 0; i < 6; i++){
                 RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "position %i : %.2f", i, joint_position_command_float[i]);
             }
-            // if(m_nVersionDRCF <= 3000000){
-            Drfl.servoj(joint_position_command_float.data(), TargetVel, TargetAcc, float(dt.seconds())*1.7);
-            // }
-            // else{
-            //     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "Not Supported in moveit  : %.2f", float(dt.seconds()));
+            
+            Drfl.servoj(joint_position_command_float.data(), TargetVel, TargetAcc, float(dt.seconds())*1.7, DR_SERVO_OVERRIDE);
             // }
             previous_joint_position_command_float = joint_position_command_float; 
         }
     }
-
+    
+    
     return return_type::OK;
 }
 
