@@ -4,13 +4,15 @@
     =_______________________________________________________________________  =
     = Title             : Doosan Robot Framwork Constant                      =
     = Author            : Lee Jeong-Woo<jeongwoo1.lee@doosan.com>             =
+    = Maintainer        : Minsoo Song<minsoo.song@doosan.com>                 =
+    =                     Minju Lee<minju3.lee@doosan.com>                    =
     = Description       : -                                                   =
     ======================================================================== */
 
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2019, Doosan Robotics
+ *  Copyright (c) 2024, Doosan Robotics
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -66,6 +68,8 @@
 #define NUM_BUTTON               (5)
 #define NUM_BUTTON_EX            (6)
 #define NUMBER_OF_TASK           (6)
+#define NUMBER_OF_TASK_EX        (NUMBER_OF_TASK+1) // SUPPORT_ORIENTATION_TYPE
+#define NUMBER_OF_ITER_THRESHOULD           (2)
 
 //
 // string constants
@@ -87,6 +91,13 @@
 #define NUM_POWER_OUT               (1)
 #define NUM_SAFETY                  (8)
 #define NUMBER_OF_BUTTON            (6)
+
+
+// Version 3 support I/O
+#define NUM_DIGITAL_V3                 (32)
+#define MAX_DIGITAL_BURST_SIZE_V3      (32)
+#define NUM_SAFETY_V3                  (16)
+#define NUM_SAFETY_IN_V3               (3)
 
 #define MAX_MODBUS_TOTAL_REGISTERS  (100)
 
@@ -438,6 +449,8 @@ typedef enum{
 //
 // gpio index enumerated value
 //
+
+// Input 20, Output 16
 typedef enum {
     GPIO_CTRLBOX_DIGITAL_INDEX_1= 0,
     GPIO_CTRLBOX_DIGITAL_INDEX_2,
@@ -455,6 +468,22 @@ typedef enum {
     GPIO_CTRLBOX_DIGITAL_INDEX_14,
     GPIO_CTRLBOX_DIGITAL_INDEX_15,
     GPIO_CTRLBOX_DIGITAL_INDEX_16,
+    GPIO_CTRLBOX_DIGITAL_INDEX_17,
+    GPIO_CTRLBOX_DIGITAL_INDEX_18,
+    GPIO_CTRLBOX_DIGITAL_INDEX_19,
+    GPIO_CTRLBOX_DIGITAL_INDEX_20,
+    GPIO_CTRLBOX_DIGITAL_INDEX_21,
+    GPIO_CTRLBOX_DIGITAL_INDEX_22,
+    GPIO_CTRLBOX_DIGITAL_INDEX_23,
+    GPIO_CTRLBOX_DIGITAL_INDEX_24,
+    GPIO_CTRLBOX_DIGITAL_INDEX_25,
+    GPIO_CTRLBOX_DIGITAL_INDEX_26,
+    GPIO_CTRLBOX_DIGITAL_INDEX_27,
+    GPIO_CTRLBOX_DIGITAL_INDEX_28,
+    GPIO_CTRLBOX_DIGITAL_INDEX_29,
+    GPIO_CTRLBOX_DIGITAL_INDEX_30,
+    GPIO_CTRLBOX_DIGITAL_INDEX_31,
+    GPIO_CTRLBOX_DIGITAL_INDEX_32,
 } GPIO_CTRLBOX_DIGITAL_INDEX;
 
 typedef enum {

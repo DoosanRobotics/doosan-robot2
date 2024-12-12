@@ -4,13 +4,15 @@
     =_______________________________________________________________________  =
     = Title             : Doosan Robot Framwork Library                       =
     = Author            : Lee Jeong-Woo<jeongwoo1.lee@doosan.com>             =
+    = Maintainer        : Minsoo Song<minsoo.song@doosan.com>                 =
+    =                     Minju Lee<minju3.lee@doosan.com>                    =
     = Description       : -                                                   =
     ======================================================================== */
 
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2019, Doosan Robotics
+ *  Copyright (c) 2024, Doosan Robotics
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -57,11 +59,16 @@
 
 #include "DRFL.h"
 
+// Specified by user. 2 or 3.
+#ifndef DRCF_VERSION
+    #define DRCF_VERSION 2
+#endif
 
 namespace DRAFramework 
 {
     typedef void (*TOnMonitoringDataExCB)(const LPMONITORING_DATA_EX);
     typedef void (*TOnMonitoringCtrlIOExCB)(const LPMONITORING_CTRLIO_EX);
+    typedef void (*TOnMonitoringCtrlIOEx2CB)(const LPMONITORING_CTRLIO_EX2);
     typedef void (*TOnTpPopupCB)(LPMESSAGE_POPUP);
     typedef void (*TOnTpLogCB)(const char[256]);
     typedef void (*TOnTpGetUserInputCB)(LPMESSAGE_INPUT);
@@ -210,6 +217,8 @@ namespace DRAFramework
         DRFL_API void _set_on_monitoring_data_ex(LPROBOTCONTROL pCtrl, TOnMonitoringDataExCB pCallbackFunc);
         DRFL_API void _set_on_monitoring_ctrl_io(LPROBOTCONTROL pCtrl, TOnMonitoringCtrlIOCB pCallbackFunc);
         DRFL_API void _set_on_monitoring_ctrl_io_ex(LPROBOTCONTROL pCtrl, TOnMonitoringCtrlIOExCB pCallbackFunc);
+        DRFL_API void _set_on_monitoring_ctrl_io_ex2(LPROBOTCONTROL pCtrl, TOnMonitoringCtrlIOEx2CB pCallbackFunc);
+
         DRFL_API void _set_on_monitoring_modbus(LPROBOTCONTROL pCtrl, TOnMonitoringModbusCB pCallbackFunc);
         DRFL_API void _set_on_monitoring_speed_mode(LPROBOTCONTROL pCtrl, TOnMonitoringSpeedModeCB pCallbackFunc);
         DRFL_API void _set_on_monitoring_access_control(LPROBOTCONTROL pCtrl, TOnMonitoringAccessControlCB pCallbackFunc);
@@ -234,6 +243,9 @@ namespace DRAFramework
         DRFL_API LPROBOT_POSE _trans(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], float fOffset[NUM_TASK], COORDINATE_SYSTEM eSourceRef = COORDINATE_SYSTEM_BASE, COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE);
         DRFL_API LPROBOT_POSE _ikin(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE);
 		DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_ex(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, unsigned char iRefPosOpt);
+        DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_add_iter_threshold(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, float fIterThreshold[2]);
+        DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_norm(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef,  unsigned char iRefPosOpt);
+        
         DRFL_API LPROBOT_POSE _fkin(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_JOINT], COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE);
         DRFL_API LPROBOT_POSE _addto(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_JOINT], float fOffset[NUM_JOINT]);
 
@@ -331,15 +343,17 @@ namespace DRAFramework
         DRFL_API bool _get_tool_digital_output(LPROBOTCONTROL pCtrl, GPIO_TOOL_DIGITAL_INDEX eGpioIndex);
         // set digital ouput on control-box
         DRFL_API bool _set_digital_output(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex, bool bOnOff);
+        DRFL_API bool _set_digital_output_ex(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex, bool bOnOff);
         DRFL_API bool _get_digital_output(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex);
+        DRFL_API bool _get_digital_output_ex(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex);
         // get digital input on control-box
         DRFL_API bool _get_digital_input(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex);
-
+        DRFL_API bool _get_digital_input_ex(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex);
         // set analog ouput on control-box
         DRFL_API bool _set_analog_output(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex, float fValue);
         // get analog inut on control-box
         DRFL_API float _get_analog_input(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex);
-
+        DRFL_API float _get_analog_input_ex(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex);
         // set analog input type on control-box
         DRFL_API bool _set_mode_analog_input(LPROBOTCONTROL pCtrl, GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex, GPIO_ANALOG_TYPE eAnalogType = GPIO_ANALOG_TYPE_CURRENT); 
         // set analog output type on control-box
@@ -370,7 +384,7 @@ namespace DRAFramework
         DRFL_API bool _flange_serial_open(LPROBOTCONTROL pCtrl, int baudrate = 115200, BYTE_SIZE eByteSize = BYTE_SIZE_EIGHTBITS, PARITY_CHECK eParity = PARITY_CHECK_NONE, STOP_BITS eStopBits = STOPBITS_ONE);
         DRFL_API bool _flange_serial_close(LPROBOTCONTROL pCtrl);
         DRFL_API bool _flange_serial_write(LPROBOTCONTROL pCtrl, int nSize, char* pSendData, int nPort = 1);
-        DRFL_API LPFLANGE_SER_RXD_INFO _flange_serial_read(LPROBOTCONTROL pCtrl, float fTimeout = -1, int nPort = 1);     
+        DRFL_API LPFLANGE_SER_RXD_INFO_EX _flange_serial_read(LPROBOTCONTROL pCtrl, float fTimeout = -1, int nPort = 1);     
   
         ////////////////////////////////////////////////////////////////////////////
         //  Configuration Operations                                              //
@@ -405,9 +419,13 @@ namespace DRAFramework
 
         DRFL_API LPSAFETY_CONFIGURATION_EX _get_safety_configuration(LPROBOTCONTROL pCtrl);
         DRFL_API LPSAFETY_CONFIGURATION_EX2 _get_safety_configuration_ex(LPROBOTCONTROL pCtrl);
+        
+        DRFL_API LPSAFETY_CONFIGURATION_EX2_V3 _get_safety_configuration_ex_v3(LPROBOTCONTROL pCtrl);
 
         DRFL_API bool _change_collision_sensitivity(LPROBOTCONTROL pCtrl, float fSensitivity);
         DRFL_API bool _set_palletizing_mode(LPROBOTCONTROL pCtrl, unsigned char iMode);
+        
+        DRFL_API bool _set_auto_safety_move_stop(LPROBOTCONTROL pCtrl, bool bFuncEnable);
         ////////////////////////////////////////////////////////////////////////////
         //  drl program Operations                                                //
         ////////////////////////////////////////////////////////////////////////////
@@ -468,6 +486,60 @@ namespace DRAFramework
         DRFL_API bool _setup_monitoring_version(LPROBOTCONTROL pCtrl, int iVersion);
         DRFL_API bool _system_shut_down(LPROBOTCONTROL pCtrl);
 
+        //brief(270) :app_weld_weave_cond_trapezoidal
+        DRFL_API bool _app_weld_weave_cond_trapezoidal(LPROBOTCONTROL pCtrl, CONFIG_TRAPEZOID_WEAVING_SETTING pConfigtrapezoidweavingsetting);
+        //brief(271) :app_weld_weave_cond_zigzag
+        DRFL_API bool _app_weld_weave_cond_zigzag(LPROBOTCONTROL pCtrl, float fOffsetY, float fOffsetZ, float fGradient, float fWeavingWidth, float fWeavingCycle);
+        //brief(272) :app_weld_weave_cond_circular
+        DRFL_API bool _app_weld_weave_cond_circular(LPROBOTCONTROL pCtrl, float fOffsetY, float fOffsetZ, float fGradient, float fwWdt[2], float fwT[2]);
+        //brief(273) :app_weld_weave_cond_sinusoidal
+        DRFL_API bool _app_weld_weave_cond_sinusoidal(LPROBOTCONTROL pCtrl, float fOffsetY, float fOffsetZ, float fGradient, float fWeavingWidth, float fWeavingCycle);
+        //brief(274) :app_weld_enable_analog
+        DRFL_API bool _app_weld_enable_analog(LPROBOTCONTROL pCtrl, CONFIG_ANALOG_WELDING_INTERFACE pConfiganalogweldinginterface);
+        //brief(275) :app_weld_set_weld_cond_analog
+        DRFL_API bool _app_weld_set_weld_cond_analog(LPROBOTCONTROL pCtrl, unsigned char iVirtualWelding, float fTargetVoltage, float fTargetCurrent, float fTargetVel, float fMinVel, float fMaxVel, float fTargetFeedingSpeed);
+        //brief(276) :app_weld_adj_welding_cond_analog
+        DRFL_API bool _app_weld_adj_welding_cond_analog(LPROBOTCONTROL pCtrl, unsigned char bRealTime, unsigned char bResetFlag, float fTargetVol, float fFeedingVel, float fTargetVel, float fOffsetY, float fOffsetZ, float fWidthRate);
+        //brief(277) :app_weld_set_interface_eip_r2m_process
+        DRFL_API bool _app_weld_set_interface_eip_r2m_process(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_INTERFACE_PROCESS pConfigdigitalweldinginterfaceprocess);
+        //brief(278) :app_weld_set_interface_eip_r2m_mode
+        DRFL_API bool _app_weld_set_interface_eip_r2m_mode(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_INTERFACE_MODE pConfigdigitalweldinginterfacemode);
+        //brief(279) :app_weld_set_interface_eip_r2m_test
+        DRFL_API bool _app_weld_set_interface_eip_r2m_test(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_INTERFACE_TEST pConfigdigitalweldinginterfacetest);
+        
+        //brief(280) :app_weld_set_interface_eip_r2m_condition
+        DRFL_API bool _app_weld_set_interface_eip_r2m_condition(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_INTERFACE_CONDITION pConfigdigitalweldinginterfacecondition);
+        //brief(281) :app_weld_set_interface_eip_r2m_option
+        DRFL_API bool _app_weld_set_interface_eip_r2m_option(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_INTERFACE_OPTION pConfigdigitalweldinginterfaceoption);
+        //brief(282) :app_weld_set_interface_eip_m2r_process2
+        DRFL_API bool _app_weld_set_interface_eip_m2r_process2(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_INTERFACE_PROCESS2 pConfigdigitalweldinginterfaceprocess2);
+        //brief(283) :app_weld_set_interface_eip_m2r_monitoring
+        DRFL_API bool _app_weld_set_interface_eip_m2r_monitoring(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_INTERFACE_MONITORING pConfigdigitalweldinginterfacemonitoring);
+        //brief(284) :app_weld_set_interface_eip_m2r_other
+        DRFL_API bool _app_weld_set_interface_eip_m2r_other(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_INTERFACE_OTHER pConfigdigitalweldinginterfacemonitoring);
+        //brief(285) :app_weld_reset_interface
+        DRFL_API bool _app_weld_reset_interface(LPROBOTCONTROL pCtrl, unsigned char bReset);
+        //brief(286) :app_weld_enable_digital
+        DRFL_API bool _app_weld_enable_digital(LPROBOTCONTROL pCtrl, unsigned char bMode);
+        //brief(286) :app_weld_disable_digital
+        DRFL_API bool _app_weld_disable_digital(LPROBOTCONTROL pCtrl, unsigned char bMode);
+        //brief(287) :app_weld_set_weld_cond_digital
+        DRFL_API bool _app_weld_set_weld_cond_digital(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_CONDITION pConfigdigitalweldingcondition);
+        //brief(288) :app_weld_adj_welding_cond_digital
+        DRFL_API bool _app_weld_adj_welding_cond_digital(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_ADJUST pConfigdigitalweldingadjust);
+        //brief(289) :measure_welding_tcp
+        DRFL_API bool _measure_welding_tcp(LPROBOTCONTROL pCtrl, unsigned char iMode, float fStickout, float fTargetPos[9][NUMBER_OF_JOINT]);
+        
+        //brief(290) :set_welding_cockpit_setting
+        DRFL_API bool _set_welding_cockpit_setting(LPROBOTCONTROL pCtrl, unsigned char bEnable, unsigned char bWeldingType);
+        //brief(291) :set_digital_welding_signal_output
+        DRFL_API bool _set_digital_welding_signal_output(LPROBOTCONTROL pCtrl, unsigned char cDataType, float fData);
+        //brief(292) :set_digital_welding_monitoring_mode
+        DRFL_API bool _set_digital_welding_monitoring_mode(LPROBOTCONTROL pCtrl, unsigned char bEnable);
+        //brief(293) :app_weld_adj_motion_offset
+        DRFL_API bool _app_weld_adj_motion_offset(LPROBOTCONTROL pCtrl, float fOffsetY, float fOffsetZ);
+
+
 #ifdef __cplusplus
     };
 #endif
@@ -515,20 +587,26 @@ namespace DRAFramework
         bool torque_rt(float fMotorTor[NUM_JOINT], float fTargetTime){ return _torque_rt(_rbtCtrlUDP, fMotorTor, fTargetTime); };
         //bool change_operation_speed_rt(float fSpeedRate){ return _change_operation_speed_rt(_rbtCtrlUDP, fSpeedRate); }; //차후 개발
 
-
         ////////////////////////////////////////////////////////////////////////////
         // Callback operation                                                    //
         ////////////////////////////////////////////////////////////////////////////
         // robot status data
         void set_on_monitoring_state(TOnMonitoringStateCB pCallbackFunc) { _set_on_monitoring_state(_rbtCtrl, pCallbackFunc); };
-        // robot operating data
+        /*Depreciated version. callbacks invoked after setup_monitoring_version(0)*/
         void set_on_monitoring_data(TOnMonitoringDataCB pCallbackFunc) { _set_on_monitoring_data(_rbtCtrl, pCallbackFunc); };
-        // robot operating data : version 1
+        /*Latest version. callbacks invoked after setup_monitoring_version(1)*/
         void set_on_monitoring_data_ex(TOnMonitoringDataExCB pCallbackFunc) { _set_on_monitoring_data_ex(_rbtCtrl, pCallbackFunc); };
-        // ctrl-box I/O data
+        /*Depreciated version. callbacks invoked after setup_monitoring_version(0)*/
         void set_on_monitoring_ctrl_io(TOnMonitoringCtrlIOCB pCallbackFunc) { _set_on_monitoring_ctrl_io(_rbtCtrl, pCallbackFunc); };
-        // ctrl-box I/O data : version 1
+        // ctrl-box I/O data
+#if DRCF_VERSION == 2
+        /*Latest version. callbacks invoked after setup_monitoring_version(1)*/
         void set_on_monitoring_ctrl_io_ex(TOnMonitoringCtrlIOExCB pCallbackFunc) { _set_on_monitoring_ctrl_io_ex(_rbtCtrl, pCallbackFunc); };
+#elif DRCF_VERSION == 3
+        /*Latest version. callbacks invoked after setup_monitoring_version(1)*/
+        void set_on_monitoring_ctrl_io_ex(TOnMonitoringCtrlIOEx2CB pCallbackFunc) { _set_on_monitoring_ctrl_io_ex2(_rbtCtrl, pCallbackFunc); };
+#endif
+
         // modbus I/O data
         void set_on_monitoring_modbus(TOnMonitoringModbusCB pCallbackFunc) { _set_on_monitoring_modbus(_rbtCtrl, pCallbackFunc); };
         // robot speed mode event
@@ -566,7 +644,9 @@ namespace DRAFramework
 
         LPROBOT_POSE trans(float fSourcePos[NUM_TASK], float fOffset[NUM_TASK], COORDINATE_SYSTEM eSourceRef = COORDINATE_SYSTEM_BASE, COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE){return _trans(_rbtCtrl, fSourcePos, fOffset, eSourceRef, eTargetRef);};
         LPROBOT_POSE ikin(float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE){return _ikin(_rbtCtrl, fSourcePos, iSolutionSpace, eTargetRef); };
-		LPINVERSE_KINEMATIC_RESPONSE ikin(float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, unsigned char iRefPosOpt){return _ikin_ex(_rbtCtrl, fSourcePos, iSolutionSpace, eTargetRef, iRefPosOpt); };
+        LPINVERSE_KINEMATIC_RESPONSE ikin(float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, unsigned char iRefPosOpt){return _ikin_ex(_rbtCtrl, fSourcePos, iSolutionSpace, eTargetRef, iRefPosOpt); };
+        LPINVERSE_KINEMATIC_RESPONSE ikin(float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, float fIterThreshold[NUMBER_OF_ITER_THRESHOULD]){return _ikin_add_iter_threshold(_rbtCtrl, fSourcePos, iSolutionSpace, eTargetRef, fIterThreshold); };
+        LPINVERSE_KINEMATIC_RESPONSE ikin_norm(float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, unsigned char iRefPosOpt){return _ikin_norm(_rbtCtrl, fSourcePos, iSolutionSpace, eTargetRef, iRefPosOpt); };
 		LPROBOT_POSE fkin(float fSourcePos[NUM_JOINT], COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE){return _fkin(_rbtCtrl, fSourcePos, eTargetRef); };        
         LPROBOT_POSE addto(float fSourcePos[NUM_JOINT], float fOffset[NUM_JOINT]) { return _addto(_rbtCtrl, fSourcePos, fOffset); };
 
@@ -729,16 +809,19 @@ namespace DRAFramework
         // get digital input on flange
         bool get_tool_digital_input(GPIO_TOOL_DIGITAL_INDEX eGpioIndex) { return _get_tool_digital_input(_rbtCtrl, eGpioIndex); };
         bool get_tool_digital_output(GPIO_TOOL_DIGITAL_INDEX eGpioIndex) { return _get_tool_digital_output(_rbtCtrl, eGpioIndex); };
-        // set digital ouput on control-box
-        bool set_digital_output(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex, bool bOnOff) { return _set_digital_output(_rbtCtrl, eGpioIndex, bOnOff); };
+#if DRCF_VERSION == 2
         bool get_digital_output(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex) { return _get_digital_output(_rbtCtrl, eGpioIndex); };
-        // get digital input on control-box
         bool get_digital_input(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex) { return _get_digital_input(_rbtCtrl, eGpioIndex); };
-
-        // set analog ouput on control-box
-        bool set_analog_output(GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex, float fValue) { return _set_analog_output(_rbtCtrl, eGpioIndex, fValue); };
-        // get analog inut on control-box
+        bool set_digital_output(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex, bool bOnOff) { return _set_digital_output(_rbtCtrl, eGpioIndex, bOnOff); };
         float get_analog_input(GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex) { return _get_analog_input(_rbtCtrl, eGpioIndex); };
+#elif DRCF_VERSION == 3
+        bool get_digital_output(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex) { return _get_digital_output_ex(_rbtCtrl, eGpioIndex); };
+        bool get_digital_input(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex) { return _get_digital_input_ex(_rbtCtrl, eGpioIndex); };
+        bool set_digital_output(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex, bool bOnOff) { return _set_digital_output_ex(_rbtCtrl, eGpioIndex, bOnOff); };
+        float get_analog_input(GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex) { return _get_analog_input_ex(_rbtCtrl, eGpioIndex); };
+#endif
+        bool set_analog_output(GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex, float fValue) { return _set_analog_output(_rbtCtrl, eGpioIndex, fValue); };
+
         // set analog input type on control-box
         bool set_mode_analog_input(GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex, GPIO_ANALOG_TYPE eAnalogType = GPIO_ANALOG_TYPE_CURRENT) { return _set_mode_analog_input(_rbtCtrl, eGpioIndex, eAnalogType); }; 
         // set analog output type on control-box
@@ -770,7 +853,7 @@ namespace DRAFramework
         bool flange_serial_open(int baudrate = 115200, BYTE_SIZE eByteSize = BYTE_SIZE_EIGHTBITS, PARITY_CHECK eParity = PARITY_CHECK_NONE, STOP_BITS eStopBits = STOPBITS_ONE){ return _flange_serial_open(_rbtCtrl, baudrate, eByteSize, eParity, eStopBits); };
         bool flange_serial_close(){ return _flange_serial_close(_rbtCtrl); };
         bool flange_serial_write(int nSize, char* pSendData, int nPort = 1){ return _flange_serial_write(_rbtCtrl, nSize, pSendData, nPort); };
-        LPFLANGE_SER_RXD_INFO flange_serial_read(float fTimeout = -1, int nPort = 1){ return _flange_serial_read(_rbtCtrl, fTimeout, nPort); };      
+        LPFLANGE_SER_RXD_INFO_EX flange_serial_read(float fTimeout = -1, int nPort = 1){ return _flange_serial_read(_rbtCtrl, fTimeout, nPort); };      
 
         ////////////////////////////////////////////////////////////////////////////
         //  Configuration Operations                                               //
@@ -809,10 +892,18 @@ namespace DRAFramework
         bool change_collision_sensitivity(float fSensitivity){ return _change_collision_sensitivity(_rbtCtrl, fSensitivity); };
         bool set_palletizing_mode(unsigned char iMode) { return _set_palletizing_mode(_rbtCtrl, iMode); };
 
-        LPSAFETY_CONFIGURATION_EX get_safety_configuration(){ return _get_safety_configuration(_rbtCtrl); };
-        LPSAFETY_CONFIGURATION_EX2 get_safety_configuration_ex(){ return _get_safety_configuration_ex(_rbtCtrl); };
+        // LPSAFETY_CONFIGURATION_EX get_safety_configuration(){ return _get_safety_configuration(_rbtCtrl); };
+        #if DRCF_VERSION == 2
+
+        LPSAFETY_CONFIGURATION_EX2 get_safety_configuration(){ return _get_safety_configuration_ex(_rbtCtrl); };
+        #elif DRCF_VERSION == 3
+
+        LPSAFETY_CONFIGURATION_EX2_V3 get_safety_configuration(){ return _get_safety_configuration_ex_v3(_rbtCtrl); };
+        #endif
 
         int check_motion() {return _check_motion(_rbtCtrl);};
+        
+        bool set_auto_safety_move_stop(bool bFuncEnable) {return _set_auto_safety_move_stop(_rbtCtrl, bFuncEnable); };
         ////////////////////////////////////////////////////////////////////////////
         //  drl program Operations                                                //
         ////////////////////////////////////////////////////////////////////////////
@@ -869,8 +960,19 @@ namespace DRAFramework
         bool set_singularity_handling(SINGULARITY_AVOIDANCE eMode) { return _set_singularity_handling(_rbtCtrl, eMode); };
         bool config_program_watch_variable(VARIABLE_TYPE eDivision, DATA_TYPE eType, string strName, string strData) { return _config_program_watch_variable(_rbtCtrl, eDivision, eType, strName.c_str(), strData.c_str()); };
         bool save_sub_program(int iTargetType, string strFileName, string strDrlProgram) { return _save_sub_program(_rbtCtrl, iTargetType, strFileName.c_str(), strDrlProgram.c_str()); };
+        
+        /*
+            If specified 0, depreciated callbacks invoked (set_on_monitoring_data, set_on_monitoring_ctrl_io)
+            If specified 1, latest callbacks invoked (set_on_monitoring_data_ex, set_on_monitoring_ctrl_io_ex)
+        */
         bool setup_monitoring_version(int iVersion) { return _setup_monitoring_version(_rbtCtrl, iVersion); };
         bool system_shut_down() { return _system_shut_down(_rbtCtrl); };
+                ////////////////////////////////////////////////////////////////////////////
+        //  welding                                                //
+        ////////////////////////////////////////////////////////////////////////////
+#if DRCF_VERSION == 2
+        
+#endif
 
 protected:
         LPROBOTCONTROL _rbtCtrlUDP;

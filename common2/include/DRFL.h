@@ -4,13 +4,15 @@
     =_______________________________________________________________________  =
     = Title             : Doosan Robot Framwork Library                       =
     = Author            : Lee Jeong-Woo<jeongwoo1.lee@doosan.com>             =
+    = Maintainer        : Minsoo Song<minsoo.song@doosan.com>                 =
+    =                     Minju Lee<minju3.lee@doosan.com>                    =
     = Description       : -                                                   =
     ======================================================================== */
 
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2019, Doosan Robotics
+ *  Copyright (c) 2024, Doosan Robotics
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -313,10 +315,7 @@ namespace DRAFramework
         ////////////////////////////////////////////////////////////////////////////
         // robot status data
         void SetOnMonitoringState(TOnMonitoringStateCB pCallbackFunc) { _SetOnMonitoringState(_rbtCtrl, pCallbackFunc); };
-        // robot operating data
-        void SetOnMonitoringData(TOnMonitoringDataCB pCallbackFunc) { _SetOnMonitoringData(_rbtCtrl, pCallbackFunc); };
-        // ctrl-box I/O data
-        void SetOnMonitoringCtrlIO(TOnMonitoringCtrlIOCB pCallbackFunc) { _SetOnMonitoringCtrlIO(_rbtCtrl, pCallbackFunc); };
+
         // modbus I/O data
         void SetOnMonitoringModbus(TOnMonitoringModbusCB pCallbackFunc) { _SetOnMonitoringModbus(_rbtCtrl, pCallbackFunc); };
         // robot speed mode event
@@ -451,6 +450,7 @@ namespace DRAFramework
         bool SetCtrlBoxDigitalOutput(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex, bool bOnOff) { return _SetCtrlBoxDigitalOutput(_rbtCtrl, eGpioIndex, bOnOff); };
         // get digital input on control-box
         bool GetCtrlBoxDigitalInput(GPIO_CTRLBOX_DIGITAL_INDEX eGpioIndex) { return _GetCtrlBoxDigitalInput(_rbtCtrl, eGpioIndex); };
+    
 
         // set analog ouput on control-box
         bool SetCtrlBoxAnalogOutput(GPIO_CTRLBOX_ANALOG_INDEX eGpioIndex, float fValue) { return _SetCtrlBoxAnalogOutput(_rbtCtrl, eGpioIndex, fValue); };
