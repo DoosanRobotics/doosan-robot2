@@ -273,6 +273,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
             m_mode.c_str()); 
         return CallbackReturn::ERROR;
     }
+    
     // Drfl.connect_rt_control();
     // string version = "v1.0";
     // float period = 0.001; // 1 msec
@@ -280,8 +281,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     // Drfl.set_rt_control_output(version, period, losscount);
     // usleep(nDelay);
     // Drfl.start_rt_control();
-
-    Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
 
     // to compare with g_joints[].cmd
     for(int i = 0; i < NUM_JOINT; i++){
@@ -360,6 +359,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 {
     if(positionCommandRunning(pre_joint_position_command_, joint_position_command_)) {
         // RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Updated ");
+        Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
         float pos[6];
         float limitVel[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
         float limitAcc[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
