@@ -47,7 +47,7 @@ DR_ERROR    g_stDrError;
 int g_nAnalogOutputModeCh1;
 int g_nAnalogOutputModeCh2;
 int m_nVersionDRCF;
-int init_count=0;
+bool init_state=TRUE;
 
 
 int nDelay = 5000;
@@ -761,9 +761,12 @@ void DSRInterface::OnMonitoringStateCB(const ROBOT_STATE eState)
         break;
     case STATE_SAFE_OFF:
         if (g_bHasControlAuthority){
-            // Drfl.set_robot_control(CONTROL_SERVO_ON);
-            // Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);   //Idle Servo Off 후 servo on 하는 상황 발생 시 set_robot_mode 명령을 전송해 manual 로 전환. add 2020/04/28
+            if (init_state){
+            Drfl.set_robot_control(CONTROL_SERVO_ON);
+            Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);   //Idle Servo Off 후 servo on 하는 상황 발생 시 set_robot_mode 명령을 전송해 manual 로 전환. add 2020/04/28
             // Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+            init_state = FALSE;
+            }
         } 
         break;
     case STATE_SAFE_STOP2:
