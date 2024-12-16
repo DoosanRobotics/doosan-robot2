@@ -393,12 +393,24 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
                     //     ,cmd[4] * ( M_PI / 180.0f)
                     //     ,cmd[5] * ( M_PI / 180.0f)
                     // );
-                    Drfl.servoj(cmd.data(), limitVel, limitAcc, float(dt.seconds()), DR_SERVO_QUEUE);
+                    if(m_nVersionDRCF >= 3000000) {
+                        Drfl.amovej(pos, limitVel, limitVel); // Workaround. needed updated.
+                    }
+                    else {
+                        // Drfl.servoj(cmd.data(), limitVel, limitAcc, float(dt.seconds())*1.7, DR_SERVO_OVERRIDE);
+                        Drfl.servoj(cmd.data(), limitVel, limitAcc, float(dt.seconds()), DR_SERVO_QUEUE);
+                    }
                     this_thread::sleep_for(chrono::milliseconds(1));
                     done = false;
                 }
             }
-            Drfl.servoj(pos, limitVel, limitAcc, float(dt.seconds()), DR_SERVO_QUEUE);
+            if(m_nVersionDRCF >= 3000000) {
+                Drfl.amovej(pos, limitVel, limitVel); // Workaround. needed updated.
+            }
+            else {
+                // Drfl.servoj(cmd.data(), limitVel, limitAcc, float(dt.seconds())*1.7, DR_SERVO_OVERRIDE);
+                Drfl.servoj(pos, limitVel, limitAcc, float(dt.seconds()), DR_SERVO_QUEUE);
+            }
         }
         pre_joint_position_command_ = joint_position_command_;
         return return_type::OK;
