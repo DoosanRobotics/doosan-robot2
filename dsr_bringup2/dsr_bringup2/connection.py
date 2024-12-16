@@ -8,7 +8,9 @@ from rclpy.node import Node
 
 class VirtualDRCF():
     def __init__(self, port, model, name):
-        self.emulator_name = name + "_emulator"
+        self.emulator_name = "emulator"
+        if name:
+            self.emulator_name = name + "_" + "emulator"
         self.run_drcf(port, model, name)
         # signal.signal(signal.SIGINT, self.terminate_drcf)
         # signal.signal(signal.SIGTERM, self.terminate_drcf)
