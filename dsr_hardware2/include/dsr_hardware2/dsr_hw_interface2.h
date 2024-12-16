@@ -523,7 +523,7 @@ namespace dsr_hardware2{
         std::vector<double> joint_position_command_;
         std::vector<double> joint_velocities_command_;
         std::vector<double> joint_effort_command_; /* not used*/
-
+        std::vector<double> pre_joint_position_command_;
         std::vector<double> joint_position_;
         std::vector<double> joint_velocities_;
         std::vector<double> joint_effort_; /* not used*/

@@ -47,7 +47,7 @@ DR_ERROR    g_stDrError;
 int g_nAnalogOutputModeCh1;
 int g_nAnalogOutputModeCh2;
 int m_nVersionDRCF;
-int init_count;
+int init_count=0;
 
 
 int nDelay = 5000;
@@ -312,7 +312,7 @@ std::vector<hardware_interface::StateInterface> DRHWInterface::export_state_inte
 std::vector<hardware_interface::CommandInterface> DRHWInterface::export_command_interfaces()
 {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
-
+    pre_joint_position_command_ = joint_position_command_;
 	for(size_t i=0; i<joint_comm_interfaces["position"].size(); i++) {
 		command_interfaces.emplace_back(joint_comm_interfaces["position"][i], "position", &joint_position_command_[i]);
 	}
@@ -338,7 +338,7 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
     }
     for(int i=0;i<6;i++){
       joint_position_[i] = deg2rad(pose->_fPosition[i]);
-    //   RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "joint_pos[%d] : %.3f ", i, joint_position_[i]);
+    //   RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), " [READ] joint_pos[%d] : %.3f ", i, joint_position_[i]);
     }
   return return_type::OK;
 }
@@ -346,49 +346,67 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
 
 std::vector<float> previous_joint_position_command_float(6, std::numeric_limits<float>::quiet_NaN()); // 초기값 NaN
 
+bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<double>& rhs) {
+    double var = 0;
+    for(int i=0; i<lhs.size(); i++) {
+        var += abs(lhs[i] - rhs[i]);
+    }
+    return var >= 0.0001;
+}
 
+vector<vector<float>> joint_position_commands;
+bool done = false;
 return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
 {
-    float TargetVel[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
-    float TargetAcc[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
-    std::vector<float> joint_position_command_float;
-    
-    for (double value : joint_position_command_) {
-        joint_position_command_float.push_back(static_cast<float>(value* (180.0f / M_PI)));
-    }
-    bool is_identical = true;
-    for (size_t i = 0; i < joint_position_command_float.size(); ++i) {
-        if (std::isnan(previous_joint_position_command_float[i]) || 
-            previous_joint_position_command_float[i] != joint_position_command_float[i]) {
-            is_identical = false;
-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
-            break;
+    if(positionCommandRunning(pre_joint_position_command_, joint_position_command_)) {
+        // RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Updated ");
+        float pos[6];
+        float limitVel[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
+        float limitAcc[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
+        for(int i=0;i<6;i++) {
+            pos[i] = static_cast<float>(joint_position_command_[i]* (180.0f / M_PI));
         }
-    }
-    auto currentTime = steady_clock::now();
-    auto duration = duration_cast<seconds>(currentTime - startTime); // 경과 시간 측정
-
-    if (duration.count() < 10) {
-        cout << " executed after 10 seconds." << endl;
-        previous_joint_position_command_float = joint_position_command_float; 
-    }
-    else{
-        if (!is_identical)
-        {
-            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "dt : %.2f", float(dt.seconds()));
-            for (int i = 0; i < 6; i++){
-                RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "position %i : %.2f", i, joint_position_command_float[i]);
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] pos  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+        //     ,pos[0] * ( M_PI / 180.0f)
+        //     ,pos[1] * ( M_PI / 180.0f)
+        //     ,pos[2] * ( M_PI / 180.0f)
+        //     ,pos[3] * ( M_PI / 180.0f)
+        //     ,pos[4] * ( M_PI / 180.0f)
+        //     ,pos[5] * ( M_PI / 180.0f)
+        // );
+        if(joint_position_commands.size() < 3) {
+            joint_position_commands.emplace_back(std::vector<float> {pos[0],pos[1],pos[2],pos[3],pos[4],pos[5]});
+            pre_joint_position_command_ = joint_position_command_;
+            done = true;
+            return return_type::OK;
+        }
+        else{
+            if(joint_position_commands.size() == 3 && done) {
+                
+                for(auto cmd : joint_position_commands) {
+                    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] cmd  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+                    //     ,cmd[0] * ( M_PI / 180.0f)
+                    //     ,cmd[1] * ( M_PI / 180.0f)
+                    //     ,cmd[2] * ( M_PI / 180.0f)
+                    //     ,cmd[3] * ( M_PI / 180.0f)
+                    //     ,cmd[4] * ( M_PI / 180.0f)
+                    //     ,cmd[5] * ( M_PI / 180.0f)
+                    // );
+                    Drfl.servoj(cmd.data(), limitVel, limitAcc, float(dt.seconds()), DR_SERVO_QUEUE);
+                    this_thread::sleep_for(chrono::milliseconds(1));
+                    done = false;
+                }
             }
-            // if(m_nVersionDRCF <= 3000000){
-            Drfl.servoj(joint_position_command_float.data(), TargetVel, TargetAcc, float(dt.seconds())*1.7);
-            // }
-            // else{
-            //     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "Not Supported in moveit  : %.2f", float(dt.seconds()));
-            // }
-            previous_joint_position_command_float = joint_position_command_float; 
+            Drfl.servoj(pos, limitVel, limitAcc, float(dt.seconds()), DR_SERVO_QUEUE);
         }
+        pre_joint_position_command_ = joint_position_command_;
+        return return_type::OK;
     }
 
+    joint_position_commands.clear();
+    done = false;
+    // RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "NOT Updated ");
+    pre_joint_position_command_ = joint_position_command_;
     return return_type::OK;
 }
 
