@@ -273,7 +273,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
             m_mode.c_str()); 
         return CallbackReturn::ERROR;
     }
-    
+
     Drfl.set_auto_servo_off(0, 5.0);
     // Drfl.connect_rt_control();
     // string version = "v1.0";
@@ -367,7 +367,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         for(int i=0;i<6;i++) {
             pos[i] = static_cast<float>(joint_position_command_[i]* (180.0f / M_PI));
         }
-        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] pos  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+        // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] pos  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
         //     ,pos[0] * ( M_PI / 180.0f)
         //     ,pos[1] * ( M_PI / 180.0f)
         //     ,pos[2] * ( M_PI / 180.0f)
@@ -756,15 +756,12 @@ void DSRInterface::OnMonitoringStateCB(const ROBOT_STATE eState)
         if (g_bHasControlAuthority) {
             Drfl.set_safe_stop_reset_type(SAFE_STOP_RESET_TYPE_DEFAULT);
             Drfl.set_robot_control(CONTROL_RESET_SAFET_STOP);
-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+            // Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
         }
         break;
     case STATE_SAFE_OFF:
         if (g_bHasControlAuthority){
-            Drfl.set_robot_control(CONTROL_SERVO_ON);
-            Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);   //Idle Servo Off 후 servo on 하는 상황 발생 시 set_robot_mode 명령을 전송해 manual 로 전환. add 2020/04/28
-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
-
+            // Drfl.set_robot_control(CONTROL_SERVO_ON);
             // Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);   //Idle Servo Off 후 servo on 하는 상황 발생 시 set_robot_mode 명령을 전송해 manual 로 전환. add 2020/04/28
             // Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
         } 
