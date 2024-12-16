@@ -11,7 +11,7 @@ import os
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, PythonExpression
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -22,12 +22,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
 from moveit_configs_utils import MoveItConfigsBuilder
 
-def print_launch_configuration_value(context, *args, **kwargs):
-    # LaunchConfiguration 값을 평가합니다.
-    gz_value = LaunchConfiguration('gz').perform(context)
-    # 평가된 값을 콘솔에 출력합니다.
-    print(f'LaunchConfiguration gz: {gz_value}')
-    return gz_value
 
 def generate_launch_description():
     ARGUMENTS =[ 
@@ -39,12 +33,13 @@ def generate_launch_description():
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
     ]
+    package_name = PythonExpression(["'", LaunchConfiguration('model'), "_moveit_config'"])
 
-    included_launch_file_path = os.path.join(
-        get_package_share_directory(LaunchConfiguration('model') +'_moveit_config'),
+    included_launch_file_path = PathJoinSubstitution([
+        FindPackageShare(package_name),
         'launch',
         'start.launch.py'
-    )
+    ])
 
     # IncludeLaunchDescription 액션을 사용하여 두 번째 Launch 파일을 포함합니다.
     # launch_arguments를 사용하여 namespace를 설정합니다.
@@ -59,4 +54,4 @@ def generate_launch_description():
                         }.items(),
     )
 
-    return LaunchDescription(ARGUMENTS + included_launch)
+    return LaunchDescription(ARGUMENTS + [included_launch])
