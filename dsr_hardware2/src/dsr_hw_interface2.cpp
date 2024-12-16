@@ -483,7 +483,7 @@ int IsInposition(double dCurPosDeg[], double dCmdPosDeg[])
 void DSRInterface::OnTpInitializingCompletedCB()
 {
     // request control authority after TP initialized
-    cout << "[callback OnTpInitializingCompletedCB] tp initializing completed" << endl;
+    // cout << "[callback OnTpInitializingCompletedCB] tp initializing completed" << endl;
     g_bTpInitailizingComplted = TRUE;
     //Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_REQUEST);
     Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
@@ -496,14 +496,14 @@ void DSRInterface::OnHommingCompletedCB()
 {
     g_bHommingCompleted = TRUE;
     // Only work within 50msec
-    cout << "[callback OnHommingCompletedCB] homming completed" << endl;
+    // cout << "[callback OnHommingCompletedCB] homming completed" << endl;
 
     g_stDrState.bHommingCompleted = TRUE;
 }
 
 void DSRInterface::OnProgramStoppedCB(const PROGRAM_STOP_CAUSE iStopCause)
 {
-    cout << "[callback OnProgramStoppedCB] Program Stop: " << (int)iStopCause << endl;
+    // cout << "[callback OnProgramStoppedCB] Program Stop: " << (int)iStopCause << endl;
     g_stDrState.bDrlStopped = TRUE;
 }
 // M2.4 or lower
@@ -734,7 +734,7 @@ void DSRInterface::OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus)
 {
     g_stDrState.nRegCount = pModbus->_iRegCount;
     for (int i = 0; i < pModbus->_iRegCount; i++){
-        cout << "[callback OnMonitoringModbusCB] " << pModbus->_tRegister[i]._szSymbol <<": " << pModbus->_tRegister[i]._iValue<< endl;
+        // cout << "[callback OnMonitoringModbusCB] " << pModbus->_tRegister[i]._szSymbol <<": " << pModbus->_tRegister[i]._iValue<< endl;
         g_stDrState.strModbusSymbol[i] = pModbus->_tRegister[i]._szSymbol;
         g_stDrState.nModbusValue[i]    = pModbus->_tRegister[i]._iValue;
     }
@@ -796,7 +796,7 @@ void DSRInterface::OnMonitoringStateCB(const ROBOT_STATE eState)
         break;
     }
 
-    cout << "[callback OnMonitoringStateCB] current state: " << GetRobotStateString((int)eState) << endl;
+    // cout << "[callback OnMonitoringStateCB] current state: " << GetRobotStateString((int)eState) << endl;
     g_stDrState.nRobotState = (int)eState;
     strncpy(g_stDrState.strRobotState, GetRobotStateString((int)eState), MAX_SYMBOL_SIZE); 
 }
@@ -805,7 +805,7 @@ void DSRInterface::OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL e
 {
     // Only work within 50msec
 
-    cout << "[callback OnMonitoringAccessControlCB] eAccCtrl: " << eAccCtrl << endl;
+    // cout << "[callback OnMonitoringAccessControlCB] eAccCtrl: " << eAccCtrl << endl;
     switch(eAccCtrl)
     {
     case MONITORING_ACCESS_CONTROL_REQUEST:
