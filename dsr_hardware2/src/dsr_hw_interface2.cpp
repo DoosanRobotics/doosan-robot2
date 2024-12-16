@@ -274,6 +274,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         return CallbackReturn::ERROR;
     }
     
+    Drfl.set_auto_servo_off(0, 5.0);
     // Drfl.connect_rt_control();
     // string version = "v1.0";
     // float period = 0.001; // 1 msec
@@ -764,6 +765,8 @@ void DSRInterface::OnMonitoringStateCB(const ROBOT_STATE eState)
             Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);   //Idle Servo Off 후 servo on 하는 상황 발생 시 set_robot_mode 명령을 전송해 manual 로 전환. add 2020/04/28
             Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
 
+            // Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);   //Idle Servo Off 후 servo on 하는 상황 발생 시 set_robot_mode 명령을 전송해 manual 로 전환. add 2020/04/28
+            // Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
         } 
         break;
     case STATE_SAFE_STOP2:
