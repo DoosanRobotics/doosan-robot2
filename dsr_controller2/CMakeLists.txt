@@ -29,6 +29,12 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
+if(NOT DEFINED DRCF_VER)
+        set(DRCF_VER 2)
+endif()
+message(DRCF_VERSION : ${DRCF_VER})
+
+
 SET( COMMON_INC_FILES
   ../common2/include
 )
@@ -61,6 +67,7 @@ add_library(dsr_controller2 SHARED
   src/dsr_controller2.cpp
   # src/dsr_joint_trajectory.cpp
 )
+target_compile_definitions(${PROJECT_NAME} PUBLIC DRCF_VERSION=${DRCF_VER})
 target_compile_features(dsr_controller2 PUBLIC cxx_std_17)
 target_include_directories(dsr_controller2 PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

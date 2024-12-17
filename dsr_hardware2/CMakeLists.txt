@@ -44,6 +44,13 @@ foreach(Dependency IN ITEMS ${CONTROLLER_INCLUDE_DEPENDS})
 endforeach()
 
 
+if(NOT DEFINED DRCF_VER)
+        set(DRCF_VER 2)
+endif()
+message(DRCF_VERSION : ${DRCF_VER})
+
+
+
 SET( COMMON_INC_FILES
   ../common2/include
 )
@@ -88,7 +95,7 @@ add_library(
   src/dsr_hw_interface2.cpp
   # src/dsr_connection_node2.cpp
 )
-
+target_compile_definitions(${PROJECT_NAME} PUBLIC DRCF_VERSION=${DRCF_VER})
 target_compile_features(dsr_hardware2 PUBLIC cxx_std_17)
 target_include_directories(dsr_hardware2 PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -111,6 +118,7 @@ ament_target_dependencies(
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "DSR_HARDWARE2_BUILDING_DLL")
+
 
 # Export hardware plugins
 pluginlib_export_plugin_description_file(hardware_interface dsr_hardware2.xml)

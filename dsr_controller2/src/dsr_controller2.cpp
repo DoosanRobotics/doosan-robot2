@@ -282,11 +282,11 @@ auto movec_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveCircle::Request
     ///RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"  <xxx pos2> %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f",fTargetPos[1][0],fTargetPos[1][1],fTargetPos[1][2],fTargetPos[1][3],fTargetPos[1][4],fTargetPos[1][5]);
     if(req->sync_type == 0){   
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movec_cb() called and calling Drfl->movec");
-        res->success = Drfl->movec(fTargetPos, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->radius, (BLENDING_SPEED_TYPE)req->blend_type);      
+        res->success = Drfl->movec(fTargetPos, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->angle1, req->angle2, req->radius, (BLENDING_SPEED_TYPE)req->blend_type);      
     }
     else{
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movec_cb() called and calling Drfl->amovec");
-        res->success = Drfl->amovec(fTargetPos, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, (BLENDING_SPEED_TYPE)req->blend_type);  
+        res->success = Drfl->amovec(fTargetPos, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->angle1, req->angle2, (BLENDING_SPEED_TYPE)req->blend_type);
     }
 };
 
@@ -1247,7 +1247,7 @@ auto set_digital_output_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetCtr
     }       
     else{
         req->index -=1;
-        res->success = Drfl->SetCtrlBoxDigitalOutput((GPIO_CTRLBOX_DIGITAL_INDEX)req->index, req->value);
+        res->success = Drfl->set_digital_output((GPIO_CTRLBOX_DIGITAL_INDEX)req->index, req->value);
     }
 };
 
@@ -1385,7 +1385,7 @@ auto get_analog_input_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetCtrlB
     bool bIsError = 0;   
 
     if((req->channel < 1) || (req->channel > 2)){
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_analog_input(channel=%d): channel(%d) is out of range. [normal range: 1 or 2]",req->channel ,req->channel);
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_analog_input(channel=%d): channel(%d) is out of range. [normal range: 1 or 2]", req->channel, req->channel);
         bIsError = 1;
     }       
     else{
@@ -1442,11 +1442,11 @@ auto set_analog_input_type_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Set
         RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_analog_input_type(channel=%d, mode=%d): mode(%d) is out of range. [normal range: 0 or 1]",req->channel ,req->mode, req->mode);
     }       
     else{
-        if(req->channel == 1) g_nAnalogOutputModeCh1 = req->mode;    
-        if(req->channel == 2) g_nAnalogOutputModeCh2 = req->mode;    
-
-        req->channel -=1;
-        res->success = Drfl->set_mode_analog_input((GPIO_CTRLBOX_ANALOG_INDEX)req->channel, (GPIO_ANALOG_TYPE)req->mode);
+        res->success = Drfl->set_mode_analog_input((GPIO_CTRLBOX_ANALOG_INDEX)(req->channel - 1), (GPIO_ANALOG_TYPE)req->mode);
+        if(res->success) {
+            if(req->channel == 1)   g_nAnalogOutputModeCh1 = req->mode;
+            else if(req->channel == 2)  g_nAnalogOutputModeCh2 = req->mode;    
+        }        
     }
 };
 

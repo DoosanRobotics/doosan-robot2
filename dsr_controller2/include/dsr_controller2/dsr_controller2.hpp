@@ -286,7 +286,7 @@
 
 // digital I/O
 #define DR_DIO_MIN_INDEX    1
-#define DR_DIO_MAX_INDEX    16  
+#define DR_DIO_MAX_INDEX    20 // Input IO :16 -> 20 , Output IO : 16   
 
 // tool digital I/O
 #define DR_TDIO_MIN_INDEX   1
