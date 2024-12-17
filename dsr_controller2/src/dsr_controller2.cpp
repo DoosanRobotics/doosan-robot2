@@ -30,16 +30,7 @@ using namespace DRAFramework;
 extern void* get_drfl();
 CDRFLEx *Drfl = (CDRFLEx*)get_drfl();
 
-
-bool g_bIsEmulatorMode = FALSE;
-bool g_bHasControlAuthority = FALSE;
-bool g_bTpInitailizingComplted = FALSE;
-bool g_bHommingCompleted = FALSE;
-
-ROBOT_JOINT_DATA g_joints[NUM_JOINT];
-
-DR_STATE    g_stDrState;
-DR_ERROR    g_stDrError;
+extern DR_STATE g_stDrState;
 
 int g_nAnalogOutputModeCh1;
 int g_nAnalogOutputModeCh2;
