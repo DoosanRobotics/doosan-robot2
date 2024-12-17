@@ -39,13 +39,9 @@ bool g_bHasControlAuthority = FALSE;
 bool g_bTpInitailizingComplted = FALSE;
 bool g_bHommingCompleted = FALSE;
 
-ROBOT_JOINT_DATA g_joints[NUM_JOINT];
-
 DR_STATE    g_stDrState;
 DR_ERROR    g_stDrError;
 
-int g_nAnalogOutputModeCh1;
-int g_nAnalogOutputModeCh2;
 int m_nVersionDRCF;
 bool init_state=TRUE;
 
@@ -283,11 +279,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     // usleep(nDelay);
     // Drfl.start_rt_control();
 
-    // to compare with g_joints[].cmd
-    for(int i = 0; i < NUM_JOINT; i++){
-        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    [init]::read %d-pos: %7.3f", i, g_joints[i].cmd);
-        m_fCmd_[i] = g_joints[i].cmd;
-    }
     return CallbackReturn::SUCCESS;
 }
 

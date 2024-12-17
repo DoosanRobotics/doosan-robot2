@@ -568,8 +568,6 @@ namespace dsr_hardware2{
 
     private:
         
-        //ROS2 bool m_bIsEmulatorMode; -> g_bIsEmulatorMode
-        
         // rclcpp::Node::SharedPtr private_nh_;	
 
         std::string m_strRobotName;

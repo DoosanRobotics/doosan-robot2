@@ -17,8 +17,6 @@
 #include <utility>
 #include <vector>
 
-#include "control_msgs/action/follow_joint_trajectory.hpp"
-#include "control_msgs/msg/joint_trajectory_controller_state.hpp"
 #include "controller_interface/controller_interface.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/duration.hpp"
@@ -28,8 +26,6 @@
 #include "rclcpp_lifecycle/lifecycle_publisher.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "realtime_tools/realtime_buffer.h"
-#include "trajectory_msgs/msg/joint_trajectory.hpp"
-#include "trajectory_msgs/msg/joint_trajectory_point.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
@@ -180,8 +176,6 @@
 #include "dsr_msgs2/srv/set_tool_shape.hpp"
 
 //moveit
-#include <moveit_msgs/msg/display_trajectory.hpp>
-#include <moveit_msgs/msg/robot_trajectory.hpp>
 
 
 //RT
@@ -547,7 +541,6 @@ protected:
 
   rclcpp::Service<dsr_msgs2::srv::GetRobotMode>::SharedPtr            m_nh_srv_get_robot_mode;
   rclcpp::Service<dsr_msgs2::srv::SetRobotMode>::SharedPtr            m_nh_srv_set_robot_mode;
-  rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_command_subscriber_;
   rclcpp::Service<dsr_msgs2::srv::SetRobotSystem>::SharedPtr          m_nh_srv_set_robot_system;
   rclcpp::Service<dsr_msgs2::srv::GetRobotSystem>::SharedPtr          m_nh_srv_get_robot_system;
   rclcpp::Service<dsr_msgs2::srv::GetRobotState>::SharedPtr           m_nh_srv_get_robot_state;
@@ -688,39 +681,8 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::ReadDataRt>::SharedPtr                    m_nh_read_data_rt;
   rclcpp::Service<dsr_msgs2::srv::WriteDataRt>::SharedPtr                   m_nh_write_data_rt;
 
-  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr m_joint_state_pub_;
-  rclcpp::TimerBase::SharedPtr timer_;
-
-  realtime_tools::RealtimeBuffer<std::shared_ptr<trajectory_msgs::msg::JointTrajectory>>
-    traj_msg_external_point_ptr_;
-  bool new_msg_ = false;
-  
-  rclcpp::Time start_time_;
-  std::shared_ptr<trajectory_msgs::msg::JointTrajectory> trajectory_msg_;
-  trajectory_msgs::msg::JointTrajectoryPoint point_interp_;
-  std::shared_ptr<sensor_msgs::msg::JointState> joint_msg;
-  std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface>>
-    joint_position_command_interface_;
-  std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface>>
-    joint_velocity_command_interface_;
-  std::vector<std::reference_wrapper<hardware_interface::LoanedStateInterface>>
-    joint_position_state_interface_;
-  std::vector<std::reference_wrapper<hardware_interface::LoanedStateInterface>>
-    joint_velocity_state_interface_;
-
-  std::unordered_map<
-    std::string, std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface>> *>
-    command_interface_map_ = {
-      {"position", &joint_position_command_interface_},
-      {"velocity", &joint_velocity_command_interface_}};
-
-  std::unordered_map<
-    std::string, std::vector<std::reference_wrapper<hardware_interface::LoanedStateInterface>> *>
-    state_interface_map_ = {
-      {"position", &joint_position_state_interface_},
-      {"velocity", &joint_velocity_state_interface_}};
 };
 
 }  // namespace dsr_control2
 
-#endif  // ROS2_CONTROL_DEMO_EXAMPLE_7__R6BOT_CONTROLLER_HPP_
+#endif  

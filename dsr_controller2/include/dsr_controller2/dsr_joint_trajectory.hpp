@@ -113,4 +113,4 @@ protected:
 
 }  // namespace dsr_control2
 
-#endif  // ROS2_CONTROL_DEMO_EXAMPLE_7__R6BOT_CONTROLLER_HPP_
+#endif  // 
