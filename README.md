@@ -44,6 +44,10 @@ Install Docker https://docs.docker.com/engine/install/ubuntu/
     $ colcon build
     $ . install/setup.bash
 
+#### Note: To use ROS2 with Version 3.x Controller, please ensure that you specify the build options (default: 2).
+$ colcon build --cmake-args -DDRCF_VER=3 
+
+
 
 ## Launch Parameters
 ### *mode*
@@ -115,8 +119,14 @@ $ ros2 launch dsr_bringup2 dsr_bringup2_spawn_on_gazebo.launch.py mode:=virtual 
 ---
 ### Launch With Moveit2
 #### Caution : If you use Moveit2 function, Controller version should be required over 2.12.
+
+
 ```bash
+## Real mode
 $ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=real model:=m1013 host:=192.168.137.100
 ```
+```bash
+## Virtual Mode
+$ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=virtual host:=127.0.0.1 model:=m1013
+```
 
-## 4. Nvidia Issac Sim (TBD)
