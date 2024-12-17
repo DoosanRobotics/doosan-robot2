@@ -127,6 +127,6 @@ $ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=real model:=m1013
 ```
 ```bash
 ## Virtual Mode
-$ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=virtual host:=127.0.0.1 model:=m1013
+$ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=virtual model:=m1013 host:=127.0.0.1 
 ```
 
