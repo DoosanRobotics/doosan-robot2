@@ -31,7 +31,6 @@ setup(
     maintainer_email='chemx3937@gmail.com',
     description='Visual Servoing',
     license='BSD',
-    tests_require=['pytest'],
     entry_points={
         'console_scripts': [                
                 'camera_publisher = visualservoing.camera_publisher:main',
