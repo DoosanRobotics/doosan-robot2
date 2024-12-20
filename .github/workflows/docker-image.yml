@@ -1,0 +1,54 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "humble-devel" ]
+  pull_request:
+    branches: [ "humble-devel" ]
+
+jobs:
+  test_docker: # On Linux, iterates on all ROS 1 and ROS 2 distributions.
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ros_distribution:
+          - humble
+        include:
+          # Humble Hawksbill (May 2022 - May 2027)
+          - docker_image: ubuntu:jammy
+            ros_distribution: humble
+            ros_version: 2
+    container:
+      image: ${{ matrix.docker_image }}
+    steps:
+      - name: setup ROS environment
+        uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: ${{ matrix.ros_distribution }}
+      - name: doosan dependencies install - poco
+        run: apt-get install -y libpoco-dev libyaml-cpp-dev dbus-x11
+  
+      - name: doosan dependencies install - Docker 
+        run: apt-get update && apt-get install -y ca-certificates curl && install -m 0755 -d /etc/apt/keyrings &&
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc &&
+            chmod a+r /etc/apt/keyrings/docker.asc && 
+            echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu 
+            $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | 
+            tee /etc/apt/sources.list.d/docker.list > /dev/null
+            
+      - name: doosan dependencies install - Emulator
+        run: apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &&
+            docker pull doosanrobot/dsr_emulator:3.0.1
+            
+      - name: build and test ROS 2
+        if: ${{ matrix.ros_version == 2 }}
+        uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          package-name:  a0912_moveit_config dsr_description2 h2515_moveit_config  m1509_moveit_config  
+                         common2              dsr_gazebo2       e0509_moveit_config      m0609_moveit_config  realtime_control
+                         dsr_bringup2         dsr_hardware2     example               m0617_moveit_config        visualservoing
+                        a0509_moveit_config       dsr_controller2      dsr_msgs2         h2017_moveit_config     m1013_moveit_config 
+          # all packages except for 'dsr_tests'
+          
+          target-ros2-distro: ${{ matrix.ros_distribution }}
