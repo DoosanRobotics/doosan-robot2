@@ -8,15 +8,20 @@
 				<inertia ixx="0.079499" ixy="2.9382e-05" ixz="1.7529e-05" iyy="0.076993"
 					iyz="-0.0009938"
 					izz="0.067833"/>
-			</inertial>
-			<visual>
-				<origin rpy="0 0 0" xyz="0 0 0" />
-				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_0_0.dae" scale="0.001 0.001 0.001" />
-				</geometry>
-			</visual>
-		</link>
-		<link name="base"/>
+				</inertial>
+				<collision>
+					<origin rpy="0 0 0" xyz="0 0 0" />
+					<geometry>
+						<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_0_0.dae" scale="0.001 0.001 0.001" />
+					</geometry>
+				</collision>
+				<visual>
+					<origin rpy="0 0 0" xyz="0 0 0" />
+					<geometry>
+						<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_0_0.dae" scale="0.001 0.001 0.001" />
+					</geometry>
+				</visual>
+			</link>
 		<joint name="base_link-base" type="fixed">
 			<origin rpy="0 0 0" xyz="0 0 0.450"/>
 			<parent link="base_link"/>
@@ -39,14 +44,15 @@
 					izz="0.34857"/>
 			</inertial>
             <collision>
-                <geometry>
-                    <cylinder radius="0.1" length="0.2"/>
-                </geometry>
-            </collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_1_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_1_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_1_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -67,27 +73,39 @@
 					izz="3.0015"/>
 			</inertial>
             <collision>
-                <origin rpy="0 -1.571 0" xyz="0.3 0 0.1525" />
-                <geometry>
-                    <cylinder radius="0.08" length="0.75"/>
-                </geometry>
-            </collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_2_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_2_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_2_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_2_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_2_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_2_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_2_2.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_2_2.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_2_2.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -108,10 +126,16 @@
 					iyz="-0.0029929"
 					izz="0.028983"/>
 			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_3_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
             <visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_3_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_3_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -132,21 +156,27 @@
 					izz="0.078126"/>
 			</inertial>
             <collision>
-                <origin rpy="-0.55 0 0" xyz="0 0.07 -0.3" />
-                <geometry>
-                    <cylinder radius="0.07" length="0.4"/>
-                </geometry>
-            </collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_4_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_4_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_4_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_4_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_4_1.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_4_1.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -168,15 +198,15 @@
 					izz="0.014587"/>
 			</inertial>
             <collision>
-                <origin rpy="1.571 0 0" xyz="0 0 0" />
-                <geometry>
-                    <cylinder radius="0.08" length="0.15"/>
-                </geometry>
-            </collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_5_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_5_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_5_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
@@ -197,10 +227,16 @@
 					iyz="5.6115e-06"
 					izz="0.0080729"/>
 			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/h2017_collision/H2017_6_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
 			<visual>
 				<origin rpy="0 0 0" xyz="0 0 0" />
 				<geometry>
-					<mesh filename="file:///$(find dsr_description2)/meshes/h2017_white/H2017_6_0.dae" scale="0.001 0.001 0.001" />
+					<mesh filename="package://dsr_description2/meshes/h2017_white/H2017_6_0.dae" scale="0.001 0.001 0.001" />
 				</geometry>
 			</visual>
 		</link>
