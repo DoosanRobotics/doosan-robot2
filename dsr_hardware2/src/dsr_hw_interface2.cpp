@@ -271,14 +271,34 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     }
 
     Drfl.set_auto_servo_off(0, 5.0);
-    // Drfl.connect_rt_control();
-    // string version = "v1.0";
-    // float period = 0.001; // 1 msec
-    // int losscount = 4;
-    // Drfl.set_rt_control_output(version, period, losscount);
-    // usleep(nDelay);
-    // Drfl.start_rt_control();
 
+    // Virtual controller doesn't support real time connection.
+    if(m_mode != "virtual") {
+        if (!Drfl.connect_rt_control(m_host)) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
+            return CallbackReturn::FAILURE;
+        }
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "Connected RT control stream");
+        const std::string version   = "v1.0";
+        const float       period    = 0.001;
+        const int         losscount = 4;
+        if (!Drfl.set_rt_control_output(version, period, losscount)) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
+            return CallbackReturn::FAILURE;
+        }
+
+        if (!Drfl.start_rt_control()) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to start RT control");
+            return CallbackReturn::FAILURE;
+        }
+
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "Setting velocity and acceleration limits");
+        float limit[6] = {70.0f,70.0f,70.0f,70.0f,70.0f,70.0f};
+        if (!Drfl.set_velj_rt(limit)) return CallbackReturn::ERROR;
+        if (!Drfl.set_accj_rt(limit)) return CallbackReturn::ERROR;
+    }
+    
+    Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
     return CallbackReturn::SUCCESS;
 }
 
@@ -320,22 +340,35 @@ std::vector<hardware_interface::CommandInterface> DRHWInterface::export_command_
 
 return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-
-    LPROBOT_POSE pose = Drfl.GetCurrentPose();
-    if(nullptr == pose) {
-      RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
-				"[read] GetCurrentPose retrieves nullptr");
-      return return_type::ERROR; //? what effection of this to control node 
+    if(m_mode == "real") {
+        const LPRT_OUTPUT_DATA_LIST data = Drfl.read_data_rt();
+        for(int i=0;i<6;i++) {
+            joint_position_[i] = static_cast<float>(data->actual_joint_position[i] * (M_PI / 180.0f));
+            joint_velocities_[i] = static_cast<float>(data->actual_joint_velocity[i] * (M_PI / 180.0f));
+        }
+    }else if(m_mode == "virtual") {
+        LPROBOT_POSE pose = Drfl.GetCurrentPose();
+        if(nullptr == pose) {
+        RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[read] GetCurrentPose retrieves nullptr");
+        return return_type::ERROR; //? what effection of this to control node 
+        }
+        for(int i=0;i<6;i++){
+            joint_position_[i] = deg2rad(pose->_fPosition[i]);
+        }
+    }else {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), 
+            "'mode' is neither 'real' nor 'virtual.'" );
     }
-    for(int i=0;i<6;i++){
-      joint_position_[i] = deg2rad(pose->_fPosition[i]);
-    //   RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), " [READ] joint_pos[%d] : %.3f ", i, joint_position_[i]);
-    }
+    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[READ] joint_position_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+    //     ,joint_position_[0]
+    //     ,joint_position_[1]
+    //     ,joint_position_[2]
+    //     ,joint_position_[3]
+    //     ,joint_position_[4]
+    //     ,joint_position_[5]);
   return return_type::OK;
 }
-
-
-std::vector<float> previous_joint_position_command_float(6, std::numeric_limits<float>::quiet_NaN()); // 초기값 NaN
 
 bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<double>& rhs) {
     double var = 0;
@@ -346,70 +379,54 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
 }
 
 vector<vector<float>> joint_position_commands;
-bool done = false;
 return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
 {
+    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] dt  : %.3f", float(dt.seconds()) );
+    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_position_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+    //         ,joint_position_command_[0]
+    //         ,joint_position_command_[1]
+    //         ,joint_position_command_[2]
+    //         ,joint_position_command_[3]
+    //         ,joint_position_command_[4]
+    //         ,joint_position_command_[5]);
+    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_velocities_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+    //         ,joint_velocities_command_[0]
+    //         ,joint_velocities_command_[1]
+    //         ,joint_velocities_command_[2]
+    //         ,joint_velocities_command_[3]
+    //         ,joint_velocities_command_[4]
+    //         ,joint_velocities_command_[5]);
+    static bool idle = false;
+    // TODO: this seems to be a workaround. refer to hardware design of 'prepare_command_mode_switch'
     if(positionCommandRunning(pre_joint_position_command_, joint_position_command_)) {
-        // RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Updated ");
-        Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+        if(true == idle) {
+            // This is workaround to overcome issues :
+            // move_joint (drfl) API internally sent safety_off right after moving. 
+            // which occurs problems like :
+            // "move_joint service command -> trajectory command => error ! "
+            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+            idle = false;
+        }
+
         float pos[6];
-        float limitVel[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
-        float limitAcc[6] = {100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f};
+        float targetVel[6];
         for(int i=0;i<6;i++) {
-            pos[i] = static_cast<float>(joint_position_command_[i]* (180.0f / M_PI));
+            pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
+            targetVel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
         }
-        // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] pos  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-        //     ,pos[0] * ( M_PI / 180.0f)
-        //     ,pos[1] * ( M_PI / 180.0f)
-        //     ,pos[2] * ( M_PI / 180.0f)
-        //     ,pos[3] * ( M_PI / 180.0f)
-        //     ,pos[4] * ( M_PI / 180.0f)
-        //     ,pos[5] * ( M_PI / 180.0f)
-        // );
-        if(joint_position_commands.size() < 3) {
-            joint_position_commands.emplace_back(std::vector<float> {pos[0],pos[1],pos[2],pos[3],pos[4],pos[5]});
-            pre_joint_position_command_ = joint_position_command_;
-            done = true;
-            return return_type::OK;
+        if(m_mode == "real") {
+            float margin = 1.5; // Setted margin since most host aren't RT. 
+            float acc[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}; // Complied with internal profile.
+            Drfl.servoj_rt(pos, targetVel, acc, float(dt.seconds() * margin));
         }
-        else{
-            if(joint_position_commands.size() == 3 && done) {
-                
-                for(auto cmd : joint_position_commands) {
-                    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] cmd  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-                    //     ,cmd[0] * ( M_PI / 180.0f)
-                    //     ,cmd[1] * ( M_PI / 180.0f)
-                    //     ,cmd[2] * ( M_PI / 180.0f)
-                    //     ,cmd[3] * ( M_PI / 180.0f)
-                    //     ,cmd[4] * ( M_PI / 180.0f)
-                    //     ,cmd[5] * ( M_PI / 180.0f)
-                    // );
-                    if(m_nVersionDRCF >= 3000000) {
-                        Drfl.amovej(pos, limitVel, limitVel); // Workaround. needed updated.
-                    }
-                    else {
-                        // Drfl.servoj(cmd.data(), limitVel, limitAcc, float(dt.seconds())*1.7, DR_SERVO_OVERRIDE);
-                        Drfl.servoj(cmd.data(), limitVel, limitAcc, float(dt.seconds()), DR_SERVO_QUEUE);
-                    }
-                    this_thread::sleep_for(chrono::milliseconds(1));
-                    done = false;
-                }
-            }
-            if(m_nVersionDRCF >= 3000000) {
-                Drfl.amovej(pos, limitVel, limitVel); // Workaround. needed updated.
-            }
-            else {
-                // Drfl.servoj(cmd.data(), limitVel, limitAcc, float(dt.seconds())*1.7, DR_SERVO_OVERRIDE);
-                Drfl.servoj(pos, limitVel, limitAcc, float(dt.seconds()), DR_SERVO_QUEUE);
-            }
+        else { // "virtual"
+            float target_vel_acc[6] = {70.0f, 70.0f, 70.0f, 70.0f, 70.0f, 70.0f};
+            Drfl.amovej(pos, target_vel_acc, target_vel_acc); // Workaround. needed updated.
         }
         pre_joint_position_command_ = joint_position_command_;
         return return_type::OK;
     }
-
-    joint_position_commands.clear();
-    done = false;
-    // RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "NOT Updated ");
+    idle = true;
     pre_joint_position_command_ = joint_position_command_;
     return return_type::OK;
 }
@@ -417,13 +434,14 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 DRHWInterface::~DRHWInterface()
 {
     Drfl.close_connection();
+    Drfl.disconnect_rt_control();
 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    CONNECTION IS CLOSED");
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
 }
 
-}  
+}
 
 
 const char* GetRobotStateString(int nState)
