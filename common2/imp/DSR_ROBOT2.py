@@ -954,10 +954,9 @@ def get_current_posx(ref=None):
                 pos = []
                 for i in range(POINT_COUNT):
                     pos.append(posx_info[0][i])
-                    sol = int(round( posx_info[0][6] ))
-                    conv_posx = posx(pos)
-
-                    return conv_posx, sol
+                sol = int(round( posx_info[0][6] ))
+                conv_posx = posx(pos)
+                return conv_posx, sol
     return 0
 
 def get_current_tool_flange_posx(ref=None):
