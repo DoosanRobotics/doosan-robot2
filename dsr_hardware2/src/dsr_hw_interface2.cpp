@@ -129,6 +129,8 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     {
         return CallbackReturn::ERROR;
     }
+    // TODO(leeminju531) Workaround sleep. replace with the event come out from drcf.
+    sleep(8);
 
     // robot has 6 joints and 2 interfaces
     joint_position_.assign(6, 0);
@@ -202,46 +204,12 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     {
         usleep(nDelay);
     }
-    
-    // Try to connect to DRCF for 15 (30 * 0.5) sec.
-    const size_t max_tries = 30;
-    bool is_connected = false;
-    for (size_t retry = 0; retry < max_tries; ++retry) {
-        is_connected = Drfl.open_connection(m_host, m_port);
-        if(!is_connected) {
-            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"Connecting failure.. retry...");
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            continue;
-        }
-        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"Connected to DRCF");
-        break;
-    }
-    if(!is_connected)
+
+    if(!Drfl.open_connection(m_host, m_port))
     {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),"    DSRInterface::init() DRCF connecting ERROR!!!");
         return CallbackReturn::ERROR;
     }
-    // Check whether DRCF loaded successfully for 10 sec..
-    // Even thought, the server connected,
-    // The drcf could still be in the booting process. 
-    // Need to make sure it loaded successfully.
-    // I assumed the monitoring is alive due to the server totally booted-up.
-    static bool isLoaded = false;
-    Drfl.set_on_monitoring_data([](const LPMONITORING_DATA /*pData*/) {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),"SUCCESFFULY LOADDED");
-        isLoaded = true;
-    });
-    for (size_t retry = 0; retry < 100; ++retry) {
-        if(isLoaded)    break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    if(!isLoaded)
-    {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),"DRCF Connected, but not successfully loaded !!!");
-        return CallbackReturn::ERROR;
-    }
-    Drfl.set_on_monitoring_data(DSRInterface::OnMonitoringDataCB); // in order to unset upper callback.
-
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    OPEN CONNECTION");
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");   
