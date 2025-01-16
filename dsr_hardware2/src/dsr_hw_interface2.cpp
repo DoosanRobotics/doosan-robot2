@@ -7,6 +7,7 @@
 // */
 
 #include "dsr_hardware2/dsr_hw_interface2.h"
+#include "dsr_hardware2/util.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 
 // #include "dsr_hardware2/dsr_connection_node2.h"
@@ -129,8 +130,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     {
         return CallbackReturn::ERROR;
     }
-    // TODO(leeminju531) Workaround sleep. replace with the event come out from drcf.
-    sleep(8);
 
     // robot has 6 joints and 2 interfaces
     joint_position_.assign(6, 0);
@@ -187,16 +186,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    INITAILIZE");
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
-    //--- doosan API's call-back fuctions : Only work within 50msec in call-back functions
-    Drfl.set_on_tp_initializing_completed(DSRInterface::OnTpInitializingCompletedCB);
-    Drfl.set_on_homming_completed(DSRInterface::OnHommingCompletedCB);
-    Drfl.set_on_program_stopped(DSRInterface::OnProgramStoppedCB);
-    Drfl.set_on_monitoring_modbus(DSRInterface::OnMonitoringModbusCB);
-    Drfl.set_on_monitoring_data(DSRInterface::OnMonitoringDataCB);           // Callback function in M2.4 and earlier
-    Drfl.set_on_monitoring_ctrl_io(DSRInterface::OnMonitoringCtrlIOCB);       // Callback function in M2.4 and earlier
-    Drfl.set_on_monitoring_state(DSRInterface::OnMonitoringStateCB);
-    Drfl.set_on_monitoring_access_control(DSRInterface::OnMonitoringAccessControlCB);
-    Drfl.set_on_log_alarm(DSRInterface::OnLogAlarm);
     
     //------------------------------------------------------------------------------
     // await for values from ros parameters
@@ -205,14 +194,77 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         usleep(nDelay);
     }
 
-    if(!Drfl.open_connection(m_host, m_port))
+    // Try to connect to DRCF for 10 (20 * 0.5) sec. 
+    bool is_connected = false;
+    for (size_t retry = 0; retry < 20; ++retry) {
+        is_connected = Drfl.open_connection(m_host, m_port);
+        if(!is_connected) {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"Connecting failure.. retry...");
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            continue;
+        }
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"Connected to DRCF");
+        break;
+    }
+    if(!is_connected)
     {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),"    DSRInterface::init() DRCF connecting ERROR!!!");
         return CallbackReturn::ERROR;
     }
+    // Check whether DRCF loaded successfully for 10 sec..
+    // Even thought, the server connected,
+    // The drcf could still be in the booting process. 
+    // Need to make sure it loaded successfully.
+    // By making sure AUTHORITY and STANDBY_STATE.
+    static bool get_control_access = false;
+    static bool is_standby = false;
+    Drfl.set_on_monitoring_access_control([](const MONITORING_ACCESS_CONTROL access) {
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"AUTHORITY : %s", to_str(access).c_str());
+        if(MONITORING_ACCESS_CONTROL_GRANT == access) {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL AUTHORITY GRANTED !!!");
+            get_control_access = true;
+        }
+        if(MONITORING_ACCESS_CONTROL_LOSS == access) {
+            get_control_access = false;
+        }
+    });
+    Drfl.set_on_monitoring_state([](const ROBOT_STATE state) {
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"ROBOT_STATE : %s", to_str(state).c_str());
+        if(STATE_STANDBY == state) {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL STATE_STANDBY !!!");
+            is_standby = true;
+        }
+    });
+    for (size_t retry = 0; retry < 10; ++retry) {
+        if(!get_control_access) {
+            Drfl.ManageAccessControl(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
+        }
+        if(!is_standby) {
+            Drfl.set_robot_control(CONTROL_SERVO_ON);
+            Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);
+        }
+        if(get_control_access && is_standby)   break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+    if(!(get_control_access && is_standby)) {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL STATE CALL FAILURE !!");
+        return CallbackReturn::ERROR;
+    }
+
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    OPEN CONNECTION");
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");   
+    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
+
+    //--- doosan API's call-back fuctions : Only work within 50msec in call-back functions
+    Drfl.set_on_tp_initializing_completed(DSRInterface::OnTpInitializingCompletedCB);//RELATED TO LOGIC -> seems to be deleted.
+    Drfl.set_on_homming_completed(DSRInterface::OnHommingCompletedCB);
+    Drfl.set_on_program_stopped(DSRInterface::OnProgramStoppedCB);
+    Drfl.set_on_monitoring_modbus(DSRInterface::OnMonitoringModbusCB);
+    Drfl.set_on_monitoring_data(DSRInterface::OnMonitoringDataCB);           // Callback function in M2.4 and earlier
+    Drfl.set_on_monitoring_ctrl_io(DSRInterface::OnMonitoringCtrlIOCB);       // Callback function in M2.4 and earlier
+    Drfl.set_on_monitoring_state(DSRInterface::OnMonitoringStateCB);//RELATED TO LOGIC
+    Drfl.set_on_monitoring_access_control(DSRInterface::OnMonitoringAccessControlCB);//RELATED TO LOGIC
+    Drfl.set_on_log_alarm(DSRInterface::OnLogAlarm);
 
     //--- connect Emulator ? ------------------------------    
     if(m_host == "127.0.0.1") g_bIsEmulatorMode = true; 
@@ -270,6 +322,8 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         return CallbackReturn::ERROR;
     }
 
+    // Basically, Controller automatically servo-off after elapse time (5 min)
+    // Deactivate it.
     Drfl.set_auto_servo_off(0, 5.0);
 
     // Virtual controller doesn't support real time connection.
@@ -495,7 +549,7 @@ void DSRInterface::OnTpInitializingCompletedCB()
     // cout << "[callback OnTpInitializingCompletedCB] tp initializing completed" << endl;
     g_bTpInitailizingComplted = TRUE;
     //Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_REQUEST);
-    Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
+    // Drfl.manage_access_control(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
 
     g_stDrState.bTpInitialized = TRUE;
 }
