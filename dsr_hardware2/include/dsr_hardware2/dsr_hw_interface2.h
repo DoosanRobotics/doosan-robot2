@@ -488,6 +488,7 @@ std::string m_mode;
 std::string m_model;
 std::string m_gripper;
 std::string m_mobile;
+std::string m_rt_host;
 unsigned int m_rate;
 unsigned int m_standby;
 bool m_command;

@@ -44,6 +44,8 @@ def generate_launch_description():
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
+        DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
+        
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # gui = LaunchConfiguration("gui")
@@ -92,7 +94,8 @@ def generate_launch_description():
             {"model":   LaunchConfiguration('model') },
             {"gripper": "none"      },
             {"mobile":  "none"      },
-            #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
+            {"rt_host":  LaunchConfiguration('rt_host')      },
+            #parameters_file_path      # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
         ],
         output="screen",
     )

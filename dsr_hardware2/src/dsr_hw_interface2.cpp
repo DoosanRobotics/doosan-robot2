@@ -46,7 +46,6 @@ DR_ERROR    g_stDrError;
 int m_nVersionDRCF;
 bool init_state=TRUE;
 
-
 int nDelay = 5000;
 #define STABLE_BAND_JNT     0.05
 
@@ -117,6 +116,10 @@ void threadFunction() {
     if (yaml_node["mobile"]) {
         m_mobile = yaml_node["mobile"].as<std::string>();
         RCLCPP_INFO(s_node_->get_logger(), "mobile: %s", m_mobile.c_str());
+    }
+    if (yaml_node["rt_host"]) {
+        m_rt_host = yaml_node["rt_host"].as<std::string>();
+        RCLCPP_INFO(s_node_->get_logger(), "rt_host: %s", m_rt_host.c_str());
     }
 }
 
@@ -328,6 +331,9 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 
     // Virtual controller doesn't support real time connection.
     if(m_mode != "virtual") {
+        if(m_nVersionDRCF >= 3000000) {
+            m_host = m_rt_host;
+        }
         if (!Drfl.connect_rt_control(m_host)) {
             RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
             return CallbackReturn::FAILURE;
