@@ -13,6 +13,8 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch.actions import RegisterEventHandler,DeclareLaunchArgument, TimerAction
+from launch.event_handlers import OnProcessExit
 
 
 def generate_launch_description():
@@ -54,9 +56,9 @@ def generate_launch_description():
         ]
     )
     
-    connection_node = Node(
+    set_config_node = Node(
         package="dsr_bringup2",
-        executable="connection",
+        executable="set_config",
         namespace=LaunchConfiguration('name'),
         parameters=[
             {"name":    LaunchConfiguration('name')  }, 
@@ -70,7 +72,28 @@ def generate_launch_description():
             {"gripper": "none"      },
             {"mobile":  "none"      },
             {"rt_host":  LaunchConfiguration('rt_host')      },
-            #parameters_file_path      # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
+            #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
+        ],
+        output="screen",
+    )
+    
+    run_emulator_node = Node(
+        package="dsr_bringup2",
+        executable="run_emulator",
+        namespace=LaunchConfiguration('name'),
+        parameters=[
+            {"name":    LaunchConfiguration('name')  }, 
+            {"rate":    100         },
+            {"standby": 5000        },
+            {"command": True        },
+            {"host":    LaunchConfiguration('host')  },
+            {"port":    LaunchConfiguration('port')  },
+            {"mode":    LaunchConfiguration('mode')  },
+            {"model":   LaunchConfiguration('model') },
+            {"gripper": "none"      },
+            {"mobile":  "none"      },
+            {"rt_host":  LaunchConfiguration('rt_host')      },
+            #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
         ],
         output="screen",
     )
@@ -105,12 +128,21 @@ def generate_launch_description():
         arguments=["-d", rviz_config_file],
         # condition=IfCondition(gui),
     )
+    
+    # Delay start of robot_controller after `joint_state_broadcaster`
+    delay_control_node_after_connection_node = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=set_config_node,
+            on_exit=[control_node],
+        )
+    )
+    
 
     nodes = [
-        connection_node,
-        control_node,
+        run_emulator_node,
         robot_state_pub_node,
-        rviz_node
+        rviz_node,
+        delay_control_node_after_connection_node,
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)
