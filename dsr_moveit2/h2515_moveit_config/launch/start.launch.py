@@ -242,6 +242,7 @@ def generate_launch_description():
     )
     
     nodes = [
+        set_config_node,
         run_emulator_node,
         robot_state_pub_node,
         robot_controller_spawner,

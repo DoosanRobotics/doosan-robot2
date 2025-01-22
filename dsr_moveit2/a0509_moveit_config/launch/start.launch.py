@@ -75,7 +75,7 @@ def generate_launch_description():
         ]
     )
     
-     set_config_node = Node(
+    set_config_node = Node(
         package="dsr_bringup2",
         executable="set_config",
         namespace=LaunchConfiguration('name'),
@@ -242,6 +242,7 @@ def generate_launch_description():
 
     
     nodes = [
+        set_config_node,
         run_emulator_node,
         robot_state_pub_node,
         robot_controller_spawner,
