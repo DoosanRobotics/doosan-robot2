@@ -226,9 +226,11 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         if(MONITORING_ACCESS_CONTROL_GRANT == access) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL AUTHORITY GRANTED !!!");
             get_control_access = true;
+            is_standby = false; // previous standby state before getting authority is definitely useless.
         }
         if(MONITORING_ACCESS_CONTROL_LOSS == access) {
             get_control_access = false;
+            is_standby = false; // previous standby state after losing authority is definitely useless.
         }
     });
     Drfl.set_on_monitoring_state([](const ROBOT_STATE state) {
@@ -236,18 +238,22 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         if(STATE_STANDBY == state) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL STATE_STANDBY !!!");
             is_standby = true;
+        }else {
+            is_standby = false;
         }
     });
-    for (size_t retry = 0; retry < 10; ++retry) {
+    for (size_t retry = 0; retry < 10; ++retry, std::this_thread::sleep_for(std::chrono::milliseconds(1000))) {
         if(!get_control_access) {
             Drfl.ManageAccessControl(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL MANAGE_ACCESS_CONTROL_FORCE_REQUEST called");
+            continue;
         }
         if(!is_standby) {
             Drfl.set_robot_control(CONTROL_SERVO_ON);
-            Drfl.set_robot_mode(ROBOT_MODE_AUTONOMOUS);
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL CONTROL_SERVO_ON called");
+            continue;
         }
         if(get_control_access && is_standby)   break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     if(!(get_control_access && is_standby)) {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL STATE CALL FAILURE !!");
