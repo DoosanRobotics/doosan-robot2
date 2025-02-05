@@ -526,6 +526,9 @@ protected:
   std::vector<std::string> command_interface_types_;
   std::vector<std::string> state_interface_types_;
 
+  // We may need to distinguish the callback group based on the traits of the services.
+  rclcpp::CallbackGroup::SharedPtr cb_group_;
+
   rclcpp::Subscription<dsr_msgs2::msg::JogMultiAxis>::SharedPtr        m_sub_jog_multi_axis;
   rclcpp::Subscription<dsr_msgs2::msg::AlterMotionStream>::SharedPtr   m_sub_alter_motion_stream;
   rclcpp::Subscription<dsr_msgs2::msg::ServojStream>::SharedPtr        m_sub_servoj_stream;
