@@ -62,6 +62,8 @@
 #include "dsr_msgs2/srv/servo_off.hpp"
 #include "dsr_msgs2/srv/set_robot_control.hpp"
 #include "dsr_msgs2/srv/change_collision_sensitivity.hpp"
+#include "dsr_msgs2/srv/set_safety_mode.hpp"
+
 
 // motion
 #include "dsr_msgs2/srv/move_joint.hpp"
