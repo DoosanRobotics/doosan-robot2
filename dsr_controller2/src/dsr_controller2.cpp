@@ -187,15 +187,22 @@ auto servo_off_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ServoOff::Reque
 
 auto set_robot_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetRobotControl::Request> req, std::shared_ptr<dsr_msgs2::srv::SetRobotControl::Response> res) -> void
 {
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_robot_control_cb() called and calling Drfl->servo_off()");
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_robot_control_cb() called and calling Drfl->set_robot_control_cb()");
     Drfl->set_robot_control((ROBOT_CONTROL)req->robot_control);
     res->success = true;
 };
 
 auto change_collision_sensitivity_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ChangeCollisionSensitivity::Request> req, std::shared_ptr<dsr_msgs2::srv::ChangeCollisionSensitivity::Response> res)-> void
 {
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"change_collision_sensitivity_cb() called and calling Drfl->servo_off()");
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"change_collision_sensitivity_cb() called and calling Drfl->change_collision_sensitivity_cb()");
     Drfl->change_collision_sensitivity((float)req->sensitivity);
+    res->success = true;
+};
+
+auto set_safety_mode_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetSafetyMode::Request> req, std::shared_ptr<dsr_msgs2::srv::SetSafetyMode::Response> res) -> void
+{
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_safety_mode() called and calling Drfl->set_safety_mode()");
+    Drfl->set_safety_mode((SAFETY_MODE)req->safety_mode, (SAFETY_MODE_EVENT)req->safety_event);
     res->success = true;
 };
 
@@ -1937,6 +1944,8 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_srv_servo_off                  = get_node()->create_service<dsr_msgs2::srv::ServoOff>("system/servo_off", servo_off_cb);   
   m_nh_srv_set_robot_control          = get_node()->create_service<dsr_msgs2::srv::SetRobotControl>("system/set_robot_control", set_robot_control_cb);
   m_nh_srv_change_collision_sensitivity = get_node()->create_service<dsr_msgs2::srv::ChangeCollisionSensitivity>("system/change_collision_sensitivity", change_collision_sensitivity_cb);   
+  m_nh_srv_set_safety_mode          = get_node()->create_service<dsr_msgs2::srv::SetSafetyMode>("system/set_safety_mode", set_safety_mode_cb);
+	
 
   //  motion Operations
   m_nh_srv_move_joint                 = get_node()->create_service<dsr_msgs2::srv::MoveJoint>("motion/move_joint", movej_cb);                                
