@@ -1,0 +1,480 @@
+<robot name="P3020">
+  <link name="base">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/1.STL"/>
+      </geometry>
+      <material name="P3020_0">
+        <color rgba="0.8 0.8 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L1">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-1.STL"/>
+      </geometry>
+      <material name="P3020_1">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L1-1">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-2.STL"/>
+      </geometry>
+      <material name="P3020_2">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L1-2">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-3.STL"/>
+      </geometry>
+      <material name="P3020_3">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L1-3">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-4.STL"/>
+      </geometry>
+      <material name="P3020_4">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L1-4">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-5.STL"/>
+      </geometry>
+      <material name="P3020_5">
+        <color rgba="0.8 0.8 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/2-5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L2">
+    <visual>
+      <origin xyz="0 0 -3.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-1.STL"/>
+      </geometry>
+      <material name="P3020_6">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L2-1">
+    <visual>
+      <origin xyz="0 0 -3.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-2.STL"/>
+      </geometry>
+      <material name="P3020_7">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L2-2">
+    <visual>
+      <origin xyz="0 0 -3.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-3.STL"/>
+      </geometry>
+      <material name="P3020_8">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L2-3">
+    <visual>
+      <origin xyz="0 0 -3.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-4.STL"/>
+      </geometry>
+      <material name="P3020_9">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L2-4">
+    <visual>
+      <origin xyz="0 0 -3.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-5.STL"/>
+      </geometry>
+      <material name="P3020_10">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L2-5">
+    <visual>
+      <origin xyz="0 0 -3.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-6.STL"/>
+      </geometry>
+      <material name="P3020_11">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-6.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L2-6">
+    <visual>
+      <origin xyz="0 0 -3.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-7.STL"/>
+      </geometry>
+      <material name="P3020_12">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-7.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L2-7">
+    <visual>
+      <origin xyz="0 0 -3.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-8.STL"/>
+      </geometry>
+      <material name="P3020_13">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/3-8.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L3">
+    <visual>
+      <origin xyz="0 0 -14.043" />
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/4-1.STL"/>
+      </geometry>
+      <material name="P3020_14">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/4-1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L3-1">
+    <visual>
+      <origin xyz="0 0 -14.043" />
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/4-2.STL"/>
+      </geometry>
+      <material name="P3020_15">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/4-2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L3-2">
+    <visual>
+      <origin xyz="0 0 -14.043" />
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/4-3.STL"/>
+      </geometry>
+      <material name="P3020_16">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/4-3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L3-3">
+    <visual>
+      <origin xyz="0 0 -14.043" />
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/4-4.STL"/>
+      </geometry>
+      <material name="P3020_17">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/4-4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L5">
+    <visual>
+      <origin xyz="0 0 -22.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/6-1.STL"/>
+      </geometry>
+      <material name="P3020_18">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/6-1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L5-1">
+    <visual>
+      <origin xyz="0 0 -22.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/6-2.STL"/>
+      </geometry>
+      <material name="P3020_19">
+        <color rgba="0.059 0.118 0.22 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/6-2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L5-2">
+    <visual>
+      <origin xyz="0 0 -22.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/6-3.STL"/>
+      </geometry>
+      <material name="P3020_20">
+        <color rgba="0.8 0.8 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/6-3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="L6">
+    <visual>
+      <origin xyz="0 -2.0785 -22.943"/>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/7.STL"/>
+      </geometry>
+      <material name="P3020_21">
+        <color rgba="0.8 0.8 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh scale="0.01 0.01 0.01" filename="package://dsr_description2/meshes/p3020/7.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="FLANGE">
+    <visual>
+      <geometry>
+          <sphere scale="0.01 0.01 0.01" radius="0.005" />
+      </geometry>
+      <material name="P3020_22">
+        <color rgba="0 0 0 0.3" />
+      </material>
+    </visual>
+  </link>
+
+  <joint name="J1" type="continuous">
+    <origin xyz="0 0 0"/>
+    <parent link="base" />
+    <child link="L1" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <joint name="J1-1" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L1" />
+    <child link="L1-1" />
+  </joint>
+  <joint name="J1-2" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L1-1" />
+    <child link="L1-2" />
+  </joint>
+  <joint name="J1-3" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L1-2" />
+    <child link="L1-3" />
+  </joint>
+  <joint name="J1-4" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L1-3" />
+    <child link="L1-4" />
+  </joint>
+  <joint name="J2" type="continuous">
+    <origin xyz="0 0 3.943" />
+    <parent link="L1-1" />
+    <child link="L2" />
+    <axis xyz="0 1 0" />
+  </joint>
+  <joint name="J2-1" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L2" />
+    <child link="L2-1" />
+  </joint>
+  <joint name="J2-2" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L2-1" />
+    <child link="L2-2" />
+  </joint>
+  <joint name="J2-3" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L2-2" />
+    <child link="L2-3" />
+  </joint>
+  <joint name="J2-4" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L2-3" />
+    <child link="L2-4" />
+  </joint>
+  <joint name="J2-5" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L2-4" />
+    <child link="L2-5" />
+  </joint>
+  <joint name="J2-6" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L2-5" />
+    <child link="L2-6" />
+  </joint>
+  <joint name="J2-7" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L2-6" />
+    <child link="L2-7" />
+  </joint>
+  <joint name="J3" type="continuous">
+      <origin xyz="0 0 10.1"/>
+    <parent link="L2-7" />
+    <child link="L3" />
+    <axis xyz="0 1 0" />
+  </joint>
+  <joint name="J3-1" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L3" />
+    <child link="L3-1" />
+  </joint>
+  <joint name="J3-2" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L3-1" />
+    <child link="L3-2" />
+  </joint>
+  <joint name="J3-3" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L3-2" />
+    <child link="L3-3" />
+  </joint>
+  <joint name="J5" type="continuous">
+    <origin xyz="0 0 8.9"/>
+    <parent link="L3-3" />
+    <child link="L5" />
+    <axis xyz="0 1 0" />
+  </joint>
+  <joint name="J5-1" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L5" />
+    <child link="L5-1" />
+  </joint>
+  <joint name="J5-2" type="fixed">
+    <origin xyz="0 0 0"/>
+    <parent link="L5-1" />
+    <child link="L5-2" />
+  </joint>
+  <joint name="J6" type="continuous">
+    <origin xyz="0 2.0785 0"/>
+    <parent link="L5-2" />
+    <child link="L6" />
+    <axis xyz="0 0 1" />
+  </joint>
+  <joint name="JF" type="fixed">
+    <origin xyz="0 0 1.3"/>
+    <parent link="L6" />
+    <child link="FLANGE" />
+  </joint>
+</robot>

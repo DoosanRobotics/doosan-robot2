@@ -1,0 +1,173 @@
+<?xml version="1.0"?>
+
+<robot name="p3020" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:include filename="$(find dsr_description2)/config/macro.gazebo.xacro" />
+    <xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
+    <xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
+
+    <xacro:macro name="p3020" params="namespace">
+        <xacro:dsr_materials />
+
+        <!-- Base Link -->
+        <link name="base_link">
+            <visual>
+                <geometry>
+                    <mesh scale="0.001 0.001 0.001" filename="package://dsr_description2/meshes/p3020/1.STL"/>
+                </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh scale="0.001 0.001 0.001" filename="package://dsr_description2/meshes/p3020/1.STL"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <!-- link_1 -->
+        <link name="link_1">
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/2-1.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/2-2.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/2-3.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/2-4.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/2-5.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+        </link>
+
+        <!-- link_2 -->
+        <link name="link_2">
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/3-1.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/3-2.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/3-3.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/3-4.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+        </link>
+
+        <!-- link_3 -->
+        <link name="link_3">
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/4-1.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/4-2.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+        </link>
+
+        <!-- link_4 (Dummy Link for joint_4) -->
+        <link name="link_4">
+            <visual>
+                <geometry>
+                    <box size="1 1 1"/>  <!-- Small placeholder box -->
+                </geometry>
+            </visual>
+        </link>
+
+        <!-- link_5 -->
+        <link name="link_5">
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/6-1.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/6-2.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+        </link>
+
+        <!-- link_6 -->
+        <link name="link_6">
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/7.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+            </visual>
+        </link>
+
+        <!-- Joints -->
+        <joint name="joint_1" type="continuous">
+            <origin xyz="0 0 0"/>
+            <parent link="base_link"/>
+            <child link="link_1"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+
+        <joint name="joint_2" type="continuous">
+            <origin xyz="0 0 3.943"/>
+            <parent link="link_1"/>
+            <child link="link_2"/>
+            <axis xyz="0 1 0"/>
+        </joint>
+
+        <joint name="joint_3" type="continuous">
+            <origin xyz="0 0 10.1"/>
+            <parent link="link_2"/>
+            <child link="link_3"/>
+            <axis xyz="0 1 0"/>
+        </joint>
+
+        <!-- Dummy joint_4 -->
+        <joint name="joint_4" type="fixed">
+            <origin xyz="0 0 0"/>  <!-- Fixed at the same position -->
+            <parent link="link_3"/>
+            <child link="link_4"/>
+        </joint>
+
+        <joint name="joint_5" type="continuous">
+            <origin xyz="0 0 8.9"/>
+            <parent link="link_4"/>
+            <child link="link_5"/>
+            <axis xyz="0 1 0"/>
+        </joint>
+
+        <joint name="joint_6" type="continuous">
+            <origin xyz="0 2.0785 0"/>
+            <parent link="link_5"/>
+            <child link="link_6"/>
+            <axis xyz="0 0 1"/>
+        </joint>
+
+        <xacro:dsr_transmission />
+        <xacro:dsr_gazebo namespace="${namespace}" />
+    </xacro:macro>
+</robot>

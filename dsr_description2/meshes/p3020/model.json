@@ -1,0 +1,179 @@
+{
+	"id": "3020",
+	"bones": [
+		{
+			"bodyNo": 0,
+			"name": "base",
+			"models": [
+				{
+					"file": "1.STL",
+					"color": "#BABABA",
+				}
+			],
+			"rotateCenter": {"x": 0, "y": 0, "z": 0},
+			"rotateAxis": {"x": 0, "y": 0, "z": 1},
+			"noticeTransform" : [
+			],
+		},
+		{
+			"bodyNo": 1,
+			"name": "joint1",
+			"models": [
+				{
+					"file": "2-1.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "2-2.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "2-3.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "2-4.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "2-5.STL",
+					"color": "#71FEFE",
+				}
+			],
+			"rotateCenter": {"x": 0, "y": 0, "z": 900.5},
+			"rotateAxis": {"x": 0, "y": 1, "z": 0},
+			"noticeTransform" : [
+				{"type" : "translate", "x" : 0 , "y" : 0 , "z" : 7200 },
+				{"type" : "rotate", "x" : 0 , "y" : 0 , "z" : 1  , "angle" : -90 }
+			],
+		},
+		{
+			"bodyNo": 2,
+			"name": "link1",
+			"models": [
+				{
+					"file": "3-1.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "3-2.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "3-3.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "3-4.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "3-5.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "3-6.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "3-7.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "3-8.STL",
+					"color": "#48535F",
+				}
+			],
+			"rotateCenter": {"x": 0, "y": 0, "z": 1500.5},
+			"rotateAxis": {"x": 0, "y": 1, "z": 0},
+			"noticeTransform" : [
+				{"type" : "translate", "x" : 0 , "y" : 99 , "z" : 152.5 },
+				{"type" : "rotate", "x" : 0 , "y" : 1 , "z" : 0  , "angle" : -90 },
+				{"type" : "rotate", "x" : 1 , "y" : 0 , "z" : 0  , "angle" : -90 },
+			]
+		},
+		{
+			"bodyNo": 3,
+			"name": "joint2",
+			"models": [
+				{
+					"file": "4-1.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "4-2.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "4-3.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "4-4.STL",
+					"color": "#48535F",
+				}
+			],
+			"rotateCenter": {"x":0, "y": 34.5, "z": 0.0 },
+			"rotateAxis": {"x": 0, "y": 0, "z": 1},
+			"noticeTransform" : [
+				{"type" : "translate", "x" : 0 , "y" : 115.5 , "z" : 997.5 },
+				{"type" : "rotate", "x" : 0 , "y" : 1 , "z" : 0  , "angle" : -90 },
+				{"type" : "rotate", "x" : 1 , "y" : 0 , "z" : 0  , "angle" : -90 }
+			],
+		},
+		{
+			"bodyNo": 4,
+			"name": "link2",
+			"models": [
+
+			],
+			"rotateCenter": {"x": 0, "y": 0, "z": 1731.5},
+			"rotateAxis": {"x": 0, "y": 1, "z": 0},
+			"noticeTransform" : [
+				{"type" : "translate", "x" : 0 , "y" : 34.5 , "z" : 1364 },
+				{"type" : "rotate", "x" : 0 , "y" : 0 , "z" : 1  , "angle" : -90 }
+			]
+		},
+		{
+			"bodyNo": 5,
+			"name": "joint3",
+			"models": [
+				{
+					"file": "6-1.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "6-2.STL",
+					"color": "#48535F",
+				},
+				{
+					"file": "6-3.STL",
+					"color": "#48535F",
+				}
+			],
+			"rotateCenter": {"x": 0, "y": 34.5, "z": 0},
+			"rotateAxis": {"x": 0, "y": 0, "z": 1},
+			"noticeTransform" : [
+				{"type" : "translate", "x" : 0 , "y" : 106.5 , "z" : 1731.5 },
+				{"type" : "rotate", "x" : 0 , "y" : 1 , "z" : 0  , "angle" : -90 },
+				{"type" : "rotate", "x" : 1 , "y" : 0 , "z" : 0  , "angle" : -90 }
+			],
+		},
+		{
+			"bodyNo": 6,
+			"name": "end",
+			"models": [
+				{
+					"file": "7.STL",
+					"color": "#B9B9B9",
+				}
+			],
+			"rotateCenter": {"x": 0, "y": 34.5, "z": 3500.5},
+			"rotateAxis": {"x": 0, "y": 0, "z": 1},
+			"noticeTransform" : [
+				{"type" : "translate", "x" : 0 , "y" : 34.5 , "z" : 3500.5 },
+				{"type" : "rotate", "x" : 0 , "y" : 0 , "z" : 1  , "angle" : 90 }
+			]
+		}
+	]
+}
