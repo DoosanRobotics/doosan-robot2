@@ -31,26 +31,41 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-1.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
             <visual>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-2.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
             <visual>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-3.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
             <visual>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-4.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
             <visual>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-5.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
         </link>
 
@@ -60,11 +75,17 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-1.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
             <visual>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-2.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
             <visual>
                 <geometry>
@@ -75,6 +96,41 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-4.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/3-5.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/3-6.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/3-7.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/3-8.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
         </link>
 
@@ -84,21 +140,39 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/4-1.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
             <visual>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/4-2.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/4-3.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/4-4.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
         </link>
 
         <!-- link_4 (Dummy Link for joint_4) -->
         <link name="link_4">
-            <visual>
-                <geometry>
-                    <box size="1 1 1"/>  <!-- Small placeholder box -->
-                </geometry>
-            </visual>
+
         </link>
 
         <!-- link_5 -->
@@ -107,11 +181,25 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/6-1.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
             <visual>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/6-2.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
+            </visual>
+            <visual>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/6-3.STL" scale="0.001 0.001 0.001" />
+                </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
         </link>
 
@@ -121,6 +209,9 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/7.STL" scale="0.001 0.001 0.001" />
                 </geometry>
+                <material name="P3020_0">
+                    <color rgba="0.8 0.8 0.8 1" />
+                </material>
             </visual>
         </link>
 
@@ -133,14 +224,14 @@
         </joint>
 
         <joint name="joint_2" type="continuous">
-            <origin xyz="0 0 3.943"/>
+            <origin xyz="0 0 0"/>
             <parent link="link_1"/>
             <child link="link_2"/>
             <axis xyz="0 1 0"/>
         </joint>
 
         <joint name="joint_3" type="continuous">
-            <origin xyz="0 0 10.1"/>
+            <origin xyz="0 0 0"/>
             <parent link="link_2"/>
             <child link="link_3"/>
             <axis xyz="0 1 0"/>
@@ -154,14 +245,14 @@
         </joint>
 
         <joint name="joint_5" type="continuous">
-            <origin xyz="0 0 8.9"/>
+            <origin xyz="0 0 0"/>
             <parent link="link_4"/>
             <child link="link_5"/>
             <axis xyz="0 1 0"/>
         </joint>
 
         <joint name="joint_6" type="continuous">
-            <origin xyz="0 2.0785 0"/>
+            <origin xyz="0 0 0"/>
             <parent link="link_5"/>
             <child link="link_6"/>
             <axis xyz="0 0 1"/>
