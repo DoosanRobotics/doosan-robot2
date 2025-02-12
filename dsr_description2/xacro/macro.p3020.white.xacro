@@ -216,21 +216,21 @@
         </link>
 
         <!-- Joints -->
-        <joint name="joint_1" type="continuous">
+        <joint name="joint_1" type="revolute">
             <origin xyz="0 0 0"/>
             <parent link="base_link"/>
             <child link="link_1"/>
             <axis xyz="0 0 1"/>
         </joint>
 
-        <joint name="joint_2" type="continuous">
+        <joint name="joint_2" type="revolute">
             <origin xyz="0 0 0"/>
             <parent link="link_1"/>
             <child link="link_2"/>
             <axis xyz="0 1 0"/>
         </joint>
 
-        <joint name="joint_3" type="continuous">
+        <joint name="joint_3" type="revolute">
             <origin xyz="0 0 0"/>
             <parent link="link_2"/>
             <child link="link_3"/>
@@ -244,14 +244,14 @@
             <child link="link_4"/>
         </joint>
 
-        <joint name="joint_5" type="continuous">
+        <joint name="joint_5" type="revolute">
             <origin xyz="0 0 0"/>
             <parent link="link_4"/>
             <child link="link_5"/>
             <axis xyz="0 1 0"/>
         </joint>
 
-        <joint name="joint_6" type="continuous">
+        <joint name="joint_6" type="revolute">
             <origin xyz="0 0 0"/>
             <parent link="link_5"/>
             <child link="link_6"/>
