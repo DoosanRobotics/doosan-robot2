@@ -35,7 +35,7 @@
                     <param name="initial_value">0.0</param>
                 </state_interface>
             </joint>
-            <joint name="joint_4">
+            <!-- <joint name="joint_4">
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint_4']}</param>
@@ -43,7 +43,7 @@
                 <state_interface name="velocity">
                     <param name="initial_value">0.0</param>
                 </state_interface>
-            </joint>
+            </joint> -->
             <joint name="joint_5">
                 <command_interface name="position"/>
                 <state_interface name="position">

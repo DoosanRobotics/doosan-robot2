@@ -12,9 +12,8 @@ server_port=$1
 
 echo "dirname:" "$0" 
 echo "server_port:" "$server_port" 
-echo "robot model:" "$2" 
+echo "robot model:" "${2^^} " 
 echo "ns:" "$3"
-
 
 
 cd "$(dirname "$0")"
@@ -33,7 +32,7 @@ if [ "$(docker ps -q -f name=$container_name)" ]; then
     echo "The emulator '$container_name' is already running."
 else
     # run
-    docker run -dit --rm --name $container_name -p $server_port:12345 $emulator_image
+    docker run -dit --rm --name $container_name --env ROBOT_MODEL=${2^^} -p $server_port:12345 $emulator_image
 fi
 
 if [ `getconf LONG_BIT` = "64" ]

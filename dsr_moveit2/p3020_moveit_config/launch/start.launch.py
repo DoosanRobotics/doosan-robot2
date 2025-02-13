@@ -72,7 +72,7 @@ def generate_launch_description():
         [
             FindPackageShare("dsr_controller2"),
             "config",
-            "dsr_controller2.yaml",
+            "dsr_controller2_p3020.yaml",
         ]
     )
     rviz_config_file = PathJoinSubstitution(
