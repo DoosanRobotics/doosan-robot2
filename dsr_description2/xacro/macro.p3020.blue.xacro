@@ -14,7 +14,7 @@
                 <geometry>
                     <mesh scale="0.001 0.001 0.001" filename="package://dsr_description2/meshes/p3020/1.STL"/>
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_gray" />
             </visual>
             <collision>
                 <geometry>
@@ -30,35 +30,35 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-1.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-2.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-3.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-4.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/2-5.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
 
             <collision>
@@ -100,7 +100,7 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-1.STL" scale="0.001 0.001 0.001" color="0 0 0 1"/>
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
                 
             </visual>
             <visual>
@@ -108,7 +108,7 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-2.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
@@ -121,35 +121,37 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-4.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-5.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-6.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-7.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -0.3943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/3-8.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue">
+                    <color rgba="0.490 0.490 0.486 1.0" />
+                </material>
             </visual>
 
             <collision>
@@ -209,28 +211,28 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/4-1.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -1.4043"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/4-2.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -1.4043"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/4-3.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 0 -1.4043"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/4-4.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <collision>
                 <origin xyz="0 0 -1.4043"/>
@@ -270,21 +272,21 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/6-1.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 -0.20785 -2.2943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/6-2.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <visual>
                 <origin xyz="0 -0.20785 -2.2943"/>
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/6-3.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_blue" />
             </visual>
             <collision>
                 <origin xyz="0 -0.20785 -2.2943"/>
@@ -313,7 +315,7 @@
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/7.STL" scale="0.001 0.001 0.001" />
                 </geometry>
-                <material name="dr_white" />
+                <material name="dr_gray" />
             </visual>
             <collision>
                 <geometry>

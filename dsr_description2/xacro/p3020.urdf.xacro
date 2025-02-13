@@ -13,6 +13,9 @@
   <xacro:if value="${cr == 'white'}">
      <xacro:include filename="$(find dsr_description2)/xacro/macro.p3020.white.xacro" />
   </xacro:if>
+  <xacro:if value="${cr == 'blue'}">
+     <xacro:include filename="$(find dsr_description2)/xacro/macro.p3020.blue.xacro" />
+  </xacro:if>
   <xacro:p3020 namespace="$(arg namespace)"/>
 
    

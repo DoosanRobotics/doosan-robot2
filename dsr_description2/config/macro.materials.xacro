@@ -17,5 +17,8 @@
 		<material name="dr_white">
 			<color rgba="0.941 0.941 0.941 1.0" />
 		</material>
+		<material name="dr_blue">
+			<color rgba="0 0 0.2 1" />
+		</material>
 	</xacro:macro>
 </robot>
