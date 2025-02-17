@@ -173,7 +173,6 @@ def generate_launch_description():
         node_robot_state_publisher,
         gz_spawn_entity,
         dsr_position_controller_spawner_action,
-        joint_state_broadcaster_spawner,
         # delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner
     ]
 
