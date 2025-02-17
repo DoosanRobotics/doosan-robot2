@@ -54,7 +54,7 @@
         <state_interface name="velocity"/>
       </joint>
 
-      <joint name="joint_4">
+      <!-- <joint name="joint_4">
         <command_interface name="position">
           <param name="min">{-2*pi}</param>
           <param name="max">{2*pi}</param>
@@ -63,7 +63,7 @@
           <param name="initial_value">0.0</param>
         </state_interface>
         <state_interface name="velocity"/>
-      </joint>
+      </joint> -->
 
       <joint name="joint_5">
         <command_interface name="position">

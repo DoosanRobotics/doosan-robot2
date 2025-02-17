@@ -11,7 +11,7 @@ import os
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, LaunchConfigurationEquals
 
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
@@ -34,6 +34,8 @@ ARGUMENTS =[
     DeclareLaunchArgument('R',   default_value = '0',     description = 'Location Roll on Gazebo'    ),
     DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
     DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
+    DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
+
 ]
 
 def generate_launch_description():
@@ -104,6 +106,19 @@ def generate_launch_description():
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
     )
+    
+    # tf_bridge = Node(
+    #     package="ros_gz_bridge",
+    #     executable="parameter_bridge",
+    #     name="tf_bridge",
+    #     output="screen",
+    #     arguments=[
+    #         "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V"  # ✅ TF를 Gazebo로 변환
+    #     ],
+    #     remappings=[
+    #         ("/tf", "/gz/tf")  # ✅ Gazebo가 "gz/tf"를 사용하도록 강제
+    #     ]
+    # )
 
     node_robot_state_publisher = Node(
         package="robot_state_publisher",
@@ -118,6 +133,7 @@ def generate_launch_description():
         executable="spawner",
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
         arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
+        condition=LaunchConfigurationEquals('use_sim_time', 'false')  
     )
     
     dsr_position_controller_spawner = Node(
@@ -162,7 +178,8 @@ def generate_launch_description():
         node_robot_state_publisher,
         gz_spawn_entity,
         joint_state_broadcaster_spawner,
-        delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner
+        dsr_position_controller_spawner_action
+        # delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

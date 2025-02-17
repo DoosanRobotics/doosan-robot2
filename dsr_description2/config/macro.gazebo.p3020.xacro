@@ -8,7 +8,7 @@
         <ros>
           <namespace>$(arg namespace)</namespace>
         </ros>
-        <parameters>$(find dsr_controller2)/config/dsr_controller2_gz.yaml</parameters>
+        <parameters>$(find dsr_controller2)/config/dsr_controller2_gz_p3020.yaml</parameters>
       </plugin>
     </gazebo>
     <!-- Base -->

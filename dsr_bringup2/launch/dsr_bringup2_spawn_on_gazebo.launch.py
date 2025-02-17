@@ -20,7 +20,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch.actions import IncludeLaunchDescription
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.actions import OpaqueFunction
+from launch.actions import OpaqueFunction, SetLaunchConfiguration
 from launch.launch_context import LaunchContext
 
 def print_launch_configuration_value(context, *args, **kwargs):
@@ -47,8 +47,11 @@ def generate_launch_description():
         DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
         DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
+        DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
         
     ]
+    set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='true')
+    
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
@@ -222,7 +225,8 @@ def generate_launch_description():
                           'z' :LaunchConfiguration('z'),
                           'R' :LaunchConfiguration('R'),
                           'P' :LaunchConfiguration('P'),
-                          'Y' :LaunchConfiguration('Y')
+                          'Y' :LaunchConfiguration('Y'),
+                          'use_sim_time' : LaunchConfiguration('use_sim_time')
                           }.items(),
     )
     

@@ -34,6 +34,7 @@ ARGUMENTS =[
     DeclareLaunchArgument('R',   default_value = '0',     description = 'Location Roll on Gazebo'    ),
     DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
     DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
+    DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
 ]
 
 def generate_launch_description():
@@ -111,6 +112,7 @@ def generate_launch_description():
         executable="spawner",
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
         arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
+        condition=IfCondition(LaunchConfiguration('use_sim_time') == 'false'),
     )
     
     dsr_position_controller_spawner = Node(

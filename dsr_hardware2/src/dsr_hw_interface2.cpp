@@ -371,7 +371,25 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 std::vector<hardware_interface::StateInterface> DRHWInterface::export_state_interfaces()
 {
   std::vector<hardware_interface::StateInterface> state_interfaces;
-	
+    // std::vector<size_t> sorted_indices(joint_interfaces["position"].size());
+    // std::iota(sorted_indices.begin(), sorted_indices.end(), 0);  // 0, 1, 2, ..., N-1
+
+    // std::sort(sorted_indices.begin(), sorted_indices.end(), [&](size_t i, size_t j) {
+    //     std::string name_i = joint_interfaces["position"][i];
+    //     std::string name_j = joint_interfaces["position"][j];
+
+    //     int num_i = std::stoi(name_i.substr(name_i.find("_") + 1));
+    //     int num_j = std::stoi(name_j.substr(name_j.find("_") + 1));
+
+    //     return num_i < num_j;  // 숫자 크기 순으로 정렬
+    // });
+
+    // std::cout << "🔹 Sorted Joint Names: ";
+    // for (size_t i : sorted_indices) {
+    //     std::cout << joint_interfaces["position"][i] << " ";
+    // }
+    // std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<< std::endl;
+
 	for(size_t i=0; i<joint_interfaces["position"].size(); i++) {
 		state_interfaces.emplace_back(joint_interfaces["position"][i], "position", &joint_position_[i]);
 	}

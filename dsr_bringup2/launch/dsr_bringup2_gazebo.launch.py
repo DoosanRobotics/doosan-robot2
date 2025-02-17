@@ -17,7 +17,7 @@ from launch.conditions import IfCondition
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, SetLaunchConfiguration
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
@@ -47,8 +47,10 @@ def generate_launch_description():
         DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
         DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
-        
+        DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
     ]
+    
+    set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='true')
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
@@ -162,6 +164,7 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         executable="spawner",
         arguments=["joint_state_broadcaster", "-c", "controller_manager"],
+        parameters=[PathJoinSubstitution([FindPackageShare("dsr_controller2"), "config", "joint_state_broadcaster.yaml"])]
     )
 
     robot_controller_spawner = Node(
@@ -169,14 +172,6 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         executable="spawner",
         arguments=["dsr_controller2", "-c", "controller_manager"],
-    )
-
-    # Delay gazebo_connection start after 'connection`
-    delay_gazebo_connection_node_after_connection_node = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=connection_node,
-            on_exit=[gazebo_connection_node],
-        )
     )
 
     # Delay rviz start after `joint_state_broadcaster`
@@ -207,7 +202,8 @@ def generate_launch_description():
                           'z' :LaunchConfiguration('z'),
                           'R' :LaunchConfiguration('R'),
                           'P' :LaunchConfiguration('P'),
-                          'Y' :LaunchConfiguration('Y')
+                          'Y' :LaunchConfiguration('Y'),
+                          'use_sim_time' : LaunchConfiguration('use_sim_time')
                           }.items(),
     )
     
@@ -228,6 +224,7 @@ def generate_launch_description():
     )
 
     nodes = [
+        set_use_sim_time,
         set_config_node,
         run_emulator_node,
         gazebo_connection_node,
