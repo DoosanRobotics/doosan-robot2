@@ -477,6 +477,7 @@ typedef struct _ROBOT_JOINT_DATA
 } ROBOT_JOINT_DATA, *LPROBOT_JOINT_DATA;
 
 std::string m_name;
+std::string m_model;
 
 namespace dsr_controller2
 {

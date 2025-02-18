@@ -75,10 +75,7 @@ def generate_launch_description():
             "dsr_controller2_p3020.yaml",
         ]
     )
-    rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
-    )
-    
+
     set_config_node = Node(
         package="dsr_bringup2",
         executable="set_config",
@@ -145,7 +142,6 @@ def generate_launch_description():
         parameters=[{
         'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
     }])
-
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",

@@ -129,6 +129,9 @@ def generate_launch_description():
         package="dsr_bringup2",
         executable="gazebo_connection",
         namespace=LaunchConfiguration('name'),
+        parameters=[
+            {"model":   LaunchConfiguration('model') },
+        ],
         output="log",
     )
 

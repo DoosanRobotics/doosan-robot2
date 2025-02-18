@@ -46,24 +46,21 @@ RobotController::RobotController() : controller_interface::ControllerInterface()
 
 controller_interface::CallbackReturn RobotController::on_init()
 {
-    // YAML 파일 경로 설정
-    // std::string package_directory = ament_index_cpp::get_package_share_directory("dsr_hardware2");
-    // std::string yaml_file_path = package_directory + "/config/parameters.yaml";
+    std::string param_name = std::string(get_node()->get_namespace()) + "_parameters.yaml";
+    std::string package_directory = ament_index_cpp::get_package_share_directory("dsr_hardware2");
+    std::string yaml_file_path = package_directory + "/config" + param_name;
     
-    // std::ifstream fin(yaml_file_path);
-    // if (!fin) {
-    //     RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"), "Failed to open YAML file: %s", yaml_file_path.c_str());
-    // }
+    std::ifstream fin(yaml_file_path);
+    if (!fin) {
+        RCLCPP_ERROR(get_node()->get_logger(), "Failed to open YAML file: %s", yaml_file_path.c_str());
+    }
+    YAML::Node yaml_node = YAML::Load(fin);
+    fin.close();
+    if (yaml_node["model"]) {
+        m_model = yaml_node["model"].as<std::string>();
+        RCLCPP_INFO(get_node()->get_logger(), "model: %s", m_model.c_str());
+    }  
 
-    // // YAML 파일 파싱
-    // YAML::Node yaml_node = YAML::Load(fin);
-    // fin.close();
-
-    // // 파싱된 YAML 노드에서 파라미터 읽기
-    // if (yaml_node["name"]) {
-    //     m_name = yaml_node["name"].as<std::string>();
-    //     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"), "name: %s", m_name.c_str());
-    // }
   return CallbackReturn::SUCCESS;
 }
 
@@ -91,6 +88,16 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
     
 
   return CallbackReturn::SUCCESS;
+}
+
+void check_dsr_model(std::array<float, NUM_JOINT>& target_joint){
+    if (m_model == "p3020"){
+        if (3 < target_joint.size() && target_joint[3] != 0.0) {
+            RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
+                        "p3020 is a 5-axis model, so the value of target_pos[%zu] cannot be specified by (%.6f).", 3, target_joint[3]);
+            target_joint[3] = 0.0;
+        }
+    }
 }
 
 controller_interface::CallbackReturn RobotController::on_activate(const rclcpp_lifecycle::State &)
@@ -213,6 +220,7 @@ auto movej_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveJoint::Request>
     res->success = false;
     std::array<float, NUM_JOINT> target_pos;
     std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
+    check_dsr_model(target_pos);
     if(req->sync_type == 0){
         RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movej_cb() called and calling Drfl->movej");
         res->success = Drfl->movej(target_pos.data(), req->vel, req->acc, req->time, (MOVE_MODE)req->mode, req->radius, (BLENDING_SPEED_TYPE)req->blend_type);   
@@ -232,7 +240,7 @@ auto movel_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveLine::Request> 
     std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
     std::copy(req->vel.cbegin(), req->vel.cend(), target_vel.begin());
     std::copy(req->acc.cbegin(), req->acc.cend(), target_acc.begin());
-
+    // check_dsr_model(target_pos);
     if(req->sync_type == 0){
         RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movel_cb() called and calling Drfl->movel");
         res->success = Drfl->movel(target_pos.data(), target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->radius, (BLENDING_SPEED_TYPE)req->blend_type);   
@@ -247,6 +255,7 @@ auto movejx_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveJointx::Reques
 {
     std::array<float, NUM_TASK> target_pos;
     std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
+    check_dsr_model(target_pos);
     if(req->sync_type == 0){
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->movejx");
         res->success = Drfl->movejx(target_pos.data(), req->sol, req->vel, req->acc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->radius, (BLENDING_SPEED_TYPE)req->blend_type);    
@@ -267,6 +276,11 @@ auto movec_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveCircle::Request
             std_msgs::msg::Float64MultiArray pos = req->pos.at(i);
             fTargetPos[i][j] = pos.data[j];
         }
+        std::array<float, NUM_JOINT> target_pos;
+        std::copy(std::begin(fTargetPos[i]), std::end(fTargetPos[i]), target_pos.begin());
+        check_dsr_model(target_pos);
+        std::copy(target_pos.begin(), target_pos.end(), std::begin(fTargetPos[i]));
+        
         fTargetVel[i] = req->vel[i];
         fTargetAcc[i] = req->acc[i];
     }
@@ -295,6 +309,11 @@ auto movesj_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSplineJoint::R
             std_msgs::msg::Float64MultiArray pos = req->pos.at(i);
             fTargetPos[i][j] = pos.data[j];
         }
+        std::array<float, NUM_JOINT> target_pos;
+        std::copy(std::begin(fTargetPos[i]), std::end(fTargetPos[i]), target_pos.begin());
+        check_dsr_model(target_pos);
+        std::copy(target_pos.begin(), target_pos.end(), std::begin(fTargetPos[i]));
+        
     }
     if(req->sync_type == 0){
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->movesj");
@@ -424,14 +443,21 @@ auto movewait_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveWait::Reques
 
 auto jog_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Jog::Request> req, std::shared_ptr<dsr_msgs2::srv::Jog::Response> res)-> void        
 {
+    if (m_model == "p3020" && req->jog_axis == JOG_AXIS_JOINT_4){
+        RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),"The p3020 model does not support control of the 4th axis.");
+        res->success = FALSE; 
+    }
+
     res->success = Drfl->jog((JOG_AXIS)req->jog_axis, (MOVE_REFERENCE)req->move_reference, req->speed);
 };
 
 
 auto jog_multi_cb = [this](const std::shared_ptr<dsr_msgs2::srv::JogMulti::Request> req, std::shared_ptr<dsr_msgs2::srv::JogMulti::Response> res)-> void                    
 {
+
     std::array<float, NUM_JOINT> target_jog;
     std::copy(req->jog_axis.cbegin(), req->jog_axis.cend(), target_jog.begin());
+    check_dsr_model(target_jog);
     res->success = Drfl->multi_jog(target_jog.data(), (MOVE_REFERENCE)req->move_reference, req->speed);
 };
 
@@ -455,10 +481,6 @@ auto trans_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Trans::Request> req
     res->success = false;
     std::array<float, NUM_TASK> target_pos;
     std::array<float, NUM_TASK> delta_pos;
-
-    std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
-    std::copy(req->delta.cbegin(), req->delta.cend(), delta_pos.begin());
-
     LPROBOT_POSE robot_pos = Drfl->trans(target_pos.data(), delta_pos.data(), (COORDINATE_SYSTEM)req->ref, (COORDINATE_SYSTEM)req->ref_out);
     for(int i=0; i<NUM_TASK; i++){
         res->trans_pos[i] = robot_pos->_fPosition[i];
@@ -1811,7 +1833,7 @@ auto servoj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojStream> msg)
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
-
+    check_dsr_model(target_pos);
     Drfl->servoj(target_pos.data(), target_vel.data(), target_acc.data(), time);
 };
 
@@ -1837,6 +1859,8 @@ auto speedj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedjStream> msg)
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
+    check_dsr_model(target_vel);
+    check_dsr_model(target_acc);
 
     Drfl->speedj(target_vel.data(), target_acc.data(), time);
 };
@@ -1863,7 +1887,8 @@ auto servoj_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojRtStream>
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
-
+    check_dsr_model(target_pos);
+    
     Drfl->servoj_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
 };
 
@@ -1889,6 +1914,8 @@ auto speedj_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedjRtStream>
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
+    check_dsr_model(target_vel);
+    check_dsr_model(target_acc);
 
     Drfl->speedj_rt(target_vel.data(), target_acc.data(), time);
 };

@@ -107,18 +107,6 @@ def generate_launch_description():
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
     )
     
-    # tf_bridge = Node(
-    #     package="ros_gz_bridge",
-    #     executable="parameter_bridge",
-    #     name="tf_bridge",
-    #     output="screen",
-    #     arguments=[
-    #         "/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V"  # ✅ TF를 Gazebo로 변환
-    #     ],
-    #     remappings=[
-    #         ("/tf", "/gz/tf")  # ✅ Gazebo가 "gz/tf"를 사용하도록 강제
-    #     ]
-    # )
 
     node_robot_state_publisher = Node(
         package="robot_state_publisher",
@@ -133,8 +121,8 @@ def generate_launch_description():
         executable="spawner",
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
         arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
-        condition=LaunchConfigurationEquals('use_sim_time', 'false')  
     )
+        # condition=LaunchConfigurationEquals('use_sim_time', 'false')  
     
     dsr_position_controller_spawner = Node(
         package="controller_manager",
@@ -164,21 +152,26 @@ def generate_launch_description():
         period=2.0,
         actions=[dsr_position_controller_spawner]
     )
+    
+    # launch issue position controller
+    # joint_state_broadcaster_spawner_action = TimerAction(
+    #     period=2.0,
+    #     actions=[joint_state_broadcaster_spawner]
+    # )
 
     # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[dsr_position_controller_spawner_action],
-        )
-    )
+    # delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+    #     event_handler=OnProcessExit(
+    #         target_action=joint_state_broadcaster_spawner,
+    #         on_exit=[dsr_position_controller_spawner_action],
+    #     )
+    # )
 
     nodes = [
         gazebo,
         node_robot_state_publisher,
         gz_spawn_entity,
-        joint_state_broadcaster_spawner,
-        dsr_position_controller_spawner_action
+        dsr_position_controller_spawner_action,
         # delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner
     ]
 
