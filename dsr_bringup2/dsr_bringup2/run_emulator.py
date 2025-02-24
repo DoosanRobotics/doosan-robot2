@@ -60,7 +60,7 @@ class VirtualDRCF(Node):
         os.system(start_cmd)
 
     def terminate_drcf(self):
-        stop_cmd = "docker ps -a --filter name={} -q | xargs -r docker stop".\
+        stop_cmd = "docker ps -a --filter name={} -q | xargs -r docker rm -f".\
             format(self.emulator_name)
         print("stop_cmd : ",stop_cmd)
         os.system(stop_cmd)

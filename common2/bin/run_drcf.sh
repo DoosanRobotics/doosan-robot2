@@ -27,13 +27,15 @@ fi
 echo "run : '$container_name' ..."
 
 
+
 # check 
 if [ "$(docker ps -q -f name=$container_name)" ]; then
-    echo "The emulator '$container_name' is already running."
-else
-    # run
-    docker run -dit --rm --name $container_name --env ROBOT_MODEL=${2^^} -p $server_port:12345 $emulator_image
+    echo "The emulator '$container_name' is already running... kill it"
+    docker ps -a --filter name=emulator -q | xargs -r docker rm -f
 fi
+# run
+docker run -dit --rm --name $container_name --env ROBOT_MODEL=${2^^} -p $server_port:12345 $emulator_image
+
 
 if [ `getconf LONG_BIT` = "64" ]
 then
