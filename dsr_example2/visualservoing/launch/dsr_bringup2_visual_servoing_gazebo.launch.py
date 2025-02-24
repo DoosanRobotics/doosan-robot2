@@ -186,13 +186,6 @@ def generate_launch_description():
         arguments=["dsr_joint_trajectory", "-c", "controller_manager"],
     )
 
-    # Delay gazebo_connection start after 'connection`
-    delay_gazebo_connection_node_after_connection_node = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=connection_node,
-            on_exit=[gazebo_connection_node],
-        )
-    )
 
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(

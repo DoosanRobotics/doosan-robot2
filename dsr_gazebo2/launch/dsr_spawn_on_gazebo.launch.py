@@ -11,7 +11,7 @@ import os
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, LaunchConfigurationEquals
 
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
@@ -35,12 +35,20 @@ ARGUMENTS =[
     DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
     DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
     DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
+
 ]
 
 def generate_launch_description():
-    
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
+
+    # gazebo
+    gazebo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [FindPackageShare("ros_gz_sim"), "/launch/gz_sim.launch.py"]
+        ),
+        launch_arguments={"gz_args": " -r -v 3 empty.sdf"}.items(),
+    )
 
     gz_spawn_entity = Node(
         package="ros_gz_sim",
@@ -85,8 +93,8 @@ def generate_launch_description():
             " ",
             "use_gazebo:=",
             LaunchConfiguration('use_gazebo'),
-            " ", 
-            "color:=", 
+            " ",
+            "color:=",
             LaunchConfiguration('color'),
             " ",
             "namespace:=",
@@ -98,6 +106,7 @@ def generate_launch_description():
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
     )
+    
 
     node_robot_state_publisher = Node(
         package="robot_state_publisher",
@@ -112,8 +121,8 @@ def generate_launch_description():
         executable="spawner",
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
         arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
-        condition=IfCondition(LaunchConfiguration('use_sim_time') == 'false'),
     )
+        # condition=LaunchConfigurationEquals('use_sim_time', 'false')  
     
     dsr_position_controller_spawner = Node(
         package="controller_manager",
@@ -143,20 +152,29 @@ def generate_launch_description():
         period=2.0,
         actions=[dsr_position_controller_spawner]
     )
+    
+    # launch issue position controller
+    # joint_state_broadcaster_spawner_action = TimerAction(
+    #     period=2.0,
+    #     actions=[joint_state_broadcaster_spawner],
+        
+    # )
 
     # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[dsr_position_controller_spawner_action],
-        )
-    )
+    # delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+    #     event_handler=OnProcessExit(
+    #         target_action=joint_state_broadcaster_spawner,
+    #         on_exit=[dsr_position_controller_spawner_action],
+    #     )
+    # )
 
     nodes = [
+        # gazebo,
         node_robot_state_publisher,
         gz_spawn_entity,
+        dsr_position_controller_spawner_action,
         joint_state_broadcaster_spawner,
-        delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner
+        # delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

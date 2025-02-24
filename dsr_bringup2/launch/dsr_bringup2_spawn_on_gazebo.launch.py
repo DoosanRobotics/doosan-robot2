@@ -11,7 +11,7 @@ import os
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration,PythonExpression
 from launch.conditions import IfCondition
 
 from launch_ros.actions import Node
@@ -55,6 +55,8 @@ def generate_launch_description():
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
+    mode = LaunchConfiguration("mode")
+    
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -123,6 +125,7 @@ def generate_launch_description():
             {"rt_host":  LaunchConfiguration('rt_host')      },
             #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
         ],
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'virtual'"])),
         output="screen",
     )
 
@@ -180,13 +183,6 @@ def generate_launch_description():
         arguments=["dsr_joint_trajectory", "-c", "controller_manager"],
     )
 
-    # Delay gazebo_connection start after 'connection`
-    delay_gazebo_connection_node_after_connection_node = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=connection_node,
-            on_exit=[gazebo_connection_node],
-        )
-    )
 
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(

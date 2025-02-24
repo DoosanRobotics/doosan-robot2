@@ -38,11 +38,12 @@ class VirtualDRCF(Node):
 
         
 
-        port, model, name = parameters['port'], parameters['model'], parameters['name']
+        mode, port, model, name = parameters['mode'], parameters['port'], parameters['model'], parameters['name']
         self.emulator_name = "emulator"
         if name:
             self.emulator_name = name + "_" + "emulator"
-        self.run_drcf(port, model, name)
+        if mode == "virtual":
+            self.run_drcf(port, model, name)
 
         # signal.signal(signal.SIGINT, self.terminate_drcf)
         # signal.signal(signal.SIGTERM, self.terminate_drcf)
