@@ -36,10 +36,10 @@ message(DRCF_VERSION : ${DRCF_VER})
 
 
 SET( COMMON_INC_FILES
-  ../common2/include
+  ../dsr_common2/include
 )
 SET( COMMON_LIB_FILES
-  ../common2/lib
+  ../dsr_common2/lib
 )
 
 include_directories(

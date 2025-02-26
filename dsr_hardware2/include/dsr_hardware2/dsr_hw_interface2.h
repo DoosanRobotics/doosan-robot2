@@ -212,8 +212,8 @@
 
 #include <control_msgs/action/follow_joint_trajectory.hpp>  //ROS2 ???
 
-#include "../../../common2/include/DRFLEx.h"
-//TODO #include "../../../common2/include/dsr_serial.h"
+#include "../../../dsr_common2/include/DRFLEx.h"
+//TODO #include "../../../dsr_common2/include/dsr_serial.h"
 
 
 #ifndef PI

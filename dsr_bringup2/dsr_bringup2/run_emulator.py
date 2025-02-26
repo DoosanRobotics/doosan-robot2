@@ -55,7 +55,7 @@ class VirtualDRCF(Node):
 
     def run_drcf(self, port, model, name):
         run_script_path = os.path.join(
-            get_package_share_directory("common2"), "bin"
+            get_package_share_directory("dsr_common2"), "bin"
         )
         start_cmd = "{}/run_drcf.sh ".format(run_script_path) +" "+ str(port)+" "+ model +" " +name
         os.system(start_cmd)

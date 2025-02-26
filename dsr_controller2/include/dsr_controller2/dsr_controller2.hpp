@@ -198,7 +198,7 @@
 #include "dsr_msgs2/srv/stop_rt_control.hpp"
 #include "dsr_msgs2/srv/write_data_rt.hpp"
 
-#include "../../../common2/include/DRFLEx.h"
+#include "../../../dsr_common2/include/DRFLEx.h"
 
 #define _DEBUG_DSR_CTL      0
 

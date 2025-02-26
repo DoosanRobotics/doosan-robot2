@@ -22,7 +22,7 @@
 #include "rclcpp/time.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
-#include "../../common2/include/DRFLEx.h"
+#include "../../dsr_common2/include/DRFLEx.h"
 
 using config_type = controller_interface::interface_configuration_type;
 using namespace DRAFramework;

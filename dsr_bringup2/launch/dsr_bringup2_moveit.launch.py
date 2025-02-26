@@ -34,7 +34,7 @@ def generate_launch_description():
         DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
     ]
-    package_name = PythonExpression(["'", LaunchConfiguration('model'), "_moveit_config'"])
+    package_name = PythonExpression(["'dsr_moveit_config_", LaunchConfiguration('model'), "'"])
 
     included_launch_file_path = PathJoinSubstitution([
         FindPackageShare(package_name),

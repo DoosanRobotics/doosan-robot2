@@ -45,10 +45,10 @@ def generate_launch_description():
     # planning_context
     robot_description = {'robot_description' : Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])}
 
-    robot_description_semantic_config = load_file('moveit_config_m1013', 'config/m1013.srdf')
+    robot_description_semantic_config = load_file('dsr_moveit_config_m1013', 'config/m1013.srdf')
     robot_description_semantic = {'robot_description_semantic' : robot_description_semantic_config}
 
-    kinematics_yaml = load_yaml('moveit_config_m1013', 'config/kinematics.yaml')
+    kinematics_yaml = load_yaml('dsr_moveit_config_m1013', 'config/kinematics.yaml')
     robot_description_kinematics = { 'robot_description_kinematics' : kinematics_yaml }
 
     # Planning Functionality
@@ -56,11 +56,11 @@ def generate_launch_description():
         'planning_plugin' : 'ompl_interface/OMPLPlanner',
         'request_adapters' : """default_planner_request_adapters/AddTimeOptimalParameterization default_planner_request_adapters/FixWorkspaceBounds default_planner_request_adapters/FixStartStateBounds default_planner_request_adapters/FixStartStateCollision default_planner_request_adapters/FixStartStatePathConstraints""" ,
         'start_state_max_bounds_error' : 1000 } }
-    ompl_planning_yaml = load_yaml('moveit_config_m1013', 'config/ompl_planning.yaml')
+    ompl_planning_yaml = load_yaml('dsr_moveit_config_m1013', 'config/ompl_planning.yaml')
     ompl_planning_pipeline_config['move_group'].update(ompl_planning_yaml)
 
     # Trajectory Execution Functionality
-    controllers_yaml = load_yaml('moveit_config_m1013', 'config/controllers.yaml')
+    controllers_yaml = load_yaml('dsr_moveit_config_m1013', 'config/controllers.yaml')
     moveit_controllers = { 'moveit_simple_controller_manager' : controllers_yaml,
                            'moveit_controller_manager': 'moveit_simple_controller_manager/MoveItSimpleControllerManager'}
 
@@ -116,8 +116,8 @@ def generate_launch_description():
     fake_joint_driver_node = Node(package='fake_joint_driver',
                                   executable='fake_joint_driver_node',
                                   parameters=[{'controller_name': 'dsr_joint_trajectory_controller'},
-                                              os.path.join(get_package_share_directory("moveit_config_m1013"), "config", "fake_controllers.yaml"),
-                                              os.path.join(get_package_share_directory("moveit_config_m1013"), "config", "start_positions.yaml"),
+                                              os.path.join(get_package_share_directory("dsr_moveit_config_m1013"), "config", "fake_controllers.yaml"),
+                                              os.path.join(get_package_share_directory("dsr_moveit_config_m1013"), "config", "start_positions.yaml"),
                                               robot_description]
                                   )
 
