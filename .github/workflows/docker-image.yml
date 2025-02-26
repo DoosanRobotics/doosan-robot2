@@ -45,10 +45,26 @@ jobs:
         if: ${{ matrix.ros_version == 2 }}
         uses: ros-tooling/action-ros-ci@v0.3
         with:
-          package-name:  a0912_moveit_config dsr_description2 h2515_moveit_config  m1509_moveit_config  
-                         dsr_common2              dsr_gazebo2       dsr_moveit_config_e0509      dsr_moveit_config_m0609  dsr_realtime_control
-                         dsr_bringup2         dsr_hardware2     dsr_example               dsr_moveit_config_m0617        dsr_visualservoing
-                        dsr_moveit_config_a0509       dsr_controller2      dsr_msgs2         dsr_moveit_config_h2017     dsr_moveit_config_m1013 
+          package-name:  dsr_moveit_config_a0912
+                         dsr_moveit_config_h2515  
+                         dsr_moveit_config_m1509  
+                         dsr_moveit_config_e0509      
+                         dsr_moveit_config_m0609  
+                         dsr_moveit_config_m0617       
+                         dsr_moveit_config_a0509       
+                         dsr_moveit_config_h2017     
+                         dsr_moveit_config_m1013
+                         dsr_moveit_config_p3020
+                         dsr_description2 
+                         dsr_common2              
+                         dsr_gazebo2       
+                         dsr_realtime_control
+                         dsr_bringup2         
+                         dsr_hardware2     
+                         dsr_example               
+                         dsr_visualservoing
+                         dsr_controller2      
+                         dsr_msgs2         
           # all packages except for 'dsr_tests'
           
           target-ros2-distro: ${{ matrix.ros_distribution }}
