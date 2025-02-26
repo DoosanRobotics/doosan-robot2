@@ -1,0 +1,31 @@
+
+# real_camera.yaml
+# Author: Chemin Ahn (chemx3937@gmail.com)
+  
+# Copyright (c) 2024 Doosan Robotics
+# Use of this source code is governed by the BSD, see LICENSE
+
+camera_name: "real_camera"
+image_width: 2304
+image_height: 1536
+
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1772.457122, 0.000000, 1244.641125, 0.000000, 1749.205247, 768.532504, 0.000000, 0.000000, 1.000000]
+
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.075019, -0.177989, 0.000553, 0.017288, 0.000000]
+
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1748.692505, 0.000000, 1293.356433, 0.000000, 0.000000, 1780.095337, 768.770009, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]
+

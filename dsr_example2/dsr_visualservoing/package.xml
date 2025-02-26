@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>dsr_visualservoing</name>
+  <version>1.1.0</version>
+  <description>
+    dsr_visualservoing
+  </description>
+  <author email="chemx3937@gmail.com">Chemin Ahn</author>   
+
+  <maintainer email="chemx3937@gmail.com">Chemin Ahn</maintainer>
+  <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
+  <license>Apache License 2.0</license>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+      <!-- gazebo_ros_paths_plugin automatically adds these to
+        GAZEBO_PLUGIN_PATH and GAZEBO_MODEL_PATH when you do this export inside
+        the package.xml file. You can than use URIs of type model://my_package/stuff. -->
+    <gazebo_ros gazebo_model_path="${prefix}"/> 
+  </export>
+
+
+</package>

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>dsr_moveit_config_p3020</name>
+  <version>2.0.7</version>
+  <description>
+      MoveIt2 config : Doosanrobotics p3020.
+  </description>
+  <author email="minsoo.song@doosan.com">Minsoo Song</author>   
+
+  <maintainer email="minsoo.song@doosan.com">Minsoo Song</maintainer>
+  <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+
+  <export>
+      <build_type>ament_cmake</build_type>
+  </export>
+</package>
