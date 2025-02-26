@@ -26,13 +26,58 @@ from launch.actions import OpaqueFunction
 from moveit_configs_utils import MoveItConfigsBuilder
 
 
+def rviz_node_function(context):
+    """런치 시점에서 model 값을 평가하고, 패키지 경로를 찾은 후 launch 파일 실행"""
+    model_value = LaunchConfiguration('model').perform(context)
 
-def print_launch_configuration_value(context, *args, **kwargs):
-    # LaunchConfiguration 값을 평가합니다.
-    gz_value = LaunchConfiguration('gz').perform(context)
-    # 평가된 값을 콘솔에 출력합니다.
-    print(f'LaunchConfiguration gz: {gz_value}')
-    return gz_value
+    # 패키지 이름 생성
+    model_value_str = f"{model_value}"
+    package_name_str = f"dsr_moveit_config_{model_value}"
+
+    # FindPackageShare 평가
+    package_path_str = FindPackageShare(package_name_str).perform(context)
+
+    print("패키지 이름:", package_name_str)
+    print("패키지 경로:", package_path_str)
+
+    # Moveit2 config 
+    moveit_config = (
+        MoveItConfigsBuilder(model_value_str, "robot_description", package_name_str)
+        .robot_description(file_path=f"config/{model_value}.urdf.xacro")
+        .robot_description_semantic(file_path="config/dsr.srdf")
+        .trajectory_execution(file_path="config/moveit_controllers.yaml")
+        .to_moveit_configs()
+    )
+    run_move_group_node = Node(
+        package="moveit_ros_move_group",
+        executable="move_group",
+        # namespace=LaunchConfiguration('name'),
+        output="screen",
+        parameters=[moveit_config.to_dict()],
+    )
+
+    # RViz
+    rviz_base = os.path.join(
+        get_package_share_directory(package_name_str), "launch"
+    )
+    rviz_full_config = os.path.join(rviz_base, "moveit.rviz")
+    
+    return [run_move_group_node, 
+        Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        # namespace=LaunchConfiguration('name'),
+        output="log",
+        arguments=["-d", rviz_full_config],
+        parameters=[
+            moveit_config.robot_description,
+            moveit_config.robot_description_semantic,
+            moveit_config.planning_pipelines,
+            moveit_config.robot_description_kinematics,
+            moveit_config.joint_limits,
+        ],
+    )]
 
 def generate_launch_description():
     ARGUMENTS =[ 
@@ -168,45 +213,9 @@ def generate_launch_description():
         ],
     )
 
-    # Moveit2 config 
-
-    moveit_config = (
-        MoveItConfigsBuilder("p3020")
-        .robot_description(file_path="config/p3020.urdf.xacro")
-        .robot_description_semantic(file_path="config/dsr.srdf")
-        .trajectory_execution(file_path="config/moveit_controllers.yaml")
-        .to_moveit_configs()
-    )
-
-    run_move_group_node = Node(
-        package="moveit_ros_move_group",
-        executable="move_group",
-        # namespace=LaunchConfiguration('name'),
-        output="screen",
-        parameters=[moveit_config.to_dict()],
-    )
-
-    # RViz
-    rviz_base = os.path.join(
-        get_package_share_directory("dsr_moveit_config_p3020"), "launch"
-    )
-    rviz_full_config = os.path.join(rviz_base, "moveit.rviz")
-
-    rviz_node = Node(
-        package="rviz2",
-        executable="rviz2",
-        name="rviz2",
-        # namespace=LaunchConfiguration('name'),
-        output="log",
-        arguments=["-d", rviz_full_config],
-        parameters=[
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-            moveit_config.planning_pipelines,
-            moveit_config.robot_description_kinematics,
-            moveit_config.joint_limits,
-        ],
-    )
+    # # Moveit2 config 
+    rviz_node = OpaqueFunction(function=rviz_node_function)
+    
 
     
     # joint_trajectory_controller_spawner = Node(
@@ -250,7 +259,6 @@ def generate_launch_description():
         delay_rviz_after_joint_state_broadcaster_spawner,
         joint_state_broadcaster_spawner,
         dsr_moveit_controller_spawner,
-        run_move_group_node,
         delay_control_node_after_connection_node,
     ]
 
