@@ -4,129 +4,183 @@
 [![license - apache 2.0](https://img.shields.io/:license-Apache%202.0-yellowgreen.svg)](https://opensource.org/licenses/Apache-2.0)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![support level: community](https://img.shields.io/badge/support%20level-community-lightgray.png)](http://rosindustrial.org/news/2016/10/7/better-supporting-a-growing-ros-industrial-software-platform)
-# Overview
+
+![images](https://github.com/user-attachments/assets/0e34c651-8434-48d3-b859-082767846b66)
+
+## Overview
     
     This package provides the function to control all models of Doosan robots in the ROS2(Humble) environment.
-    
-    ※ Currently, ROS2 related packages are being updated rapidly. 
-       Doosan packages will also be updated from time to time and features will be upgraded.
- 
-
-# Installation 
-#### To utilize the new emulator in virtual mode, Docker is required. 
-
-Install Docker https://docs.docker.com/engine/install/ubuntu/
-
-#### *Doosan Robot ROS2 Package is implemented at ROS2-humble.*
-    ### Prerequisite installation elements before package installation
-    sudo apt-get update
-    sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget
-    sudo apt-get install -y ros-humble-control-msgs ros-humble-realtime-tools ros-humble-xacro ros-humble-joint-state-publisher-gui ros-humble-ros2-control ros-humble-ros2-controllers ros-humble-gazebo-msgs ros-humble-moveit-msgs dbus-x11 ros-humble-moveit-configs-utils ros-humble-moveit-ros-move-group
-
-    ### install gazebo sim
-    sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
-    wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
-    sudo apt-get update
-    sudo apt-get install -y libignition-gazebo6-dev
-    sudo apt-get install -y ros-humble-gazebo-ros-pkgs ros-humble-moveit-msgs ros-humble-ros-gz-sim ros-humble-ros-gz
-    
-    ### We assume that you have installed the ros-humble-desktop package using the apt-get command.
-    ### We recommand the /home/<user_home>/ros2_ws/src
-    $ mkdir -p ~/ros2_ws/src
-    $ cd ~/ros2_ws/src
-    $ git clone -b humble-devel https://github.com/doosan-robotics/doosan-robot2.git
-    $ git clone -b humble https://github.com/ros-controls/gz_ros2_control
-    $ rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
-    $ cd ~/ros2_ws/src/doosan-robot2
-    $ chmod +x ./install_emulator.sh
-    $ sudo ./install_emulator.sh
-    $ cd ~/ros2_ws
-    $ colcon build
-    $ . install/setup.bash
-
-#### Note: To use ROS2 with Version 3.x Controller, please ensure that you specify the build options (default: 2).
-    $ colcon build --cmake-args -DDRCF_VER=3 
 
 
+## Installation
+
+### Prerequisites
+
+To utilize the new emulator in virtual mode, **Docker** is required. Install Docker by following the official guide: [Docker Installation for Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
+
+### Required Dependencies
+
+Before installing the package, ensure that the necessary dependencies are installed:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget \
+                        ros-humble-control-msgs ros-humble-realtime-tools ros-humble-xacro \
+                        ros-humble-joint-state-publisher-gui ros-humble-ros2-control \
+                        ros-humble-ros2-controllers ros-humble-gazebo-msgs ros-humble-moveit-msgs \
+                        dbus-x11 ros-humble-moveit-configs-utils ros-humble-moveit-ros-move-group
+```
+
+### Install Gazebo Simulation
+
+```bash
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install -y libignition-gazebo6-dev ros-humble-gazebo-ros-pkgs ros-humble-ros-gz-sim ros-humble-ros-gz
+```
+
+### Package Installation
+
+Ensure that you have installed **ros-humble-desktop** using `apt-get`. We recommend placing the package inside:
+
+```bash
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws/src
+```
+
+Clone the required repositories:
+
+```bash
+git clone -b humble-devel https://github.com/doosan-robotics/doosan-robot2.git
+git clone -b humble https://github.com/ros-controls/gz_ros2_control
+```
+
+Install dependencies:
+
+```bash
+rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
+```
+
+Run the emulator installation script:
+
+```bash
+cd ~/ros2_ws/src/doosan-robot2
+chmod +x ./install_emulator.sh
+sudo ./install_emulator.sh
+```
+
+Build the package:
+
+```bash
+cd ~/ros2_ws
+colcon build
+. install/setup.bash
+```
+
+To use **ROS2 with Version 3.x Controller**, specify the build option:
+
+```bash
+colcon build --cmake-args -DDRCF_VER=3
+```
+
+---
 
 ## Launch Parameters
-### *mode*
-- Pass __mode:=real__ arguement over launch to drive a robot in reality.   
-The default IP and port of our robot controller are _192.168.127.100_ and _12345_.
 
-- Pass __mode:=virtual__ argument over launch to drive a robot virtually.   
-Our emulators are automatically started and terminated according to launch lifetime.   
-The default IP and port of the virtual emulator are _127.0.0.1_ and _12345_.   
-( Users need to install the emulator by 'install_emulator.sh' )
+### **mode**
 
+- `mode:=real` → Drive a robot in reality (default IP: `192.168.127.100`, port: `12345`)
+- `mode:=virtual` → Drive a robot virtually (default IP: `127.0.0.1`, port: `12345`)
+  - Emulator starts and terminates automatically with launch lifetime.
 
-### *name* 
-- Robot Namespace (Default dsr01)
+### **name**
 
-### *host* 
-- Ip Address of Doosan Robotics Controller  (Default 192.168.137.100)   
-If users would like to launch virtually, you need to specify host:=127.0.0.1 (the emulator is installed in localhost)
+- Robot namespace (Default: `dsr01`)
 
-### *port* 
-- Port of Doosan Robotics Controller (Default 12345)
+### **host**
 
-### *model*
-- Model Inforamtion (Doosan robot model name)
+- IP Address of **Doosan Robotics Controller**
+  - Default: `192.168.137.100`
+  - Virtual mode: `127.0.0.1`
 
-### *color*
-- Select white/blue (Only white in case of E0609)
+### **port**
 
-### *gui*
-- Activate/Deactivate GUI (true/false)
+- Port of **Doosan Robotics Controller** (Default: `12345`)
 
-### *gz*
-- Activate/Deactivate Gazebo Sim (true/false) 
+### **model**
 
+- Doosan robot model name
 
-## Tutorial
-[demo.webm](https://github.com/user-attachments/assets/bd91aea0-b8b6-4ce1-9040-9ab06630edbe)
+### **color**
 
----
-### Launch With Rviz2
-```bash
-## Real Mode
-## User needs to match host and port according to real controller's
-$ ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=real host:=192.168.137.100 port:=12345 model:=m1013
-```
+- Select `white` or `blue` (Only `white` for E0609)
 
-```bash
-## Virtual Mode
-## User need to specify port (the virtual controller automatically starts on it)
-$ ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=virtual host:=127.0.0.1 port:=12345 model:=m1013
-```
+### **gui**
+
+- Activate/Deactivate GUI (`true`/`false`)
+
+### **gz**
+
+- Activate/Deactivate Gazebo Simulation (`true`/`false`)
 
 ---
-### Launch With Gazebo Sim
-```bash
-## Real Mode
-$ ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=real host:=192.168.137.100 model:=m1013
-```
-```bash
-## Virtual Mode
-$ ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12346 name:=dsr01 x:=0 y:=0
 
-## Additionally, you can add adittional arms for multi controls by spawning sperate ones. 
-## Keep in mind. you need to distinguish 'port' for controller,
-## 'name' for robot namespace, location for loading on gazebo without collisions. 
-$ ros2 launch dsr_bringup2 dsr_bringup2_spawn_on_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12347 name:=dsr02 x:=2 y:=2
-```
+## Tutorials
 
----
-### Launch With Moveit2
-#### Caution : If you use Moveit2 function, Controller version should be required over 2.12.
+### Launch with **Rviz2**
 
+#### **Real Mode**
 
 ```bash
-## Real mode
-$ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=real model:=m1013 host:=192.168.137.100
+ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=real host:=192.168.137.100 port:=12345 model:=m1013
 ```
+
+#### **Virtual Mode**
+
 ```bash
-## Virtual Mode
-$ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=virtual model:=m1013 host:=127.0.0.1 
+ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=virtual host:=127.0.0.1 port:=12345 model:=m1013
 ```
+
+### Launch with **Gazebo Simulation**
+
+#### **Real Mode**
+
+```bash
+ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=real host:=192.168.137.100 model:=m1013
+```
+
+#### **Virtual Mode**
+
+```bash
+ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12346 name:=dsr01 x:=0 y:=0
+```
+
+To add additional arms for multi-control:
+
+```bash
+ros2 launch dsr_bringup2 dsr_bringup2_spawn_on_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12347 name:=dsr02 x:=2 y:=2
+```
+
+**Note:** Ensure each additional arm has a unique `port`, `name`, and location (`x`, `y`) to avoid collisions in Gazebo.
+
+### Launch with **MoveIt2**
+
+⚠ **Caution:** MoveIt2 requires Controller Version **2.12 or higher**.
+
+#### **Real Mode**
+
+```bash
+ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=real model:=m1013 host:=192.168.137.100
+```
+
+#### **Virtual Mode**
+
+```bash
+ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=virtual model:=m1013 host:=127.0.0.1
+```
+
+## Additional Resources
+
+[Demo Video](https://github.com/user-attachments/assets/bd91aea0-b8b6-4ce1-9040-9ab06630edbe)
 
