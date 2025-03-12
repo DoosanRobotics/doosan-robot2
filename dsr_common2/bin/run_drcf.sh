@@ -34,7 +34,7 @@ if [ "$(docker ps -q -f name=$container_name)" ]; then
     docker ps -a --filter name=emulator -q | xargs -r docker rm -f
 fi
 # run
-docker run -dit --rm --name $container_name --env ROBOT_MODEL=${2^^} -p $server_port:12345 $emulator_image
+docker run -dit --privileged --rm --name $container_name --env ROBOT_MODEL=${2^^} -p $server_port:12345 $emulator_image
 
 
 if [ `getconf LONG_BIT` = "64" ]
