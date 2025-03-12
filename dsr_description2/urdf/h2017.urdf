@@ -22,6 +22,7 @@
 					</geometry>
 				</visual>
 			</link>
+		<link name="base"/>
 		<joint name="base_link-base" type="fixed">
 			<origin rpy="0 0 0" xyz="0 0 0.450"/>
 			<parent link="base_link"/>
