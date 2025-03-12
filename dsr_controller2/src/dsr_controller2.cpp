@@ -94,7 +94,7 @@ void check_dsr_model(std::array<float, NUM_JOINT>& target_joint){
     if (m_model == "p3020"){
         if (3 < target_joint.size() && target_joint[3] != 0.0) {
             RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
-                        "p3020 is a 5-axis model, so the value of target_pos[%zu] cannot be specified by (%.6f).", 3, target_joint[3]);
+                        "p3020 is a 5-axis model, so the value of target_pos[3] cannot be specified by (%.6f).", target_joint[3]);
             target_joint[3] = 0.0;
         }
     }
@@ -216,7 +216,7 @@ auto set_safety_mode_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetSafety
 //----- MOTION Service Call-back functions ------------------------------------------------------------
 auto movej_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveJoint::Request> req, std::shared_ptr<dsr_msgs2::srv::MoveJoint::Response> res)-> void
 {   
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movej_cb() %p", Drfl);
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movej_cb() %p", (void*) Drfl);
     res->success = false;
     std::array<float, NUM_JOINT> target_pos;
     std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
@@ -1617,20 +1617,20 @@ auto connect_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Connec
     res->success = Drfl->connect_rt_control(req->ip_address, req->port);
 };
 
-auto disconnect_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::DisconnectRtControl::Request> req, 
+auto disconnect_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::DisconnectRtControl::Request> /*req*/, 
                                        std::shared_ptr<dsr_msgs2::srv::DisconnectRtControl::Response> res) -> void 
 {
     res->success = Drfl->disconnect_rt_control();
 };
 
-auto get_rt_control_output_version_list_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetRtControlOutputVersionList::Request> req, 
+auto get_rt_control_output_version_list_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetRtControlOutputVersionList::Request> /*req*/, 
                                                     std::shared_ptr<dsr_msgs2::srv::GetRtControlOutputVersionList::Response> res) -> void 
 {
     res->version = Drfl->get_rt_control_output_version_list();
     res->success = true;
 };
 
-auto get_rt_control_input_version_list_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetRtControlInputVersionList::Request> req, 
+auto get_rt_control_input_version_list_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetRtControlInputVersionList::Request> /*req*/, 
                                                    std::shared_ptr<dsr_msgs2::srv::GetRtControlInputVersionList::Response> res) -> void 
 {
     res->version = Drfl->get_rt_control_input_version_list();
@@ -1663,13 +1663,13 @@ auto set_rt_control_output_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Set
     res->success = Drfl->set_rt_control_output(req->version, req->period, req->loss);
 };
 
-auto start_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::StartRtControl::Request> req, 
+auto start_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::StartRtControl::Request> /*req*/, 
                                   std::shared_ptr<dsr_msgs2::srv::StartRtControl::Response> res) -> void 
 {
     res->success = Drfl->start_rt_control();
 };
 
-auto stop_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::StopRtControl::Request> req, 
+auto stop_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::StopRtControl::Request> /*req*/, 
                                  std::shared_ptr<dsr_msgs2::srv::StopRtControl::Response> res) -> void 
 {
     res->success = Drfl->stop_rt_control();
@@ -1703,7 +1703,7 @@ auto set_accx_rt_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetAccxRt::Re
     res->success = Drfl->set_accx_rt(req->trans, req->rotation);
 };
 
-auto read_data_rt_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ReadDataRt::Request> req, 
+auto read_data_rt_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ReadDataRt::Request> /*req*/, 
                               std::shared_ptr<dsr_msgs2::srv::ReadDataRt::Response> res) -> void 
 {
     LPRT_OUTPUT_DATA_LIST temp = Drfl->read_data_rt();
@@ -2115,7 +2115,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
 }
 
 controller_interface::return_type RobotController::update(
-  const rclcpp::Time & time, const rclcpp::Duration & /*period*/)
+  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
     return controller_interface::return_type::OK;
 }

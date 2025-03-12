@@ -280,7 +280,8 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     else                    g_bIsEmulatorMode = false;
 
     //--- Get version -------------------------------------            
-    SYSTEM_VERSION tSysVerion = {'\0', };
+    SYSTEM_VERSION tSysVerion;
+    memset(&tSysVerion, 0, sizeof(tSysVerion));
     assert(Drfl.get_system_version(&tSysVerion));
 
     //--- Get DRCF version & convert to integer  ----------            
@@ -456,7 +457,7 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
 
 bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<double>& rhs) {
     double var = 0;
-    for(int i=0; i<lhs.size(); i++) {
+    for(size_t i=0; i<lhs.size(); i++) {
         var += abs(lhs[i] - rhs[i]);
     }
     return var >= 0.0001;
@@ -594,7 +595,7 @@ void DSRInterface::OnHommingCompletedCB()
     g_stDrState.bHommingCompleted = TRUE;
 }
 
-void DSRInterface::OnProgramStoppedCB(const PROGRAM_STOP_CAUSE iStopCause)
+void DSRInterface::OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/)
 {
     // cout << "[callback OnProgramStoppedCB] Program Stop: " << (int)iStopCause << endl;
     g_stDrState.bDrlStopped = TRUE;
