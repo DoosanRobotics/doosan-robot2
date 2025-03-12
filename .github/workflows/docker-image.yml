@@ -2,9 +2,9 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "humble-devel" ]
+    branches: [ "humble" ]
   pull_request:
-    branches: [ "humble-devel" ]
+    branches: [ "humble" ]
 
 jobs:
   test_docker: # On Linux, iterates on all ROS 1 and ROS 2 distributions.
