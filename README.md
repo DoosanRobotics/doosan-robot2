@@ -28,7 +28,10 @@ sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget \
                         ros-humble-control-msgs ros-humble-realtime-tools ros-humble-xacro \
                         ros-humble-joint-state-publisher-gui ros-humble-ros2-control \
                         ros-humble-ros2-controllers ros-humble-gazebo-msgs ros-humble-moveit-msgs \
-                        dbus-x11 ros-humble-moveit-configs-utils ros-humble-moveit-ros-move-group
+                        dbus-x11 ros-humble-moveit-configs-utils ros-humble-moveit-ros-move-group \
+                        ros-humble-gazebo-ros-pkgs ros-humble-ros-gz-sim ros-humble-ign-ros2-control
+
+
 ```
 
 ### Install Gazebo Simulation
@@ -53,7 +56,6 @@ Clone the required repositories:
 
 ```bash
 git clone -b humble https://github.com/doosan-robotics/doosan-robot2.git
-git clone -b humble https://github.com/ros-controls/gz_ros2_control
 ```
 
 Install dependencies:
