@@ -13,7 +13,7 @@
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
-  <test_depend>dsr_msgs</test_depend>
+  <test_depend>dsr_msgs2</test_depend>
   <export>
     <build_type>ament_python</build_type>
   </export>
