@@ -308,6 +308,8 @@ auto movesj_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSplineJoint::R
         for(int j=0; j<NUM_JOINT; j++){
             std_msgs::msg::Float64MultiArray pos = req->pos.at(i);
             fTargetPos[i][j] = pos.data[j];
+            fTargetVel[j] = req->vel[j];
+            fTargetAcc[j] = req->acc[j];
         }
         std::array<float, NUM_JOINT> target_pos;
         std::copy(std::begin(fTargetPos[i]), std::end(fTargetPos[i]), target_pos.begin());
@@ -315,15 +317,26 @@ auto movesj_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSplineJoint::R
         std::copy(target_pos.begin(), target_pos.end(), std::begin(fTargetPos[i]));
         
     }
+    
+    std::array<float, NUM_JOINT> target_vel;
+    std::array<float, NUM_JOINT> target_acc;
+    std::copy(std::begin(fTargetVel), std::end(fTargetVel), target_vel.begin());
+    std::copy(std::begin(fTargetAcc), std::end(fTargetAcc), target_acc.begin());
+    check_dsr_model(target_vel);
+    check_dsr_model(target_acc);
+    std::copy(target_vel.begin(), target_vel.end(), std::begin(fTargetVel));
+    std::copy(target_acc.begin(), target_acc.end(), std::begin(fTargetAcc));
+
+
     if(req->sync_type == 0){
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->movesj");
-        //res->success = Drfl->MoveSJ(fTargetPos, req->pos_cnt, req->vel, req->acc, req->time, (MOVE_MODE)req->mode);
-        res->success = Drfl->movesj(fTargetPos, req->pos_cnt, fTargetVel[0], fTargetAcc[0], req->time, (MOVE_MODE)req->mode); //need updata API
+        //res->success = Drfl->MoveSJ(fTargetPos, req->pos_cnt, fTargetVel, req->acc, req->time, (MOVE_MODE)req->mode);
+        res->success = Drfl->movesj(fTargetPos, req->pos_cnt, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode); //need updata API
     }
     else{
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->amovesj");
-        //res->success = Drfl->MoveSJAsync(fTargetPos, req->pos_cnt, req->vel, req->acc, req->time, (MOVE_MODE)req->mode);
-        res->success = Drfl->amovesj(fTargetPos, req->pos_cnt, fTargetVel[0], fTargetAcc[0], req->time, (MOVE_MODE)req->mode); //need updata API
+        //res->success = Drfl->MoveSJAsync(fTargetPos, req->pos_cnt, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode);
+        res->success = Drfl->amovesj(fTargetPos, req->pos_cnt, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode); //need updata API
     }
 };
 
