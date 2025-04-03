@@ -243,10 +243,10 @@
 				</geometry>
 			</visual>
 		</link>
-		<link name="tool0"/>
+	<!-- <link name="tool0"/>
   <joint name="joint_6-tool0" type="fixed">
     <origin rpy="3.1415926535 -1.570796327 0" xyz="0 0 0"/>
     <parent link="link_6"/>
     <child link="tool0"/>
-  </joint>
+  </joint> -->
 </robot>
