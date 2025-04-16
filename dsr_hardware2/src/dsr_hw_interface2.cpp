@@ -365,7 +365,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         if (!Drfl.set_accj_rt(limit)) return CallbackReturn::ERROR;
     }
     
-    Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
     return CallbackReturn::SUCCESS;
 }
 
@@ -489,7 +488,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
             // move_joint (drfl) API internally sent safety_off right after moving. 
             // which occurs problems like :
             // "move_joint service command -> trajectory command => error ! "
-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE);
             idle = false;
         }
 
@@ -510,6 +509,9 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         }
         pre_joint_position_command_ = joint_position_command_;
         return return_type::OK;
+    }
+    if(false == idle) {
+       Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_STOP);
     }
     idle = true;
     pre_joint_position_command_ = joint_position_command_;
