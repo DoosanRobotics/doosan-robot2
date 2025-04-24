@@ -26,6 +26,7 @@
   <depend>trajectory_msgs</depend> 
   <depend>moveit_msgs</depend> 
   <depend>yaml-cpp</depend> 
+  <depend>libpoco-dev</depend>
   
   <build_depend>dsr_msgs2</build_depend>
 

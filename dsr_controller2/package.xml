@@ -28,6 +28,7 @@
   <depend>dsr_hardware2</depend>
   <depend>yaml-cpp</depend> 
   <depend>ament_index_cpp</depend>
+  <depend>libpoco-dev</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>controller_manager</test_depend>
