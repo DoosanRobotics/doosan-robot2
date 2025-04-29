@@ -21,7 +21,7 @@
       dsr_position_controller:
         type: forward_command_controller/ForwardCommandController
 
-dsr_controller2:
+/**/dsr_controller2:
   ros__parameters:
     joints:
       - joint_1
@@ -31,7 +31,7 @@ dsr_controller2:
       - joint_5
       - joint_6
       
-dsr_position_controller:
+/**/dsr_position_controller:
   ros__parameters:
     joints:
       - joint_1
@@ -50,7 +50,7 @@ dsr_position_controller:
     #   - position
     #   - velocity
 
-dsr_joint_trajectory:
+/**/dsr_joint_trajectory:
   ros__parameters:
     joints:
       - joint_1
@@ -68,7 +68,7 @@ dsr_joint_trajectory:
       - position
       - velocity
 
-dsr_moveit_controller:
+/**/dsr_moveit_controller:
   ros__parameters:
     command_interfaces:
       - position
