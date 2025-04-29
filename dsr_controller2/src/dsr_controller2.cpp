@@ -712,6 +712,10 @@ auto get_current_posx_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetCurre
 #endif
 
     LPROBOT_TASK_POSE cur_posx = Drfl->get_current_posx((COORDINATE_SYSTEM)req->ref);
+    if(nullptr == cur_posx) {
+        res->success = false;
+        return;
+    }
     arr.data.clear();
     for (int i = 0; i < NUM_TASK; i++){
         arr.data.push_back(cur_posx->_fTargetPos[i]);
