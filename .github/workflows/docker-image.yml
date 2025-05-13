@@ -5,7 +5,6 @@ on:
     branches: [ "humble" ]
   pull_request:
     branches: [ "humble" ]
-
 jobs:
   doosan-jobs: 
     runs-on: linux_x86_8core_runner 
@@ -91,4 +90,5 @@ jobs:
                         dsr_controller2      
                         dsr_msgs2
                         dsr_tests
+                        
           target-ros2-distro: ${{ matrix.ros_distribution }}
