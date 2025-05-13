@@ -8,7 +8,7 @@ on:
 
 jobs:
   doosan-jobs: 
-    runs-on: linux_x86_8core_runner
+    runs-on: linux_x86_8core_runner 
     timeout-minutes: 25
     strategy:
       matrix:
