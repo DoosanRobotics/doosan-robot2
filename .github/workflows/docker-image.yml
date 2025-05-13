@@ -7,64 +7,70 @@ on:
     branches: [ "humble" ]
 
 jobs:
-  test_docker: # On Linux, iterates on all ROS 1 and ROS 2 distributions.
-    runs-on: ubuntu-latest
+  doosan-jobs: 
+    runs-on: linux_x86_8core_runner
+    timeout-minutes: 25
     strategy:
       matrix:
         ros_distribution:
           - humble
         include:
-          # Humble Hawksbill (May 2022 - May 2027)
           - docker_image: ubuntu:jammy
             ros_distribution: humble
             ros_version: 2
-    container:
-      image: ${{ matrix.docker_image }}
+    services:
+      emulator-server:
+        image: doosanrobot/dsr_emulator:3.0.1
+        ports:
+          - 12345:12345
+        options: --name emulator -i
+    env:
+      TEST_ON_CLOUD: true
     steps:
       - name: setup ROS environment 
         uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: ${{ matrix.ros_distribution }}
+
       - name: doosan dependencies install - poco
-        run: apt-get install -y libpoco-dev libyaml-cpp-dev dbus-x11
+        run: sudo apt-get install -y libpoco-dev libyaml-cpp-dev dbus-x11
   
       - name: doosan dependencies install - Docker 
-        run: apt-get update && apt-get install -y ca-certificates curl && install -m 0755 -d /etc/apt/keyrings &&
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc &&
-            chmod a+r /etc/apt/keyrings/docker.asc && 
-            echo \
+        run: sudo apt-get update && sudo apt-get install -y ca-certificates && sudo install -m 0755 -d /etc/apt/keyrings &&
+            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc &&
+            sudo chmod a+r /etc/apt/keyrings/docker.asc && 
+            sudo echo \
             "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu 
             $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | 
-            tee /etc/apt/sources.list.d/docker.list > /dev/null
-            
-      - name: doosan dependencies install - Emulator
-        run: apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &&
-            docker pull doosanrobot/dsr_emulator:3.0.1
-            
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+      - name: doosan emulator start
+        run: sudo docker start emulator
+
       - name: build and test ROS 2
         if: ${{ matrix.ros_version == 2 }}
         uses: ros-tooling/action-ros-ci@v0.3
         with:
-          package-name:  dsr_moveit_config_a0912
-                         dsr_moveit_config_h2515  
-                         dsr_moveit_config_m1509  
-                         dsr_moveit_config_e0509      
-                         dsr_moveit_config_m0609  
-                         dsr_moveit_config_m0617       
-                         dsr_moveit_config_a0509       
-                         dsr_moveit_config_h2017     
-                         dsr_moveit_config_m1013
-                         dsr_moveit_config_p3020
-                         dsr_description2 
-                         dsr_common2              
-                         dsr_gazebo2       
-                         dsr_realtime_control
-                         dsr_bringup2         
-                         dsr_hardware2     
-                         dsr_example               
-                         dsr_visualservoing
-                         dsr_controller2      
-                         dsr_msgs2         
-          # all packages except for 'dsr_tests'
-          
+          package-name: dsr_moveit_config_a0912
+                        dsr_tests
+                        dsr_moveit_config_h2515  
+                        dsr_moveit_config_m1509  
+                        dsr_moveit_config_e0509      
+                        dsr_moveit_config_m0609  
+                        dsr_moveit_config_m0617       
+                        dsr_moveit_config_a0509       
+                        dsr_moveit_config_h2017     
+                        dsr_moveit_config_m1013
+                        dsr_moveit_config_p3020
+                        dsr_description2 
+                        dsr_common2              
+                        dsr_gazebo2       
+                        dsr_realtime_control
+                        dsr_bringup2         
+                        dsr_hardware2     
+                        dsr_example               
+                        dsr_visualservoing
+                        dsr_controller2      
+                        dsr_msgs2
+                        dsr_tests
           target-ros2-distro: ${{ matrix.ros_distribution }}

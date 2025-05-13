@@ -15,7 +15,7 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument, TimerAction
 from launch.event_handlers import OnProcessExit
-
+from launch.conditions import IfCondition
 
 def generate_launch_description():
     ARGUMENTS =[ 
@@ -26,9 +26,12 @@ def generate_launch_description():
         DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
+        DeclareLaunchArgument('rviz',   default_value = 'false',     description = 'Start RViz2'    ),
+        DeclareLaunchArgument('start_emulator',   default_value = 'false',     description = 'Start emulator'    ),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
-    # gui = LaunchConfiguration("gui")
+    rviz = LaunchConfiguration("rviz")
+    start_emulator = LaunchConfiguration("start_emulator")
     
     # Get URDF via xacro
     robot_description_content = Command(
@@ -96,6 +99,7 @@ def generate_launch_description():
             #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
         ],
         output="screen",
+        condition=IfCondition(start_emulator),
     )
 
     control_node = Node(
@@ -126,7 +130,7 @@ def generate_launch_description():
         name="rviz2",
         output="log",
         arguments=["-d", rviz_config_file],
-        # condition=IfCondition(gui),
+        condition=IfCondition(rviz),
     )
     
     # Delay start of robot_controller after `joint_state_broadcaster`
@@ -136,7 +140,6 @@ def generate_launch_description():
             on_exit=[control_node],
         )
     )
-    
 
     nodes = [
         set_config_node,

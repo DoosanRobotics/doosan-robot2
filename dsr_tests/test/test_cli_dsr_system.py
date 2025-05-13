@@ -9,6 +9,7 @@ from dsr_msgs2.srv import *
 import rclpy.duration
 from std_msgs.msg import Float64MultiArray, MultiArrayDimension
 import rclpy.type_support
+import os
 
 ### !Note: Currently, real mode doesn't work. (TODO)
 MODE = 'virtual'
@@ -17,6 +18,19 @@ MODEL = 'm1013'
 SRV_CALL_TIMEOUT = 30	
 PORT = 12345
 
+RVIZ = True
+START_EMULATOR = True 
+
+
+
+### In case of cloud ci pipeline, 
+### we don't need turn on rviz and 
+### emulator should be already setup at pipeline configuration.
+if os.getenv("TEST_ON_CLOUD", "false") == "true":
+	print("START TEST CODE ON CLOUD ENVIRONMENT !!")
+	RVIZ = False
+	START_EMULATOR = False
+	
 
 @pytest.fixture(scope='session', autouse=True)
 def bringUp():
@@ -29,7 +43,9 @@ def bringUp():
 			"dsr_bringup_without_spawner_test.launch.py",
 			"mode:={}".format(MODE),
 			"name:={}".format(NAMESPACE),
-			"port:={}".format(PORT)
+			"port:={}".format(PORT),
+			"rviz:={}".format(RVIZ),
+			"start_emulator:={}".format(START_EMULATOR)
 			],
 			stdout=subprocess.PIPE,
 			stderr=subprocess.STDOUT,
