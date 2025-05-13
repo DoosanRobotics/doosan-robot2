@@ -47,6 +47,24 @@ jobs:
       - name: doosan emulator start
         run: sudo docker start emulator
 
+      - name: Check if port is open on localhost
+        run: |
+          PORT=12345  # Set the port you want to check
+          TIMEOUT=60  # Timeout for 1 minute
+          END_TIME=$(( $(date +%s) + TIMEOUT ))
+
+          echo "Checking if port $PORT is open on localhost for 1 minute..."
+          while [ $(date +%s) -lt $END_TIME ]; do
+            if nc -z localhost $PORT; then
+              echo "Port $PORT is open!"
+              exit 0
+            fi
+            echo "Port $PORT is not open. Retrying in 5 seconds..."
+            sleep 5
+          done
+          echo "Port $PORT is not open after 1 minute."
+          exit 1
+
       - name: build and test ROS 2
         if: ${{ matrix.ros_version == 2 }}
         uses: ros-tooling/action-ros-ci@v0.3
