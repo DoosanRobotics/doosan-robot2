@@ -62,8 +62,7 @@ jobs:
             sleep 5
           done
           echo "Port $PORT is not open after 1 minute."
-          exit 1
-
+          exit 1 
       - name: build and test ROS 2
         if: ${{ matrix.ros_version == 2 }}
         uses: ros-tooling/action-ros-ci@v0.3
