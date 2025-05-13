@@ -69,7 +69,6 @@ jobs:
         uses: ros-tooling/action-ros-ci@v0.3
         with:
           package-name: dsr_moveit_config_a0912
-                        dsr_tests
                         dsr_moveit_config_h2515  
                         dsr_moveit_config_m1509  
                         dsr_moveit_config_e0509      
