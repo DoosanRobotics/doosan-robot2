@@ -30,8 +30,6 @@ from ament_index_python.packages import get_package_share_directory
 from launch.actions import IncludeLaunchDescription, SetLaunchConfiguration
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.actions import OpaqueFunction
-from launch.launch_context import LaunchContext
 
 def print_launch_configuration_value(context, *args, **kwargs):
     gz_value = LaunchConfiguration('gz').perform(context)
@@ -94,28 +92,6 @@ def generate_launch_description():
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
     )
     
-    set_config_node = Node(
-        package="dsr_bringup2",
-        executable="set_config",
-        namespace=LaunchConfiguration('name'),
-        parameters=[
-            {"name":    LaunchConfiguration('name')  }, 
-            {"rate":    100         },
-            {"standby": 5000        },
-            {"command": True        },
-            {"host":    LaunchConfiguration('host')  },
-            {"port":    LaunchConfiguration('port')  },
-            {"mode":    LaunchConfiguration('mode')  },
-            {"model":   LaunchConfiguration('model') },
-            {"gripper": "none"      },
-            {"mobile":  "none"      },
-            {"rt_host":  LaunchConfiguration('rt_host')      },
-            #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
-        ],
-        output="screen",
-    )
-    
-    run_emulator = LaunchConfiguration('run_emulator')
     run_emulator_node = Node(
         package="dsr_bringup2",
         executable="run_emulator",
@@ -249,17 +225,9 @@ def generate_launch_description():
         )
     )
     
-    # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_control_node_after_connection_node = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=set_config_node,
-            on_exit=[control_node],
-        )
-    )
 
     nodes = [
         set_use_sim_time,
-        set_config_node,
         run_emulator_node,
         gazebo_connection_node,
         original_tf_nodes,
@@ -267,7 +235,7 @@ def generate_launch_description():
         robot_controller_spawner,
         joint_state_broadcaster_spawner,
         included_launch_after_robot_controller_spawner,
-        delay_control_node_after_connection_node,
+        control_node,
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

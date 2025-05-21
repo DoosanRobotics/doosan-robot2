@@ -35,11 +35,15 @@ def generate_robot_description_action(context, *args, **kwargs):
     dynamic_yaml = LaunchConfiguration('dynamic_yaml').perform(context).lower() == 'true'
     model = LaunchConfiguration('model').perform(context)
     color = LaunchConfiguration('color').perform(context)
-    gripper = LaunchConfiguration('gripper').perform(context)
+    name = LaunchConfiguration('name').perform(context)
+    host = LaunchConfiguration('host').perform(context)
+    rt_host = LaunchConfiguration('rt_host').perform(context)
+    port = LaunchConfiguration('port').perform(context)
+    mode = LaunchConfiguration('mode').perform(context)
 
     # Parse URDF to extract active and passive joints
-    urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, gripper)
-    print(f"[DEBUG] model={model}, gripper={gripper}")
+    urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, name, host, rt_host, port, mode)
+    print(f"[DEBUG] model={model}, color={color}, name={name}, host={host}, rt_host={rt_host}, port={port}, mode={mode}")
     print(f"[DEBUG] active_joints={active_joints}")
     print(f"[DEBUG] passive_joints={passive_joints}")
 
@@ -131,7 +135,6 @@ def control_node_fn(context):
         gripper_yaml = os.path.join(pkg_share, "config", "gripper_controller.yaml")
         params.append(gripper_yaml)
         print(f"[INFO] Including gripper YAML in controller_manager: {gripper_yaml}")
-
     node = Node(
         package="controller_manager",
         executable="ros2_control_node",
@@ -173,27 +176,6 @@ def generate_launch_description():
 
     # Build robot_description and select controller YAML
     robot_description_action = OpaqueFunction(function=generate_robot_description_action)
-
-    # Run set_config
-    set_config_node = Node(
-        package="dsr_bringup2",
-        executable="set_config",
-        namespace=LaunchConfiguration('name'),
-        parameters=[{
-            "name": LaunchConfiguration('name'),
-            "rate": 100,
-            "standby": 5000,
-            "command": True,
-            "host": LaunchConfiguration('host'),
-            "port": LaunchConfiguration('port'),
-            "mode": LaunchConfiguration('mode'),
-            "model": LaunchConfiguration('model'),
-            "gripper": LaunchConfiguration('gripper'),
-            "mobile": "none",
-            "rt_host": LaunchConfiguration('rt_host'),
-        }],
-        output="screen",
-    )
 
     # Run emulator
     run_emulator_node = Node(
@@ -258,44 +240,29 @@ def generate_launch_description():
     # MoveGroup + (optional) RViz
     rviz_and_move_group = OpaqueFunction(function=rviz_and_move_group_fn)
 
-    # A) After set_config exits, start controller manager and then (after a short delay) spawn joint_state_broadcaster.
-    delay_control_node_after_set_config = RegisterEventHandler(
-        OnProcessExit(
-            target_action=set_config_node,
-            on_exit=[
-                LogInfo(msg=">> [STEP 1 COMPLETED] set_config finished. Starting ros2_control_node..."),
-                control_node,
-                TimerAction(period=1.0, actions=[
-                    LogInfo(msg=">> [STEP 1B] Spawning joint_state_broadcaster..."),
-                    joint_state_broadcaster_spawner
-                ]),
-            ],
-        )
-    )
-
-    # B) Once joint_state_broadcaster is active, spawn dsr_controller2 (arm controller).
+    # A) Once joint_state_broadcaster is active, spawn dsr_controller2 (arm controller).
     delay_robot_controller_after_joint_state = RegisterEventHandler(
         OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[
-                LogInfo(msg=">> [STEP 2 COMPLETED] joint_state_broadcaster active. Starting dsr_controller2..."),
+                LogInfo(msg=">> [STEP 1 COMPLETED] joint_state_broadcaster active. Starting dsr_controller2..."),
                 robot_controller_spawner
             ],
         )
     )
 
-    # C) After dsr_controller2 becomes active, (conditionally) spawn the gripper position controller.
+    # B) After dsr_controller2 becomes active, (conditionally) spawn the gripper position controller.
     delay_gripper_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
             on_exit=[
-                LogInfo(msg=">> [STEP 3A] dsr_controller2 active. (cond) starting gripper_position_controller..."),
+                LogInfo(msg=">> [STEP 2] dsr_controller2 active. (cond) starting gripper_position_controller..."),
                 OpaqueFunction(function=gripper_spawner_fn),
             ],
         )
     )
 
-    # D) After dsr_controller2 becomes active, spawn dsr_moveit_controller (MoveIt-compatible trajectory controller).
+    # C) After dsr_controller2 becomes active, spawn dsr_moveit_controller (MoveIt-compatible trajectory controller).
     delay_dsr_moveit_controller_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
@@ -306,7 +273,7 @@ def generate_launch_description():
         )
     )
 
-    # E) After dsr_moveit_controller is active, start MoveGroup (and RViz if gui=true).
+    # D) After dsr_moveit_controller is active, start MoveGroup (and RViz if gui=true).
     delay_rviz_after_moveit_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=dsr_moveit_controller_spawner,
@@ -320,10 +287,10 @@ def generate_launch_description():
     nodes = [
         LogInfo(msg=">> [START] Launching Doosan Robot Bringup with MoveIt2..."),
         robot_description_action,
-        set_config_node,
         run_emulator_node,
         robot_state_pub_node,
-        delay_control_node_after_set_config,
+        control_node,
+        joint_state_broadcaster_spawner,
         delay_robot_controller_after_joint_state,
         delay_gripper_after_robot_controller,
         delay_dsr_moveit_controller_after_robot_controller,

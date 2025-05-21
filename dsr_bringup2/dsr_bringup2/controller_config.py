@@ -53,7 +53,7 @@ def adjust_dsr_controller_yaml(yaml_path, active_joints, passive_joints):
     return temp_yaml
 
 
-def parse_joints_from_urdf(model, color=None, gripper='none'):
+def parse_joints_from_urdf(model, color=None, name=None, host=None, rt_host=None, port=None, mode=None):
     if color is None:
         color = "white"
 
@@ -64,7 +64,17 @@ def parse_joints_from_urdf(model, color=None, gripper='none'):
     )
 
     urdf_xml = subprocess.check_output(
-        ['xacro', xacro_file, f'color:={color}', f'gripper:={gripper}']
+        [
+            'xacro',
+            xacro_file,
+            f'color:={color}',
+            f'name:={name}',
+            f'host:={host}',
+            f'rt_host:={rt_host}',
+            f'port:={port}',
+            f'mode:={mode}',
+            f'model:={model}',
+        ]
     ).decode('utf-8')
 
     robot_model = URDF.from_xml_string(urdf_xml)

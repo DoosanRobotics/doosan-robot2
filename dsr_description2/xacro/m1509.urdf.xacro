@@ -1,9 +1,15 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="m1509" >
 
-  <xacro:arg name="mode"           default="virtual"/>   
-  <xacro:arg name="color"          default="white"/>      
-  <xacro:arg name="namespace"      default=""/>
+  <xacro:arg name="color"   default="white"/>
+  <xacro:arg name="gripper" default="none"/>
+  <xacro:arg name="namespace" default=""/>
+  <xacro:arg name="use_gazebo" default="false"/>
+  <xacro:arg name="host" default=""/>
+  <xacro:arg name="port" default=""/>
+  <xacro:arg name="rt_host" default=""/>
+  <xacro:arg name="mode" default=""/>
+  <xacro:arg name="model" default=""/>
 
   <!-- gripper control argument -->
   <xacro:arg name="gripper"              default="none"/>         <!-- none | robotique -->
@@ -12,6 +18,11 @@
 
   <xacro:arg name="use_gazebo" default="false"/>
   <xacro:property name="gz" value="$(arg use_gazebo)"/>
+  <xacro:property name="host" value="$(arg host)"/>
+  <xacro:property name="rt_host" value="$(arg rt_host)"/>
+  <xacro:property name="port" value="$(arg port)"/>
+  <xacro:property name="mode" value="$(arg mode)"/>
+  <xacro:property name="model" value="$(arg model)"/>
 
   <xacro:property name="cr" value="$(arg color)"/>
 
@@ -37,8 +48,15 @@
     <xacro:m1509_gz_ros2_control namespace="$(arg namespace)"/>
   </xacro:if>
   <xacro:unless value="${gz}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/m1509.ros2_control.xacro"/>
-    <xacro:m1509_ros2_control name="m1509"/>
+    <xacro:include filename="$(find dsr_description2)/ros2_control/m1509.ros2_control.xacro" />
+    <xacro:m1509_ros2_control
+      name="m1509"
+      host="${host}"
+      rt_host="${rt_host}"
+      port="${port}"
+      mode="${mode}"
+      model="${model}"
+    />
   </xacro:unless>
 
   <xacro:if value="${gr == 'robotiq_2f85'}">
