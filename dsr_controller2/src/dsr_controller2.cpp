@@ -30,14 +30,42 @@ using namespace DRAFramework;
 extern void* get_drfl();
 CDRFLEx *Drfl = (CDRFLEx*)get_drfl();
 
-extern DR_STATE g_stDrState;
+DR_STATE g_stDrState;
+DR_ERROR    g_stDrError;
 
 extern bool g_bIsEmulatorMode;
-
+extern std::string g_model;
 int g_nAnalogOutputModeCh1;
 int g_nAnalogOutputModeCh2;
-// int m_nVersionDRCF;
 
+
+dsr_controller2::RobotController *instance;
+
+const char* GetRobotStateString(int nState)
+{
+    switch(nState)
+    {
+    case STATE_INITIALIZING:    return "(0) INITIALIZING";
+    case STATE_STANDBY:         return "(1) STANDBY";
+    case STATE_MOVING:          return "(2) MOVING";
+    case STATE_SAFE_OFF:        return "(3) SAFE_OFF";
+    case STATE_TEACHING:        return "(4) TEACHING";
+    case STATE_SAFE_STOP:       return "(5) SAFE_STOP";
+    case STATE_EMERGENCY_STOP:  return "(6) EMERGENCY_STOP";
+    case STATE_HOMMING:         return "(7) HOMMING";
+    case STATE_RECOVERY:        return "(8) RECOVERY";
+    case STATE_SAFE_STOP2:      return "(9) SAFE_STOP2";
+    case STATE_SAFE_OFF2:       return "(10) SAFE_OFF2";
+    case STATE_RESERVED1:       return "(11) RESERVED1";
+    case STATE_RESERVED2:       return "(12) RESERVED2";
+    case STATE_RESERVED3:       return "(13) RESERVED3";
+    case STATE_RESERVED4:       return "(14) RESERVED4";
+    case STATE_NOT_READY:       return "(15) NOT_READY";
+
+    default:                  return "UNKNOWN";
+    }
+    return "UNKNOWN";
+}
 
 namespace dsr_controller2
 {
@@ -46,21 +74,8 @@ RobotController::RobotController() : controller_interface::ControllerInterface()
 
 controller_interface::CallbackReturn RobotController::on_init()
 {
-    std::string param_name = std::string(get_node()->get_namespace()) + "_parameters.yaml";
-    std::string package_directory = ament_index_cpp::get_package_share_directory("dsr_hardware2");
-    std::string yaml_file_path = package_directory + "/config" + param_name;
-    
-    std::ifstream fin(yaml_file_path);
-    if (!fin) {
-        RCLCPP_ERROR(get_node()->get_logger(), "Failed to open YAML file: %s", yaml_file_path.c_str());
-    }
-    YAML::Node yaml_node = YAML::Load(fin);
-    fin.close();
-    if (yaml_node["model"]) {
-        m_model = yaml_node["model"].as<std::string>();
-        RCLCPP_INFO(get_node()->get_logger(), "model: %s", m_model.c_str());
-    }  
-
+    instance = this;
+    m_model = g_model;
   return CallbackReturn::SUCCESS;
 }
 
@@ -75,17 +90,23 @@ controller_interface::InterfaceConfiguration RobotController::command_interface_
 controller_interface::InterfaceConfiguration RobotController::state_interface_configuration() const
 {
   controller_interface::InterfaceConfiguration conf = {config_type::INDIVIDUAL, {}};
-
-
   return conf;
 }
 
-
-
-
 controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_lifecycle::State &)
 {
-    
+	//--- doosan API's call-back fuctions : Only work within 50msec in call-back functions
+	Drfl->set_on_tp_initializing_completed(DRFL_CALLBACKS::OnTpInitializingCompletedCB);
+	Drfl->set_on_homming_completed(DRFL_CALLBACKS::OnHommingCompletedCB);
+	Drfl->set_on_program_stopped(DRFL_CALLBACKS::OnProgramStoppedCB);
+	Drfl->set_on_monitoring_modbus(DRFL_CALLBACKS::OnMonitoringModbusCB);
+	Drfl->set_on_monitoring_data(DRFL_CALLBACKS::OnMonitoringDataCB);           // Callback function in M2.4 and earlier
+	Drfl->set_on_monitoring_ctrl_io(DRFL_CALLBACKS::OnMonitoringCtrlIOCB);       // Callback function in M2.4 and earlier
+	Drfl->set_on_monitoring_state(DRFL_CALLBACKS::OnMonitoringStateCB);//RELATED TO LOGIC
+	Drfl->set_on_monitoring_access_control(DRFL_CALLBACKS::OnMonitoringAccessControlCB);//RELATED TO LOGIC
+	Drfl->set_on_log_alarm(DRFL_CALLBACKS::OnLogAlarm);
+	// Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
+	Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
 
   return CallbackReturn::SUCCESS;
 }
@@ -1960,6 +1981,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
 };
   cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
+  error_log_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotError>("error", 100);
   // Subscription declarations
   m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb);
   m_sub_alter_motion_stream           = get_node()->create_subscription<dsr_msgs2::msg::AlterMotionStream>("alter_motion_stream", 20, alter_cb);
@@ -2161,7 +2183,431 @@ controller_interface::CallbackReturn RobotController::on_shutdown(const rclcpp_l
   return CallbackReturn::SUCCESS;
 }
 
+
+
+
+
 }  // namespace dsr_controller2
+
+
+namespace DRFL_CALLBACKS{
+	//----- register the call-back functions ----------------------------------------
+void OnTpInitializingCompletedCB()
+{
+    // request control authority after TP initialized
+    // cout << "[callback OnTpInitializingCompletedCB] tp initializing completed" << endl;
+    g_bTpInitailizingComplted = TRUE;
+    //Drfl->manage_access_control(MANAGE_ACCESS_CONTROL_REQUEST);
+    // Drfl->manage_access_control(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
+
+    g_stDrState.bTpInitialized = TRUE;
+}
+
+
+void OnHommingCompletedCB()
+{
+    g_bHommingCompleted = TRUE;
+    // Only work within 50msec
+    // cout << "[callback OnHommingCompletedCB] homming completed" << endl;
+
+    g_stDrState.bHommingCompleted = TRUE;
+}
+
+void OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/)
+{
+    // cout << "[callback OnProgramStoppedCB] Program Stop: " << (int)iStopCause << endl;
+    g_stDrState.bDrlStopped = TRUE;
+}
+// M2.4 or lower
+void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO)
+{
+    for (int i = 0; i < NUM_DIGITAL; i++){
+        if(pCtrlIO){  
+            g_stDrState.bCtrlBoxDigitalOutput[i] = pCtrlIO->_tOutput._iTargetDO[i];  
+            g_stDrState.bCtrlBoxDigitalInput[i]  = pCtrlIO->_tInput._iActualDI[i];  
+        }
+    }
+}
+
+// M3.0 or higher
+// void OnMonitoringCtrlIOEx2CB (const LPMONITORING_CTRLIO_EX2 pCtrlIO) 
+// {
+//     //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"OnMonitoringCtrlIOExCB");
+
+//     for (int i = 0; i < NUM_DIGITAL; i++){
+//         if(pCtrlIO){  
+//             g_stDrState.bCtrlBoxDigitalOutput[i] = pCtrlIO->_tOutput._iTargetDO[i];  
+//             g_stDrState.bCtrlBoxDigitalInput[i]  = pCtrlIO->_tInput._iActualDI[i];  
+//         }
+//     }
+
+//     //----- In M3.0 version or higher The following variables were added -----
+//     for (int i = 0; i < 3; i++)
+//         g_stDrState.bActualSW[i] = pCtrlIO->_tInput._iActualSW[i];
+
+//     for (int i = 0; i < 2; i++){
+//         g_stDrState.bActualSI[i] = pCtrlIO->_tInput._iActualSI[i];
+//         g_stDrState.fActualAI[i] = pCtrlIO->_tInput._fActualAI[i];
+//         g_stDrState.iActualAT[i] = pCtrlIO->_tInput._iActualAT[i];
+//         g_stDrState.fTargetAO[i] = pCtrlIO->_tOutput._fTargetAO[i];
+//         g_stDrState.iTargetAT[i] = pCtrlIO->_tOutput._iTargetAT[i];
+//         g_stDrState.bActualES[i] = pCtrlIO->_tEncoder._iActualES[i];
+//         g_stDrState.iActualED[i] = pCtrlIO->_tEncoder._iActualED[i];
+//         g_stDrState.bActualER[i] = pCtrlIO->_tEncoder._iActualER[i];
+//     }  
+//     //-------------------------------------------------------------------------
+// }
+
+// M2.5 or higher
+void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO) 
+{
+    //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"OnMonitoringCtrlIOExCB");
+
+    for (int i = 0; i < NUM_DIGITAL; i++){
+        if(pCtrlIO){  
+            g_stDrState.bCtrlBoxDigitalOutput[i] = pCtrlIO->_tOutput._iTargetDO[i];  
+            g_stDrState.bCtrlBoxDigitalInput[i]  = pCtrlIO->_tInput._iActualDI[i];  
+        }
+    }
+
+    //----- In M2.5 version or higher The following variables were added -----
+    for (int i = 0; i < 3; i++)
+        g_stDrState.bActualSW[i] = pCtrlIO->_tInput._iActualSW[i];
+
+    for (int i = 0; i < 2; i++){
+        g_stDrState.bActualSI[i] = pCtrlIO->_tInput._iActualSI[i];
+        g_stDrState.fActualAI[i] = pCtrlIO->_tInput._fActualAI[i];
+        g_stDrState.iActualAT[i] = pCtrlIO->_tInput._iActualAT[i];
+        g_stDrState.fTargetAO[i] = pCtrlIO->_tOutput._fTargetAO[i];
+        g_stDrState.iTargetAT[i] = pCtrlIO->_tOutput._iTargetAT[i];
+        g_stDrState.bActualES[i] = pCtrlIO->_tEncoder._iActualES[i];
+        g_stDrState.iActualED[i] = pCtrlIO->_tEncoder._iActualED[i];
+        g_stDrState.bActualER[i] = pCtrlIO->_tEncoder._iActualER[i];
+    }  
+    //-------------------------------------------------------------------------
+}
+
+// M2.4 or lower
+void OnMonitoringDataCB(const LPMONITORING_DATA pData)
+{
+    // This function is called every 100 msec
+    // Only work within 50msec
+    //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"OnMonitoringDataCB");
+
+    g_stDrState.nActualMode  = pData->_tCtrl._tState._iActualMode;                  // position control: 0, torque control: 1 ?????
+    g_stDrState.nActualSpace = pData->_tCtrl._tState._iActualSpace;                 // joint space: 0, task space: 1    
+
+    for (int i = 0; i < NUM_JOINT; i++){
+        if(pData){  
+            // joint         
+            g_stDrState.fCurrentPosj[i] = pData->_tCtrl._tJoint._fActualPos[i];     // Position Actual Value in INC     
+            g_stDrState.fCurrentVelj[i] = pData->_tCtrl._tJoint._fActualVel[i];     // Velocity Actual Value
+            g_stDrState.fJointAbs[i]    = pData->_tCtrl._tJoint._fActualAbs[i];     // Position Actual Value in ABS
+            g_stDrState.fJointErr[i]    = pData->_tCtrl._tJoint._fActualErr[i];     // Joint Error
+            g_stDrState.fTargetPosj[i]  = pData->_tCtrl._tJoint._fTargetPos[i];     // Target Position
+            g_stDrState.fTargetVelj[i]  = pData->_tCtrl._tJoint._fTargetVel[i];     // Target Velocity
+            // task
+            g_stDrState.fCurrentPosx[i]     = pData->_tCtrl._tTask._fActualPos[0][i];   //????? <---------이것 2개다 확인할 것  
+            g_stDrState.fCurrentToolPosx[i] = pData->_tCtrl._tTask._fActualPos[1][i];   //????? <---------이것 2개다 확인할 것  
+            g_stDrState.fCurrentVelx[i] = pData->_tCtrl._tTask._fActualVel[i];      // Velocity Actual Value
+            g_stDrState.fTaskErr[i]     = pData->_tCtrl._tTask._fActualErr[i];      // Task Error
+            g_stDrState.fTargetPosx[i]  = pData->_tCtrl._tTask._fTargetPos[i];      // Target Position
+            g_stDrState.fTargetVelx[i]  = pData->_tCtrl._tTask._fTargetVel[i];      // Target Velocity
+            // Torque
+            g_stDrState.fDynamicTor[i]  = pData->_tCtrl._tTorque._fDynamicTor[i];   // Dynamics Torque
+            g_stDrState.fActualJTS[i]   = pData->_tCtrl._tTorque._fActualJTS[i];    // Joint Torque Sensor Value
+            g_stDrState.fActualEJT[i]   = pData->_tCtrl._tTorque._fActualEJT[i];    // External Joint Torque
+            g_stDrState.fActualETT[i]   = pData->_tCtrl._tTorque._fActualETT[i];    // External Task Force/Torque
+
+            g_stDrState.nActualBK[i]    = pData->_tMisc._iActualBK[i];              // brake state     
+            g_stDrState.fActualMC[i]    = pData->_tMisc._fActualMC[i];              // motor input current
+            g_stDrState.fActualMT[i]    = pData->_tMisc._fActualMT[i];              // motor current temperature
+        }
+    }
+    g_stDrState.nSolutionSpace  = pData->_tCtrl._tTask._iSolutionSpace;             // Solution Space
+    g_stDrState.dSyncTime       = pData->_tMisc._dSyncTime;                         // inner clock counter  
+
+    for (int i = 5; i < NUM_BUTTON; i++){
+        if(pData){
+            g_stDrState.nActualBT[i]    = pData->_tMisc._iActualBT[i];              // robot button state
+        }
+    }
+
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            if(pData){
+                g_stDrState.fRotationMatrix[j][i] = pData->_tCtrl._tTask._fRotationMatrix[j][i];    // Rotation Matrix
+            }
+        }
+    }
+
+    for (int i = 0; i < NUM_FLANGE_IO; i++){
+        if(pData){
+            g_stDrState.bFlangeDigitalInput[i]  = pData->_tMisc._iActualDI[i];      // Digital Input data             
+            g_stDrState.bFlangeDigitalOutput[i] = pData->_tMisc._iActualDO[i];      // Digital output data
+        }
+    }
+}
+
+// M2.5 or higher    
+void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData)
+{
+    // This function is called every 100 msec
+    // Only work within 50msec
+    // RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    OnMonitoringDataExCB");
+
+    g_stDrState.nActualMode  = pData->_tCtrl._tState._iActualMode;                  // position control: 0, torque control: 1 ?????
+    g_stDrState.nActualSpace = pData->_tCtrl._tState._iActualSpace;                 // joint space: 0, task space: 1    
+
+    for (int i = 0; i < NUM_JOINT; i++){
+        if(pData){  
+            // joint         
+            g_stDrState.fCurrentPosj[i] = pData->_tCtrl._tJoint._fActualPos[i];     // Position Actual Value in INC     
+            g_stDrState.fCurrentVelj[i] = pData->_tCtrl._tJoint._fActualVel[i];     // Velocity Actual Value
+            g_stDrState.fJointAbs[i]    = pData->_tCtrl._tJoint._fActualAbs[i];     // Position Actual Value in ABS
+            g_stDrState.fJointErr[i]    = pData->_tCtrl._tJoint._fActualErr[i];     // Joint Error
+            g_stDrState.fTargetPosj[i]  = pData->_tCtrl._tJoint._fTargetPos[i];     // Target Position
+            g_stDrState.fTargetVelj[i]  = pData->_tCtrl._tJoint._fTargetVel[i];     // Target Velocity
+            // task
+            g_stDrState.fCurrentPosx[i]     = pData->_tCtrl._tTask._fActualPos[0][i];   //????? <---------이것 2개다 확인할 것  
+            g_stDrState.fCurrentToolPosx[i] = pData->_tCtrl._tTask._fActualPos[1][i];   //????? <---------이것 2개다 확인할 것  
+            g_stDrState.fCurrentVelx[i] = pData->_tCtrl._tTask._fActualVel[i];      // Velocity Actual Value
+            g_stDrState.fTaskErr[i]     = pData->_tCtrl._tTask._fActualErr[i];      // Task Error
+            g_stDrState.fTargetPosx[i]  = pData->_tCtrl._tTask._fTargetPos[i];      // Target Position
+            g_stDrState.fTargetVelx[i]  = pData->_tCtrl._tTask._fTargetVel[i];      // Target Velocity
+            // Torque
+            g_stDrState.fDynamicTor[i]  = pData->_tCtrl._tTorque._fDynamicTor[i];   // Dynamics Torque
+            g_stDrState.fActualJTS[i]   = pData->_tCtrl._tTorque._fActualJTS[i];    // Joint Torque Sensor Value
+            g_stDrState.fActualEJT[i]   = pData->_tCtrl._tTorque._fActualEJT[i];    // External Joint Torque
+            g_stDrState.fActualETT[i]   = pData->_tCtrl._tTorque._fActualETT[i];    // External Task Force/Torque
+
+            g_stDrState.nActualBK[i]    = pData->_tMisc._iActualBK[i];              // brake state     
+            g_stDrState.fActualMC[i]    = pData->_tMisc._fActualMC[i];              // motor input current
+            g_stDrState.fActualMT[i]    = pData->_tMisc._fActualMT[i];              // motor current temperature
+        }
+    }
+    g_stDrState.nSolutionSpace  = pData->_tCtrl._tTask._iSolutionSpace;             // Solution Space
+    g_stDrState.dSyncTime       = pData->_tMisc._dSyncTime;                         // inner clock counter  
+
+    for (int i = 5; i < NUM_BUTTON; i++){
+        if(pData){
+            g_stDrState.nActualBT[i]    = pData->_tMisc._iActualBT[i];              // robot button state
+        }
+    }
+
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            if(pData){
+                g_stDrState.fRotationMatrix[j][i] = pData->_tCtrl._tTask._fRotationMatrix[j][i];    // Rotation Matrix
+            }
+        }
+    }
+
+    for (int i = 0; i < NUM_FLANGE_IO; i++){
+        if(pData){
+            g_stDrState.bFlangeDigitalInput[i]  = pData->_tMisc._iActualDI[i];      // Digital Input data             
+            g_stDrState.bFlangeDigitalOutput[i] = pData->_tMisc._iActualDO[i];      // Digital output data
+        }
+    }
+
+    //----- In M2.5 version or higher The following variables were added -----
+    for (int i = 0; i < NUM_JOINT; i++){
+        g_stDrState.fActualW2B[i] = pData->_tCtrl._tWorld._fActualW2B[i];
+        g_stDrState.fCurrentVelW[i] = pData->_tCtrl._tWorld._fActualVel[i];
+        g_stDrState.fWorldETT[i] = pData->_tCtrl._tWorld._fActualETT[i];
+        g_stDrState.fTargetPosW[i] = pData->_tCtrl._tWorld._fTargetPos[i];
+        g_stDrState.fTargetVelW[i] = pData->_tCtrl._tWorld._fTargetVel[i];
+        g_stDrState.fCurrentVelU[i] = pData->_tCtrl._tWorld._fActualVel[i];
+        g_stDrState.fUserETT[i] = pData->_tCtrl._tUser._fActualETT[i];
+        g_stDrState.fTargetPosU[i] = pData->_tCtrl._tUser._fTargetPos[i];
+        g_stDrState.fTargetVelU[i] = pData->_tCtrl._tUser._fTargetVel[i];
+    }    
+
+    for(int i = 0; i < 2; i++){
+        for(int j = 0; j < 6; j++){
+            g_stDrState.fCurrentPosW[i][j] = pData->_tCtrl._tWorld._fActualPos[i][j];
+            g_stDrState.fCurrentPosU[i][j] = pData->_tCtrl._tUser._fActualPos[i][j];
+        }
+    }
+
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            g_stDrState.fRotationMatrixWorld[j][i] = pData->_tCtrl._tWorld._fRotationMatrix[j][i];
+            g_stDrState.fRotationMatrixUser[j][i] = pData->_tCtrl._tUser._fRotationMatrix[j][i];
+        }
+    }
+
+    g_stDrState.iActualUCN = pData->_tCtrl._tUser._iActualUCN;
+    g_stDrState.iParent    = pData->_tCtrl._tUser._iParent;
+    //-------------------------------------------------------------------------
+}
+
+void OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus)
+{
+    g_stDrState.nRegCount = pModbus->_iRegCount;
+    for (int i = 0; i < pModbus->_iRegCount; i++){
+        // cout << "[callback OnMonitoringModbusCB] " << pModbus->_tRegister[i]._szSymbol <<": " << pModbus->_tRegister[i]._iValue<< endl;
+        g_stDrState.strModbusSymbol[i] = pModbus->_tRegister[i]._szSymbol;
+        g_stDrState.nModbusValue[i]    = pModbus->_tRegister[i]._iValue;
+    }
+}
+
+void OnMonitoringStateCB(const ROBOT_STATE eState)
+{
+
+    switch((unsigned char)eState)
+    {  
+    case STATE_EMERGENCY_STOP:
+        // popup
+        break;
+    case STATE_STANDBY:
+    case STATE_MOVING:
+    case STATE_TEACHING:
+        break;
+    case STATE_SAFE_STOP:
+        if (g_bHasControlAuthority) {
+            Drfl->set_safe_stop_reset_type(SAFE_STOP_RESET_TYPE_DEFAULT);
+            Drfl->set_robot_control(CONTROL_RESET_SAFET_STOP);
+            // Drfl->set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+        }
+        break;
+    case STATE_SAFE_OFF:
+        if (g_bHasControlAuthority){
+            if (init_state){
+            Drfl->set_robot_control(CONTROL_SERVO_ON);
+            Drfl->set_robot_mode(ROBOT_MODE_AUTONOMOUS);   //Idle Servo Off 후 servo on 하는 상황 발생 시 set_robot_mode 명령을 전송해 manual 로 전환. add 2020/04/28
+            // Drfl->set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+            init_state = FALSE;
+            }
+        } 
+        break;
+    case STATE_SAFE_STOP2:
+        if (g_bHasControlAuthority) Drfl->set_robot_control(CONTROL_RECOVERY_SAFE_STOP);
+        break;
+    case STATE_SAFE_OFF2:
+        if (g_bHasControlAuthority) {
+            Drfl->set_robot_control(CONTROL_RECOVERY_SAFE_OFF);
+        }
+        break;
+    case STATE_RECOVERY:
+        Drfl->set_robot_control(CONTROL_RESET_RECOVERY);
+        break;
+    default:
+        break;
+    }
+
+    // cout << "[callback OnMonitoringStateCB] current state: " << GetRobotStateString((int)eState) << endl;
+    g_stDrState.nRobotState = (int)eState;
+    strncpy(g_stDrState.strRobotState, GetRobotStateString((int)eState), MAX_SYMBOL_SIZE); 
+}
+
+void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl)
+{
+    // Only work within 50msec
+
+    // cout << "[callback OnMonitoringAccessControlCB] eAccCtrl: " << eAccCtrl << endl;
+    switch(eAccCtrl)
+    {
+    case MONITORING_ACCESS_CONTROL_REQUEST:
+        Drfl->ManageAccessControl(MANAGE_ACCESS_CONTROL_RESPONSE_NO);
+        //Drfl->TransitControlAuth(MANaGE_ACCESS_CONTROL_RESPONSE_YES);
+        break;
+    case MONITORING_ACCESS_CONTROL_GRANT:
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"_______________________________________________\n");   
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    Access control granted ");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"_______________________________________________\n");   
+        g_bHasControlAuthority = TRUE;
+        OnMonitoringStateCB(Drfl->GetRobotState());
+        break;
+    case MONITORING_ACCESS_CONTROL_DENY:
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"_______________________________________________\n");   
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    Access control deny ");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"_______________________________________________\n");   
+        break;
+    case MONITORING_ACCESS_CONTROL_LOSS:
+        g_bHasControlAuthority = FALSE;
+        if (g_bTpInitailizingComplted) {
+            Drfl->ManageAccessControl(MANAGE_ACCESS_CONTROL_REQUEST);
+        }
+        break;
+    default:
+        break;
+    }
+    g_stDrState.nAccessControl = (int)eAccCtrl;
+}
+
+void OnLogAlarm(LPLOG_ALARM pLogAlarm)
+{
+	dsr_msgs2::msg::RobotError msg;
+	switch(pLogAlarm->_iLevel)
+	{
+	case LOG_LEVEL_SYSINFO:
+			RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"[callback OnLogAlarm]");
+			RCLCPP_INFO(rclcpp::get_logger("dsr_controller2")," level : %d",(unsigned int)pLogAlarm->_iLevel);
+			RCLCPP_INFO(rclcpp::get_logger("dsr_controller2")," group : %d",(unsigned int)pLogAlarm->_iGroup);
+			RCLCPP_INFO(rclcpp::get_logger("dsr_controller2")," index : %d", pLogAlarm->_iIndex);
+			RCLCPP_INFO(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[0] );
+			RCLCPP_INFO(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[1] );
+			RCLCPP_INFO(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[2] );
+			break;
+	case LOG_LEVEL_SYSWARN:
+			RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),"[callback OnLogAlarm]");
+			RCLCPP_WARN(rclcpp::get_logger("dsr_controller2")," level : %d",(unsigned int)pLogAlarm->_iLevel);
+			RCLCPP_WARN(rclcpp::get_logger("dsr_controller2")," group : %d",(unsigned int)pLogAlarm->_iGroup);
+			RCLCPP_WARN(rclcpp::get_logger("dsr_controller2")," index : %d", pLogAlarm->_iIndex);
+			RCLCPP_WARN(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[0] );
+			RCLCPP_WARN(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[1] );
+			RCLCPP_WARN(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[2] );
+			break;
+	case LOG_LEVEL_SYSERROR:
+	default:
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"),"[callback OnLogAlarm]");
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2")," level : %d",(unsigned int)pLogAlarm->_iLevel);
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2")," group : %d",(unsigned int)pLogAlarm->_iGroup);
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2")," index : %d", pLogAlarm->_iIndex);
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[0] );
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[1] );
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2")," param : %s", pLogAlarm->_szParam[2] );
+			break;
+	}
+	g_stDrError.nLevel=(unsigned int)pLogAlarm->_iLevel;
+	g_stDrError.nGroup=(unsigned int)pLogAlarm->_iGroup;
+	g_stDrError.nCode=pLogAlarm->_iIndex;
+	strncpy(g_stDrError.strMsg1, pLogAlarm->_szParam[0], MAX_STRING_SIZE);
+	strncpy(g_stDrError.strMsg2, pLogAlarm->_szParam[1], MAX_STRING_SIZE);
+	strncpy(g_stDrError.strMsg3, pLogAlarm->_szParam[2], MAX_STRING_SIZE);
+
+	msg.level=g_stDrError.nLevel;
+	msg.group=g_stDrError.nGroup;
+	msg.code=g_stDrError.nCode;
+	msg.msg1=g_stDrError.strMsg1;
+	msg.msg2=g_stDrError.strMsg2;
+	msg.msg3=g_stDrError.strMsg3;
+
+	instance->error_log_pub_->publish(msg);
+}
+
+// void OnDisConnected(){
+// 	RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"),"Disconnected.. Please check out your Ethernet Cable.. ");
+// 	Drfl->close_connection(); // clean-up
+
+// 	dsr_msgs2::msg::RobotDisconnect msg;
+// 	instance->disconnect_pub_->publish(msg);
+
+//     // Drfl->set_on_tp_initializing_completed(DRFL_CALLBACKS::OnTpInitializingCompletedCB);
+// 	// Drfl->set_on_homming_completed(DRFL_CALLBACKS::OnHommingCompletedCB);
+// 	// Drfl->set_on_program_stopped(DRFL_CALLBACKS::OnProgramStoppedCB);
+// 	// Drfl->set_on_monitoring_modbus(DRFL_CALLBACKS::OnMonitoringModbusCB);
+// 	// Drfl->set_on_monitoring_data(DRFL_CALLBACKS::OnMonitoringDataCB);           // Callback function in M2.4 and earlier
+// 	// Drfl->set_on_monitoring_ctrl_io(DRFL_CALLBACKS::OnMonitoringCtrlIOCB);       // Callback function in M2.4 and earlier
+// 	// Drfl->set_on_monitoring_state(DRFL_CALLBACKS::OnMonitoringStateCB);
+// 	// Drfl->set_on_monitoring_access_control(DRFL_CALLBACKS::OnMonitoringAccessControlCB);
+// 	// Drfl->set_on_log_alarm(DRFL_CALLBACKS::OnLogAlarm);
+// 	// Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
+// 	// Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
+// }
+
+}
 
 #include "pluginlib/class_list_macros.hpp"
 

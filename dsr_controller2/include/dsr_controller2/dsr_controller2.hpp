@@ -46,6 +46,8 @@
 #include <dsr_msgs2/msg/speedj_rt_stream.hpp>
 #include <dsr_msgs2/msg/speedl_rt_stream.hpp>
 #include <dsr_msgs2/msg/torque_rt_stream.hpp>
+#include <dsr_msgs2/msg/robot_error.hpp>
+
 
 
 //system
@@ -479,6 +481,30 @@ typedef struct _ROBOT_JOINT_DATA
 std::string m_name;
 std::string m_model;
 
+bool g_bIsEmulatorMode = FALSE;
+bool g_bHasControlAuthority = FALSE;
+bool g_bTpInitailizingComplted = FALSE;
+bool g_bHommingCompleted = FALSE;
+bool init_state=TRUE;
+
+
+
+namespace DRFL_CALLBACKS {
+  void OnTpInitializingCompletedCB();
+  void OnHommingCompletedCB();
+  void OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/);
+  void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO);
+  void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO);
+  void OnMonitoringDataCB(const LPMONITORING_DATA pData);
+  void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
+  void OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus);
+  void OnMonitoringStateCB(const ROBOT_STATE eState);
+  void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl);
+  void OnLogAlarm(LPLOG_ALARM pLogAlarm);
+  void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
+}
+
+
 namespace dsr_controller2
 {
 class RobotController : public controller_interface::ControllerInterface
@@ -524,6 +550,7 @@ public:
   controller_interface::CallbackReturn on_shutdown(
     const rclcpp_lifecycle::State & previous_state) override;
   
+  rclcpp::Publisher<dsr_msgs2::msg::RobotError>::SharedPtr error_log_pub_;
 protected:
   std::vector<std::string> joint_names_;
   std::vector<std::string> command_interface_types_;

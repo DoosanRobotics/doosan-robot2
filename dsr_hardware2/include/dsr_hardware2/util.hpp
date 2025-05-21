@@ -1,6 +1,12 @@
 #include <string>
 #include "../../dsr_common2/include/DRFLEx.h"
 
+#ifndef PI
+#define PI 3.14159265359
+#endif
+#define deg2rad(deg)  ((deg) * PI / 180.0)
+#define rad2deg(rad)  ((rad) * 180.0 / PI)
+
 std::string to_str(MONITORING_ACCESS_CONTROL x)
 {
     if(x == MONITORING_ACCESS_CONTROL_REQUEST)  return "MONITORING_ACCESS_CONTROL_REQUEST";
