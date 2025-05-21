@@ -23,7 +23,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'set_config = dsr_bringup2.set_config:main',
             'moveit_connection = dsr_bringup2.moveit_connection:main',
             'gazebo_connection = dsr_bringup2.gazebo_connection:main',
             'run_emulator = dsr_bringup2.run_emulator:main',

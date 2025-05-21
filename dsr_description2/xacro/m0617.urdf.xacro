@@ -5,11 +5,20 @@
   <xacro:arg name="gripper" default="none"/>
   <xacro:arg name="namespace" default=""/>
   <xacro:arg name="use_gazebo" default="false"/>
-  
+  <xacro:arg name="host" default=""/>
+  <xacro:arg name="port" default=""/>
+  <xacro:arg name="rt_host" default=""/>
+  <xacro:arg name="mode" default=""/>
+  <xacro:arg name="model" default=""/>
+
   <xacro:property name="cr" value="$(arg color)"/>
   <xacro:property name="gr" value="$(arg gripper)"/>
   <xacro:property name="gz" value="$(arg use_gazebo)"/>
-  
+  <xacro:property name="host" value="$(arg host)"/>
+  <xacro:property name="rt_host" value="$(arg rt_host)"/>
+  <xacro:property name="port" value="$(arg port)"/>
+  <xacro:property name="mode" value="$(arg mode)"/>
+  <xacro:property name="model" value="$(arg model)"/>
 
   <xacro:if value="${cr == 'white'}">
      <xacro:include filename="$(find dsr_description2)/xacro/macro.m0617.white.xacro" />
@@ -34,7 +43,14 @@
   </xacro:if>
   <xacro:unless value="${gz}">
     <xacro:include filename="$(find dsr_description2)/ros2_control/m0617.ros2_control.xacro" />
-    <xacro:m0617_ros2_control name="m0617"/>
+    <xacro:m0617_ros2_control
+      name="m0617"
+      host="${host}"
+      rt_host="${rt_host}"
+      port="${port}"
+      mode="${mode}"
+      model="${model}"
+    />
   </xacro:unless>
 
 </robot>

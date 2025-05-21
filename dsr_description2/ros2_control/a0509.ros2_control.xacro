@@ -3,31 +3,23 @@
 
   <xacro:macro name="a0509_ros2_control" params="
   name
-  rate:=100
-  standby:=ture
-  command:=none
   host:=0.0.0.0
+  rt_host:=0.0.0.0
   port:=12345
   mode:=real
   model:=a0509
-  gripper:=none
-  mobile:=none
+
   ">
 
     <ros2_control name="${name}" type="system">
 
       <hardware>
         <plugin>dsr_hardware2/DRHWInterface</plugin>
-        <param name="name">${name}</param>
-        <param name="rate">${rate}</param>
-        <param name="standby">${standby}</param>
-        <param name="command">${command}</param>
         <param name="host">${host}</param>
+        <param name="rt_host">${rt_host}</param>
         <param name="port">${port}</param>
         <param name="mode">${mode}</param>
         <param name="model">${model}</param>
-        <param name="gripper">${gripper}</param>
-        <param name="mobile">${mobile}</param>
       </hardware>
 
       <joint name="joint_1">
