@@ -105,7 +105,7 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 	Drfl->set_on_monitoring_state(DRFL_CALLBACKS::OnMonitoringStateCB);//RELATED TO LOGIC
 	Drfl->set_on_monitoring_access_control(DRFL_CALLBACKS::OnMonitoringAccessControlCB);//RELATED TO LOGIC
 	Drfl->set_on_log_alarm(DRFL_CALLBACKS::OnLogAlarm);
-	// Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
+	Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
 	Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
 
   return CallbackReturn::SUCCESS;
@@ -1979,9 +1979,12 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
 
     Drfl->torque_rt(tor.data(), time);
 };
-  cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-  error_log_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotError>("error", 100);
+
+	error_log_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotError>("error", 100);
+  disconnect_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotDisconnection>("robot_disconnection", 100);
+
+  cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   // Subscription declarations
   m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb);
   m_sub_alter_motion_stream           = get_node()->create_subscription<dsr_msgs2::msg::AlterMotionStream>("alter_motion_stream", 20, alter_cb);
@@ -2584,28 +2587,18 @@ void OnLogAlarm(LPLOG_ALARM pLogAlarm)
 	msg.msg2=g_stDrError.strMsg2;
 	msg.msg3=g_stDrError.strMsg3;
 
+	if(0 == instance->error_log_pub_.use_count())	return;
 	instance->error_log_pub_->publish(msg);
 }
 
-// void OnDisConnected(){
-// 	RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"),"Disconnected.. Please check out your Ethernet Cable.. ");
-// 	Drfl->close_connection(); // clean-up
-
-// 	dsr_msgs2::msg::RobotDisconnect msg;
-// 	instance->disconnect_pub_->publish(msg);
-
-//     // Drfl->set_on_tp_initializing_completed(DRFL_CALLBACKS::OnTpInitializingCompletedCB);
-// 	// Drfl->set_on_homming_completed(DRFL_CALLBACKS::OnHommingCompletedCB);
-// 	// Drfl->set_on_program_stopped(DRFL_CALLBACKS::OnProgramStoppedCB);
-// 	// Drfl->set_on_monitoring_modbus(DRFL_CALLBACKS::OnMonitoringModbusCB);
-// 	// Drfl->set_on_monitoring_data(DRFL_CALLBACKS::OnMonitoringDataCB);           // Callback function in M2.4 and earlier
-// 	// Drfl->set_on_monitoring_ctrl_io(DRFL_CALLBACKS::OnMonitoringCtrlIOCB);       // Callback function in M2.4 and earlier
-// 	// Drfl->set_on_monitoring_state(DRFL_CALLBACKS::OnMonitoringStateCB);
-// 	// Drfl->set_on_monitoring_access_control(DRFL_CALLBACKS::OnMonitoringAccessControlCB);
-// 	// Drfl->set_on_log_alarm(DRFL_CALLBACKS::OnLogAlarm);
-// 	// Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
-// 	// Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
-// }
+void OnDisConnected(){
+	RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"),"Disconnected.. Please check out Ethernet Cable.. ");
+	Drfl->close_connection(); // clean-up
+	
+	if(0 == instance->disconnect_pub_.use_count())	return;
+	dsr_msgs2::msg::RobotDisconnection msg;
+	instance->disconnect_pub_->publish(msg);
+}
 
 }
 
