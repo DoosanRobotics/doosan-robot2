@@ -40,5 +40,16 @@
       <geom type="box" name="box3" size="0.002 0.002 0.01" condim="3"
         rgba="0.7 0 0 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
     </body>
+
+    <body name="box4" pos="0.4 -0.2 0.1" euler="0 0 0">
+      <freejoint/>
+      <geom type="box" name="box4" size="0.002 0.002 0.01" condim="3"
+        rgba="0.7 0 0 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
+    </body>
+    <body name="box5" pos="0.6 -0.2 0.1" euler="0 0 0">
+      <freejoint/>
+      <geom type="box" name="box5" size="0.002 0.002 0.01" condim="3"
+        rgba="0.7 0 0 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
+    </body>
   </worldbody>
 </mujoco>

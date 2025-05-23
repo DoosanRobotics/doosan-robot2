@@ -25,14 +25,12 @@
 
       <joint axis="1 0 0"/>
       <default class="driver">
-        <!-- <joint range="0 0.8" armature="0.005" damping="0.1" solimplimit="0.95 0.99 0.001" solreflimit="0.005 1"/> -->
-        <joint range="-0.1 0.8" armature="0.005" damping="30" solimplimit="0.95 0.99 0.001" solreflimit="0.005 1" actuatorfrcrange="-10 10" frictionloss="0"/>
+        <joint range="-0.1 0.8" armature="0.005" damping="40" solimplimit="0.95 0.99 0.001" solreflimit="0.005 1" actuatorfrcrange="-10 10" frictionloss="0"/>
       </default>
       <default class="follower">
         <joint range="-0.872664 0.872664" armature="0.001" pos="0 -0.018 0.0065" solimplimit="0.95 0.99 0.001" solreflimit="0.005 1"/>
       </default>
       <default class="spring_link">
-        <!-- <joint range="-0.29670597283 0.8" armature="0.001" stiffness="0.05" springref="2.62" damping="0.00125"/> -->
         <joint range="-0.29670597283 0.8" armature="0.001" stiffness="0.2" springref="2.62" damping="0.10125"/>
       </default>
       <default class="coupler">
@@ -58,7 +56,6 @@
 
   <!-- Add worldbody for seperate spawn on MuJoCo -->
   <!-- <worldbody> -->
-<!-- <body name="base_mount" pos="0 0 0.007" childclass="2f85"> -->
 <body name="base_mount" pos="0 0 0.0075" childclass="2f85">
     <geom class="visual" mesh="base_mount" material="black"/>
     <geom class="collision" mesh="base_mount"/>
@@ -68,6 +65,13 @@
     <geom class="visual" mesh="base" material="black"/>
     <geom class="collision" mesh="base"/>
     <site name="pinch" pos="0 0 0.145" type="sphere" group="5" rgba="0.9 0.9 0.9 1" size="0.005"/>
+                      <geom name="pinch_sphere_viz"
+                  type="sphere"
+                  pos="0 0 0.145"
+                  size="0.005"
+                  rgba="1 0 0 0.5"
+                  contype="0"
+                  conaffinity="0"/>
     <!-- Right-hand side 4-bar linkage -->
     <body name="right_driver" pos="0 0.0306011 0.054904">
         <inertial mass="0.00899563" pos="2.96931e-12 0.0177547 0.00107314" quat="0.681301 0.732003 0 0"
@@ -179,10 +183,7 @@
       gainprm="0.3137255 0 0" biasprm="0 -100 -10"/> -->
     <!-- <general class="2f85" joint="left_driver_joint" forcerange="-5 5" ctrlrange="0 255"
       gainprm="0.3137255 0 0" biasprm="0 -100 -10"/> -->
-
-    <position joint="left_driver_joint" kp="10" kv="20" ctrlrange="0 0.8"/>
-
+    <position joint="left_driver_joint" kp="10" kv="1" ctrlrange="0 0.8"/>
   </actuator>
-  <!-- -->
 
 </mujoco>
