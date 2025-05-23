@@ -1,0 +1,12 @@
+/**:
+  controller_manager:
+    ros__parameters:
+      update_rate: 100
+      left_knuckle_position_controller:
+        type: forward_command_controller/ForwardCommandController
+        
+  left_knuckle_position_controller:
+    ros__parameters:
+      joints:
+        - left_driver_joint
+      interface_name: position

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+<!-- Dummy for 2f85 Mujoco ROS2 control -->
+    <link name="dummy"/>
+    <joint name="left_driver_joint" type="revolute">
+        <parent link="world"/>
+        <child link="dummy"/>
+
+        <axis xyz="0 -1 0"/>
+        <origin rpy="0 0 0" xyz="0.03060114 0.0 0.05490452"/>
+        <limit effort="50" lower="0.0" upper="0.8" velocity="0.5"/>
+    </joint>
+</robot>

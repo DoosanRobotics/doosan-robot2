@@ -26,6 +26,7 @@ setup(
             'moveit_connection = dsr_bringup2.moveit_connection:main',
             'gazebo_connection = dsr_bringup2.gazebo_connection:main',
             'run_emulator = dsr_bringup2.run_emulator:main',
+            'mujoco_bridge = dsr_bringup2.dsr_mujoco_bridge:main',
         ],
     },
 )

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <joint name="left_driver_joint">
+        <param name="position_kp">120</param>
+        <param name="position_ki">0.1</param>
+        <param name="position_kd">0.1</param>
+        <param name="position_i_max">10</param>
+        <command_interface name="position_pid"/>
+        <state_interface name="position">
+        <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+    </joint>
+</robot>

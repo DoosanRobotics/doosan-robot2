@@ -17,6 +17,6 @@ ament_package()
 
 
 
-install(DIRECTORY meshes urdf xacro config ros2_control DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY meshes urdf xacro config ros2_control mujoco_models DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY rviz DESTINATION share/${PROJECT_NAME})
