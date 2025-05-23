@@ -100,19 +100,8 @@ def generate_launch_description():
     )
     robot_description = {"robot_description": robot_description_content}
     
-    # controller_param_file = PathJoinSubstitution(
-    #     [FindPackageShare("dsr_mujoco"), "config",
-    #     "dsr_mujoco_controller_with_2f85.yaml"]
-    # )
+
     controller_param_file = LaunchConfiguration('controller_param_file')
-
-    from launch.actions import LogInfo
-
-    print_path = LogInfo(
-        msg=[ "!!!! Controller YAML !!!! → ",
-            controller_param_file ]
-    )
-
     # Mujoco node
     node_mujoco = Node(
         package='mujoco_ros2_control',
@@ -122,7 +111,6 @@ def generate_launch_description():
         parameters=[
             robot_description,
             controller_param_file,
-            # {'mujoco_model_path': mujoco_model_path,},
             {'mujoco_model_path': LaunchConfiguration('scene_path')},
             {"use_sim_time": True},
         ],
@@ -199,7 +187,5 @@ def generate_launch_description():
         node_mujoco,
         delay_joint_state_broadcaster,
         delay_dsr_position_controller,
-
-        print_path,  # to do : remove this
     ])
 
