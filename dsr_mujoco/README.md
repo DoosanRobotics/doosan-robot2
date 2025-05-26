@@ -1,19 +1,20 @@
-# Use Doosan robots with MuJoCo
+# Use Doosan robots on MuJoCo
 
 ![Doosan robot in MuJoCo](doc/images/m1013_in_mujoco.png)
 
 ## Overview
 
-This package enables controlling Doosan robots in MuJoCo simulation using ROS 2.  
+This package enables controlling Doosan robots in MuJoCo simulation using ROS 2.
+
 Supported models:
-- **m1013** (white series)  
-- **m0609** (white series)
+- **m1013** (white)  
+- **m0609** (white)
 
 ## Prerequisites
 
 1. Install MuJoCo from Google DeepMind:  
-   - Official [releases](https://github.com/google-deepmind/mujoco/releases)  
-   For more info, refer to the website: https://mujoco.org/  
+   - Download from official [releases](https://github.com/google-deepmind/mujoco/releases). 
+   (For more info, refer to the website: https://mujoco.org/)  
 
 2. Set `MUJOCO_DIR` (update path & version) in your `~/.bashrc`:
    ```bash
