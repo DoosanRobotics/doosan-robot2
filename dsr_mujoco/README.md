@@ -1,6 +1,6 @@
 # Use Doosan robots with MuJoCo
 
-![Doosan robot in MuJoCo](dsr_mujoco/doc/images/m1013_in_mujoco.png)
+![Doosan robot in MuJoCo](doc/images/m1013_in_mujoco.png)
 
 ## Overview
 
@@ -12,15 +12,16 @@ Supported models:
 ## Prerequisites
 
 1. Install MuJoCo from Google DeepMind:  
-   - Official [Releases](https://github.com/google-deepmind/mujoco/releases)  
-   - Website: https://mujoco.org/  
+   - Official [releases](https://github.com/google-deepmind/mujoco/releases)  
+   For more info, refer to the website: https://mujoco.org/  
 
 2. Set `MUJOCO_DIR` (update path & version) in your `~/.bashrc`:
    ```bash
    export MUJOCO_DIR=/PATH/TO/MUJOCO/mujoco-3.x.x
    ```
 
-3. Install MuJoCo ROS 2 control package:
+
+3. Install [MuJoCo ROS 2 control](https://github.com/moveit/mujoco_ros2_control) package:
    ```bash
    git clone https://github.com/moveit/mujoco_ros2_control.git
    cd mujoco_ros2_control
@@ -58,7 +59,10 @@ Supported models:
    ```
 
 ### Demo Video
-[![Watch on YouTube](dsr_mujoco/doc/images/m1013_with_slide.png)](https://youtu.be/Jqaam6x79t4)
+[![Watch on YouTube](doc/images/m1013_with_slide.png)](https://youtu.be/Jqaam6x79t4)
+
+## Tutorial
+Work in process ...
 
 ## Future Work
 
