@@ -48,12 +48,12 @@ def main(args=None):
         p2= posj(0.0, 0.0, 90.0, 0.0, 90.0, 0.0)
         
         # Gripping pose
-        x1= posx(500, -353, 190.0, 0.0, 180.0, 0.0)
+        x1= posx(503, -353, 190.0, 0.0, 180.0, 0.0)
         
         # Going to release pose
-        x2= posx(500, -353, 290.0, 0.0, 180.0, 0.0)
-        x3 = posx(500, 210, 400.0, 0.0, 180.0, 0.0)
-        x4 = posx(500, 550, 420, 0, 180, 0)
+        x2= posx(503, -353, 290.0, 0.0, 180.0, 0.0)
+        x3 = posx(503, 210, 400.0, 0.0, 180.0, 0.0)
+        x4 = posx(503, 550, 420, 0, 180, 0)
         xlist = [x2, x3, x4]
 
         # Start to move
@@ -72,7 +72,7 @@ def main(args=None):
                 movel(x1)
 
                 # Close gripper
-                time.sleep(0.8)
+                time.sleep(1.0)
                 msg.data = [0.8]
                 knuckle_pub.publish(msg)
                 time.sleep(1.0)
