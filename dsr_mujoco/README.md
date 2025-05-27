@@ -24,37 +24,32 @@ Supported models:
 
 3. Install [MuJoCo ROS 2 control](https://github.com/moveit/mujoco_ros2_control) package:
    ```bash
+   cd /PATH/TO/DOOSAN_WS/SRC
    git clone https://github.com/moveit/mujoco_ros2_control.git
    cd mujoco_ros2_control
    git checkout bd2d576331a1be2d2701f35f1b736297d09f1cea
+   
+   cd
+   cd /PATH/TO/DOOSAN_WS
    colcon build
    source install/setup.bash
    ```
    *Note:* Recent versions have simtime issue. Extra change or tuning may be required.  
    
-   *Tip:* add to your `~/.bashrc`:
-   ```bash
-   source ~/mujoco_ros2_control/install/local_setup.bash
-   ```
 
-## Launch & Demo
-
-1. **Launch Blank scene (m1013):**  
+## Launch with MuJoCo
+- **Launch m1013 in blank scene:**  
    ```bash
    source /PATH/TO/DOOSAN_WS/install/setup.bash
    ros2 launch dsr_bringup2 dsr_bringup2_mujoco.launch.py
    ```
-2. In another terminal, run demo movements for test:
-   ```bash
-   ros2 run dsr_example dance
-   ```
 
-1. **Slope demo (m1013 + 2F85 gripper)**  
+## Demo example
+- **Launch m1013 with gripper in a demo scene:**
    ```bash
-   ros2 launch dsr_bringup2 dsr_bringup2_mujoco_gripper.launch.py \
-     scene_path:=demo/slope_demo_scene.xml
+   ros2 launch dsr_bringup2 dsr_bringup2_mujoco.launch.py gripper:=2f85 scene_path:=demo/slope_demo_scene.xml
    ```
-2. In another terminal, run Pick & Place movements:  
+- **In another terminal, run Pick & Place movements:**    
    ```bash
    ros2 run dsr_example slope_demo
    ```
@@ -65,7 +60,3 @@ Supported models:
 ## Tutorial
 Work in process ...
 
-## Future Work
-
-1. Model compatible with MJX will be upload on Google DeepMind [menagerie](https://github.com/google-deepmind/mujoco_menagerie) soon. (Not officially maintained)
-2. RL demo tasks on DeepMind [playground](https://github.com/google-deepmind/mujoco_playground) will be provided laterly. (Not officially maintained)

@@ -24,18 +24,18 @@
   </worldbody>
 
   <asset>
-    <mesh file="objects/bottom_fence_left.stl" scale="0.018 0.02 0.02"/>
-    <mesh file="objects/bottom_fence_right.stl" scale="0.018 0.02 0.02"/>
-    <mesh file="objects/top_fence_left.stl" scale="0.018 0.02 0.02"/>
-    <mesh file="objects/top_fence_right.stl" scale="0.018 0.02 0.02"/>
-    <mesh file="objects/stopper.stl" scale="0.018 0.02 0.02"/>
-    <mesh file="objects/top_slope.stl" scale="0.018 0.02 0.02"/>
-    <mesh file="objects/bottom_slope.stl" scale="0.018 0.02 0.02"/>
-    <mesh file="objects/stopper_left.stl" scale="0.018 0.02 0.015"/>
-    <mesh file="objects/stopper_right.stl" scale="0.018 0.02 0.015"/>
+    <mesh file="demo/assets/bottom_fence_left.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/bottom_fence_right.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/top_fence_left.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/top_fence_right.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/stopper.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/top_slope.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/bottom_slope.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/stopper_left.stl" scale="0.018 0.02 0.015"/>
+    <mesh file="demo/assets/stopper_right.stl" scale="0.018 0.02 0.015"/>
 
-    <mesh file="objects/bottom_support_left.stl" scale="0.018 0.02 0.02"/>
-    <mesh file="objects/bottom_support_right.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/bottom_support_left.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/bottom_support_right.stl" scale="0.018 0.02 0.02"/>
   </asset>
 
 
