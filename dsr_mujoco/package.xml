@@ -7,9 +7,9 @@
  <version>0.1.0</version>
  <description>dsr_mujoco</description>
 
- <maintainer email="tpingouin@gmail.com">Theo Choi</maintainer>
+ <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
 
- <license>MIT</license>
+ <license>Apache License 2.0</license>
 
  <author>Theo Choi</author>
 
@@ -24,7 +24,6 @@
  <depend>force_torque_sensor_broadcaster</depend>
 
  <depend>xacro</depend>
- <depend>mujoco_ros2_control</depend>
  <depend>forward_command_controller</depend>
  <depend>controller_manager</depend>
  <depend>joint_state_broadcaster</depend>

@@ -9,7 +9,7 @@
 import os
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler, DeclareLaunchArgument, SetLaunchConfiguration, IncludeLaunchDescription
-from launch.event_handlers import OnProcessExit, OnProcessStart
+from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, PythonExpression
 from launch.conditions import IfCondition
 from launch_ros.actions import Node
@@ -30,13 +30,15 @@ def generate_launch_description():
         DeclareLaunchArgument('mj',    default_value = 'true',     description = 'USE MUJOCO SIM'    ),
         DeclareLaunchArgument('rt_host', default_value = '192.168.137.50', description = 'ROBOT_RT_IP'),
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
+        DeclareLaunchArgument('gripper', default_value='none', description='Use gripper'),
+        DeclareLaunchArgument('scene_path', default_value='none', description='Relative path to MuJoCo scene XML file (demo/slope_demo_scene.xml)'),
     ]
 
     set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='true')
     xacro_path = os.path.join(get_package_share_directory('dsr_description2'), 'xacro')
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
-    # mode = LaunchConfiguration("mode") # Not tested with real robot yet.
+    # mode = LaunchConfiguration("mode")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -59,7 +61,6 @@ def generate_launch_description():
             " model:=", LaunchConfiguration('model'),
         ]
     )
-    
     robot_description = {"robot_description": robot_description_content}
     
     robot_controllers = PathJoinSubstitution(
@@ -123,10 +124,14 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
-                'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color'), ])
+        parameters=[
+            {
+                'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color'), 
+                                         ])
             },
-            {"use_sim_time": True},])
+            {"use_sim_time": True},
+        ]
+    )
     
     # RViz node
     rviz_node = Node(
@@ -140,7 +145,7 @@ def generate_launch_description():
         parameters=[{"use_sim_time": True}],
     )
 
-    # Joint state broadcaster spawner
+    # Joint state broadcaster spawners
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
@@ -169,7 +174,9 @@ def generate_launch_description():
                           'use_mujoco': LaunchConfiguration('mj'), 
                           'name' : LaunchConfiguration('name'),
                           'color' : LaunchConfiguration('color'),
-                          'use_sim_time' : LaunchConfiguration('use_sim_time')
+                          'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                          'gripper' : LaunchConfiguration('gripper'),
+                          'scene_path' : LaunchConfiguration('scene_path'),
                           }.items(),
     )
     

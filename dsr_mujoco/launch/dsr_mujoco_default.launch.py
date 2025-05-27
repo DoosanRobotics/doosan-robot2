@@ -1,20 +1,17 @@
 # 
-#  dsr_bringup2
+#  dsr_mujoco
 #  Author: Theo Choi (theo.choi@doosan.com)
 #  
 #  Copyright (c) 2025 Doosan Robotics
-#  Use of this source code is governed by the BSD, see LICENSE
+#  Use of this source code is governed by the Apache License 2.0, see LICENSE
 # 
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler, TimerAction, DeclareLaunchArgument, OpaqueFunction, SetLaunchConfiguration, LogInfo
+from launch.actions import RegisterEventHandler, TimerAction, DeclareLaunchArgument
 from launch.event_handlers import OnProcessStart
 from launch_ros.actions import Node
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
-from ament_index_python.packages import get_package_share_directory
-from dsr_mujoco.dsr_merge_gripper import merge_gripper
-from pathlib import Path
 
 ARGUMENTS = [
         DeclareLaunchArgument('name',  default_value = '',     description = 'NAME_SPACE'     ),
@@ -22,51 +19,6 @@ ARGUMENTS = [
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('use_mujoco',   default_value = 'true',     description = 'Start Mujoco'    ),
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
-        DeclareLaunchArgument('gripper', default_value='2f85', description='Use gripper'),
-        DeclareLaunchArgument('scene_path', default_value='none', description='Relative path to MuJoCo scene XML file (demo/slope_demo_scene.xml)'),
-        # DeclareLaunchArgument('controller_param_file', default_value='config/dsr_mujoco_controller.yaml', description='Controller YAML file'),
-    ]
-
-# Merge dsr and gripper xmls and set the YAML file
-def prepare_files_for_mujoco(context, *args, **kwargs):
-    share = Path(get_package_share_directory("dsr_description2"))
- 
-    model_arg   = context.launch_configurations['model']
-    gripper_arg = context.launch_configurations['gripper']
-    scene_arg = context.launch_configurations['scene_path']
-
-    arm = share / "mujoco_models" / model_arg / f"{model_arg}.xml"
-    hand = share / "mujoco_models" / gripper_arg / f"{gripper_arg}.xml"
-    # Use demo or custom path for scene
-    if scene_arg and scene_arg.lower() != 'none':
-        p = Path(scene_arg)
-        if p.is_absolute() and p.exists():
-            scene = p
-        else:
-            rel = share / "mujoco_models" / scene_arg.lstrip('/')
-            if rel.exists():
-                scene = rel
-            else:
-                raise FileNotFoundError(f"Scene XML not found for {scene_arg}")
-    # Default blank scene
-    else:
-        scene = share / "mujoco_models" / model_arg / "scene.xml"
-        if not scene.exists():
-            raise FileNotFoundError(f"Default scene.xml not found for {model_arg}")
-
-    merged_path, scene_path = merge_gripper(arm, hand, scene)
-
-    # Bring the yaml file
-    ctrl = Path(get_package_share_directory('dsr_mujoco')) \
-           / 'config' \
-           / f"dsr_mujoco_controller_with_{gripper_arg}.yaml"
-    if not ctrl.exists():
-        raise FileNotFoundError(f"Controller YAML not found: {ctrl}")
-        
-    return [
-        SetLaunchConfiguration("merged_mjcf", str(merged_path)),
-        SetLaunchConfiguration("scene_path",   str(scene_path)),
-        SetLaunchConfiguration("controller_param_file",  str(ctrl)),
     ]
 
 def generate_launch_description():
@@ -92,16 +44,23 @@ def generate_launch_description():
             LaunchConfiguration('color'),
             " ",
             "namespace:=",
-            PathJoinSubstitution([LaunchConfiguration('name'), "mj"]),
-            " ",
-            "gripper:=",  
-            LaunchConfiguration('gripper'),
+            PathJoinSubstitution([LaunchConfiguration('name'), "mj"])
         ]
     )
+    
     robot_description = {"robot_description": robot_description_content}
     
+    mujoco_model_path = PathJoinSubstitution(
+        [FindPackageShare("dsr_description2"), "mujoco_models",
+        LaunchConfiguration('model'),
+        "scene.xml"]
+    )
 
-    controller_param_file = LaunchConfiguration('controller_param_file')
+    controller_param_file= PathJoinSubstitution(
+        [FindPackageShare("dsr_mujoco"), "config",
+        "dsr_mujoco_controller.yaml"]
+    )
+        
     # Mujoco node
     node_mujoco = Node(
         package='mujoco_ros2_control',
@@ -111,7 +70,7 @@ def generate_launch_description():
         parameters=[
             robot_description,
             controller_param_file,
-            {'mujoco_model_path': LaunchConfiguration('scene_path')},
+            {'mujoco_model_path': mujoco_model_path,},
             {"use_sim_time": True},
         ],
     )
@@ -140,17 +99,6 @@ def generate_launch_description():
         output="screen",
     )
     
-    gripper_controller_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "mj"]),
-        arguments=[
-            'left_knuckle_position_controller',
-            '-c','controller_manager'
-            ],
-        output="screen",
-    )
-    
     # Delay mujoco's robot joint broadcaster after mujoco node start
     delay_joint_state_broadcaster = RegisterEventHandler(
         event_handler=OnProcessStart(
@@ -171,21 +119,16 @@ def generate_launch_description():
             on_start=[
                 TimerAction(
                     period=1.0,
-                    actions=[
-                        dsr_position_controller_spawner, 
-                        gripper_controller_spawner
-                        ]
+                    actions=[dsr_position_controller_spawner]
                 )
             ]
         )
     )
     
     return LaunchDescription(ARGUMENTS + [
-        # Merge arm and gripper xmls
-        OpaqueFunction(function=prepare_files_for_mujoco),
-        
         node_mujoco,
         delay_joint_state_broadcaster,
         delay_dsr_position_controller,
     ])
+
 
