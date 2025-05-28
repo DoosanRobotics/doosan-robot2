@@ -78,11 +78,12 @@ def main(args=None):
                 time.sleep(1.0)
 
                 movesx(xlist, vel=500, acc=200)
+                time.sleep(0.2)
 
                 # Open gripper
                 msg.data = [-0.1]
                 knuckle_pub.publish(msg)
-                time.sleep(2.3)
+                time.sleep(2.0)
                 
                 movej(p2, vel=80, acc=50)
 

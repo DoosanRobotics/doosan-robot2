@@ -9,6 +9,7 @@ This package enables controlling Doosan robots in MuJoCo simulation using ROS 2.
 Supported models:
 - **m1013** (white)  
 - **m0609** (white)
+- **h2017** (blue)
 
 ## Prerequisites
 
@@ -34,7 +35,7 @@ Supported models:
    colcon build
    source install/setup.bash
    ```
-   *Note:* Recent versions have simtime issue. Extra change or tuning may be required.  
+   *Note:* Recent versions have sim-time issue. Extra change or tuning may be required.  
    
 
 ## Launch with MuJoCo
@@ -47,7 +48,7 @@ Supported models:
 ## Demo example
 - **Launch m1013 with gripper in a demo scene:**
    ```bash
-   ros2 launch dsr_bringup2 dsr_bringup2_mujoco.launch.py gripper:=2f85 scene_path:=demo/slope_demo_scene.xml
+   ros2 launch dsr_bringup2 dsr_bringup2_mujoco.launch.py model:=m1013 gripper:=2f85 scene_path:=demo/slope_demo_scene.xml
    ```
 - **In another terminal, run Pick & Place movements:**    
    ```bash

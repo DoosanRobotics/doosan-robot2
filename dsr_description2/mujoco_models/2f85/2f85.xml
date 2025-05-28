@@ -17,8 +17,8 @@
     <mesh class="2f85" file="2f85/assets/spring_link.stl"/>
   </asset>  
     
-    <!-- For 2f85 Gripper -->
-    <default>
+  <!-- For 2f85 Gripper -->
+  <default>
     <default class="2f85">
       <mesh scale="0.001 0.001 0.001"/>
       <general biastype="affine"/>
@@ -54,8 +54,8 @@
     </default>
   </default>
 
-  <!-- Add worldbody for seperate spawn on MuJoCo -->
-  <!-- <worldbody> -->
+<!-- Add worldbody for seperate spawn on MuJoCo -->
+<!-- <worldbody> -->
 <body name="base_mount" pos="0 0 0.0075" childclass="2f85">
     <geom class="visual" mesh="base_mount" material="black"/>
     <geom class="collision" mesh="base_mount"/>

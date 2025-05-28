@@ -30,7 +30,7 @@ ARGUMENTS = [
     ]
 
 # Merge dsr and gripper xml, build scene
-def prepare_files_for_mujoco(context, *args, **kwargs):
+def prepare_mjcf_files_for_mujoco(context, *args, **kwargs):
     dsr_description_share = Path(get_package_share_directory("dsr_description2"))
 
     model_arg   = context.launch_configurations['model']
@@ -67,6 +67,7 @@ def prepare_files_for_mujoco(context, *args, **kwargs):
     # Prepare to build scene
     if input_scene_arg and input_scene_arg.lower() != 'none':
         p_candidate = Path(input_scene_arg)
+        # Both works for ablsolute and relative
         if p_candidate.is_absolute() and p_candidate.exists():
             original_scene_template_path = p_candidate
         else:
@@ -155,9 +156,9 @@ def generate_launch_description():
         ]
     )
     robot_description = {"robot_description": robot_description_content}
-    
 
     controller_param_file = LaunchConfiguration('controller_param_file')
+    
     # Mujoco node
     node_mujoco = Node(
         package='mujoco_ros2_control',
@@ -168,7 +169,7 @@ def generate_launch_description():
             robot_description,
             controller_param_file,
             {'mujoco_model_path': LaunchConfiguration('scene_path')},
-            {"use_sim_time": True},
+            {"use_sim_time": LaunchConfiguration('use_sim_time')},
         ],
     )
     
@@ -240,7 +241,7 @@ def generate_launch_description():
     
     return LaunchDescription(ARGUMENTS + [
         # Merge arm and gripper xmls
-        OpaqueFunction(function=prepare_files_for_mujoco),
+        OpaqueFunction(function=prepare_mjcf_files_for_mujoco),
         # Set controller YAML file
         OpaqueFunction(function=prepare_controller_config),
 

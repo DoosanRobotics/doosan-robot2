@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <mujoco model="slope scene">
   <!-- <include file="m1013.xml" /> -->
-  <option cone="elliptic" impratio="100" integrator="implicitfast"/>
+  <option cone="elliptic" impratio="200" integrator="implicitfast"/>
 
   <compiler angle="radian" meshdir="../" />
   <statistic center="0.3 0 0.4" extent="1" />

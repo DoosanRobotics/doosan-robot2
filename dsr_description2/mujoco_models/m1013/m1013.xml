@@ -21,7 +21,6 @@
     <body name="link_1" pos="0 0 0.1525">
       <inertial pos="0.000119 0.0428 -0.006383" quat="0.464342 0.521165 -0.533586 0.477557" mass="7.8" diaginertia="0.0472838 0.0450586 0.0294526"/>
       <joint name="joint_1" pos="0 0 0" axis="0 0 1" range="-6.2832 6.2832" actuatorfrcrange="-346 346" damping="1200" frictionloss="1"/>
-      <geom type="mesh" mesh="MF1013_1_0" />
       <geom type="mesh" contype="1" conaffinity="1" group="1" mesh="MF1013_1_0" material="white"/>
       <body name="link_2" pos="0 0.0345 0" quat="0.499898 -0.500102 -0.5 -0.5">
         <inertial pos="0.25973 -5.3e-05 0.15782" quat="0.0181111 0.703821 0.0182764 0.709911" mass="10.83" diaginertia="0.850272 0.849428 0.0375257"/>

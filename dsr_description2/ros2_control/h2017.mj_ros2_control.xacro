@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
-<robot name="m0609" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="h2017" xmlns:xacro="http://ros.org/wiki/xacro">
 
     <xacro:include filename="$(find dsr_description2)/config/macro.gazebo.xacro" />
     <xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
     <xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
 
-    <xacro:property name="default_position_kp" value="2000" />
+    <xacro:property name="default_position_kp" value="5000" />
     <xacro:property name="default_position_ki" value="10" />
-    <xacro:property name="default_position_kd" value="10" />
+    <xacro:property name="default_position_kd" value="0.01" />
     <xacro:property name="default_position_i_max" value="1000" />
     <xacro:macro name="joint_pid_params" params="kp:=${default_position_kp} ki:=${default_position_ki} kd:=${default_position_kd} i_max:=${default_position_i_max}">
         <param name="position_kp">${kp}</param>
@@ -17,8 +17,8 @@
         <command_interface name="position_pid"/>
     </xacro:macro>
     
-    <xacro:macro name="m0609_mj_ros2_control" params="
-    name:=m0609
+    <xacro:macro name="h2017_mj_ros2_control" params="
+    name:=h2017
     namespace
     rate:=100
     standby:=true
@@ -26,7 +26,7 @@
     host:=0.0.0.0
     port:=12345
     mode:=real
-    model:=m0609
+    model:=h2017
     gripper:=none
     mobile:=none
     use_gazebo:=false
@@ -108,6 +108,6 @@
     <xacro:if value="${gripper == '2f85'}">
         <xacro:include filename="$(find dsr_description2)/xacro/robotiq_2f85.xacro"/>
     </xacro:if>
-
+    
     </xacro:macro>
 </robot>
