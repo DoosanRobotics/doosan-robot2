@@ -58,6 +58,4 @@ Supported models:
 ### Demo Video
 [![Watch on YouTube](doc/images/m1013_with_slide.png)](https://youtu.be/Jqaam6x79t4)
 
-## Tutorial
-Work in process ...
-
+## [Usage documentation](doc/doc.md)
