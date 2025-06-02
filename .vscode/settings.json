@@ -149,5 +149,6 @@
         ".vscode",
         ".vscode-insiders",
         ".devcontainer/devcontainer.json"
-    ]
+    ],
+    "cmake.sourceDirectory": "/home/theochoi/ros2_ws/src/doosan-robot2-MuJoCo_support/dsr_msgs2"
 }
