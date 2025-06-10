@@ -14,7 +14,7 @@ ros2 launch dsr_bringup2 dsr_bringup2_mujoco.launch.py model:=m1013 gui:=true gr
 
 ### **gui**
 
-- Activate/Deactivate GUI (`true`/`false`)
+- Activate/Deactivate Rviz2 GUI (`true`/`false`)
 
 ### **gripper**
 
