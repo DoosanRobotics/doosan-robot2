@@ -14,7 +14,7 @@ Supported models:
 ## Prerequisites
 
 1. Install MuJoCo from Google DeepMind:  
-   - Download from official [releases](https://github.com/google-deepmind/mujoco/releases). 
+   - Download from official [releases](https://github.com/google-deepmind/mujoco/releases) and unzip the file. 
    (For more info, refer to the website: https://mujoco.org/)  
 
 2. Set `MUJOCO_DIR` (update path & version) in your `~/.bashrc`:
@@ -36,13 +36,12 @@ Supported models:
    source install/setup.bash
    ```
    *Note:* Recent versions have sim-time issue. Extra change or tuning may be required.  
-   *Build dependencies:* You may need to install libglfw3-dev for the MuJoCo ROS 2 control build. Refer the following command:`sudo apt update && sudo apt install libglfw3-dev`
+   *Build dependencies:* You may need to install libglfw3-dev for the MuJoCo ROS 2 control build. Refer the following command: `sudo apt update && sudo apt install libglfw3-dev`
    
 
 ## Launch with MuJoCo
 - **Launch m1013 in blank scene:**  
    ```bash
-   source /PATH/TO/DOOSAN_WS/install/setup.bash
    ros2 launch dsr_bringup2 dsr_bringup2_mujoco.launch.py
    ```
 
