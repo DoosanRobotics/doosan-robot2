@@ -25,18 +25,20 @@ Supported models:
 
 3. Install [MuJoCo ROS 2 control](https://github.com/moveit/mujoco_ros2_control) package:
    ```bash
+   # For package dependencies
+   sudo apt update && sudo apt install libglfw3-dev
+
    cd ~/ros2_ws/src
    git clone https://github.com/moveit/mujoco_ros2_control.git
    cd mujoco_ros2_control
    git checkout bd2d576331a1be2d2701f35f1b736297d09f1cea
-   
+
    cd
    cd ~/ros2_ws/src
    colcon build
    source install/setup.bash
    ```
    *Note:* Recent versions have sim-time issue. Extra change or tuning may be required.  
-   *Build dependencies:* You may need to install libglfw3-dev for the MuJoCo ROS 2 control build. Refer the following command: `sudo apt update && sudo apt install libglfw3-dev`
    
 
 ## Launch with MuJoCo
