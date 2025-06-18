@@ -27,18 +27,18 @@ from moveit_configs_utils import MoveItConfigsBuilder
 
 
 def rviz_node_function(context):
-    """런치 시점에서 model 값을 평가하고, 패키지 경로를 찾은 후 launch 파일 실행"""
+    """Evaluate the model value at launch time, find the package path, and then execute the launch file"""
     model_value = LaunchConfiguration('model').perform(context)
 
-    # 패키지 이름 생성
+    # Create package name
     model_value_str = f"{model_value}"
     package_name_str = f"dsr_moveit_config_{model_value}"
 
-    # FindPackageShare 평가
+    # Get the package path using FindPackageShare    
     package_path_str = FindPackageShare(package_name_str).perform(context)
 
-    print("패키지 이름:", package_name_str)
-    print("패키지 경로:", package_path_str)
+    print("Package name:", package_name_str)
+    print("Package path:", package_path_str)
 
     # Moveit2 config 
     moveit_config = (
@@ -144,7 +144,7 @@ def generate_launch_description():
             {"gripper": "none"      },
             {"mobile":  "none"      },
             {"rt_host":  LaunchConfiguration('rt_host')      },
-            #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
+            #parameters_file_path       # If a parameter is set in both the launch file and a YAML file, the value from the YAML file will be used.
         ],
         output="screen",
     )
