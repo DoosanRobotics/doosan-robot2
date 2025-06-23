@@ -1,0 +1,73 @@
+<mujoco model="p3020">
+  <compiler angle="radian" meshdir="assets/"/>
+
+  <asset>
+    <mesh name="P3020_0_1" file="P3020_0_1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_1_1" file="P3020_1_1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_1_2" file="P3020_1_2.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_1_3" file="P3020_1_3.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_1_4" file="P3020_1_4.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_1_5" file="P3020_1_5.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_2_1" file="P3020_2_1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_2_2" file="P3020_2_2.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_2_3" file="P3020_2_3.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_2_4" file="P3020_2_4.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_2_5" file="P3020_2_5.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_2_6" file="P3020_2_6.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_2_7" file="P3020_2_7.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_2_8" file="P3020_2_8.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_3_1" file="P3020_3_1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_3_2" file="P3020_3_2.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_3_3" file="P3020_3_3.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_3_4" file="P3020_3_4.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_5_1" file="P3020_5_1.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_5_2" file="P3020_5_2.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_5_3" file="P3020_5_3.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="P3020_6_1" file="P3020_6_1.STL" scale="0.001 0.001 0.001"/>
+  </asset>
+
+  <worldbody>
+    <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.941 0.941 0.941 1" mesh="P3020_0_1"/>
+    <body name="link_1" pos="0 0 0.3943">
+      <inertial pos="-1.1e-05 0.11205 -0.065579" quat="0.964297 -0.00123481 0.26482 0.00046348" mass="28.624" diaginertia="0.50696 0.50696 0.50696"/>
+      <joint name="joint_1" pos="0 0 0" axis="0 0 1" range="-6.2832 6.2832" actuatorfrcrange="-459 459"/>
+      <geom pos="0 0 -0.3943" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_1_1"/>
+      <geom pos="0 0 -0.3943" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_1_2"/>
+      <geom pos="0 0 -0.3943" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_1_3"/>
+      <geom pos="0 0 -0.3943" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_1_4"/>
+      <geom pos="0 0 -0.3943" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_1_5"/>
+      <body name="link_2" pos="0 0.2351 0" quat="0.499998 -0.500002 -0.5 -0.5">
+        <inertial pos="0.4005 5e-06 0.006736" quat="0.512286 0.511868 0.487866 0.487381" mass="30.357" diaginertia="4.55158 4.4825 0.169374"/>
+        <joint name="joint_2" pos="0 0 0" axis="0 0 1" range="-2.1817 2.1817" actuatorfrcrange="-841 841"/>
+        <geom pos="-0.3943 0 -0.2351" quat="0.499998 0.5 0.500002 0.5" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_2_1"/>
+        <geom pos="-0.3943 0 -0.2351" quat="0.499998 0.5 0.500002 0.5" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_2_2"/>
+        <geom pos="-0.3943 0 -0.2351" quat="0.499998 0.5 0.500002 0.5" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_2_3"/>
+        <geom pos="-0.3943 0 -0.2351" quat="0.499998 0.5 0.500002 0.5" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_2_4"/>
+        <geom pos="-0.3943 0 -0.2351" quat="0.499998 0.5 0.500002 0.5" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_2_5"/>
+        <geom pos="-0.3943 0 -0.2351" quat="0.499998 0.5 0.500002 0.5" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_2_6"/>
+        <geom pos="-0.3943 0 -0.2351" quat="0.499998 0.5 0.500002 0.5" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_2_7"/>
+        <geom pos="-0.3943 0 -0.2351" quat="0.499998 0.5 0.500002 0.5" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_2_8"/>
+        <body name="link_3" pos="1.01 0 0" quat="0.707105 0 0 0.707108">
+          <inertial pos="0.00637354 -0.695704 -0.367708" quat="0.538837 0.842399 0.00364966 0.00239179" mass="8.893" diaginertia="2.78048 2.31304 0.505788"/>
+          <joint name="joint_3" pos="0 0 0" axis="0 0 1" range="-2.7925 2.7925" actuatorfrcrange="-484 484"/>
+          <geom pos="0 1.4043 -0.2351" quat="0.707105 0.707108 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_3_1"/>
+          <geom pos="0 1.4043 -0.2351" quat="0.707105 0.707108 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_3_2"/>
+          <geom pos="0 1.4043 -0.2351" quat="0.707105 0.707108 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_3_3"/>
+          <geom pos="0 1.4043 -0.2351" quat="0.707105 0.707108 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_3_4"/>
+          <body name="link_5" pos="0 -0.890001 -0.0272">
+            <inertial pos="2.9e-05 -0.00224 -0.050131" quat="0.999936 0.000269377 -0.000584697 0.011307" mass="2.959" diaginertia="0.0165735 0.0136865 0.00999489"/>
+            <joint name="joint_5" pos="0 0 0" axis="0 0 1" range="-6.2832 6.2832" actuatorfrcrange="-70 70"/>
+            <geom pos="0 2.2943 -0.2079" quat="0.707105 0.707108 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_5_1"/>
+            <geom pos="0 2.2943 -0.2079" quat="0.707105 0.707108 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_5_2"/>
+            <geom pos="0 2.2943 -0.2079" quat="0.707105 0.707108 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0 0 0.15 1" mesh="P3020_5_3"/>
+            <body name="link_6" pos="0 -0.13 0" quat="0.707105 0.707108 0 0">
+              <inertial pos="-0.000232 -0.027102 -0.055618" quat="0.497098 0.500775 -0.49512 0.506926" mass="1.087" diaginertia="0.00781365 0.0075571 0.00710725"/>
+              <joint name="joint_6" pos="0 0 0" axis="0 0 1" range="-6.2832 6.2832" actuatorfrcrange="-50 50"/>
+              <geom pos="0 -0.2079 -2.4243" quat="1 0 0 0" type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="0.941 0.941 0.941 1" mesh="P3020_6_1"/>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+</mujoco>
