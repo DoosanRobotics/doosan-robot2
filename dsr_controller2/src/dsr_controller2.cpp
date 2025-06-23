@@ -1872,6 +1872,7 @@ auto servoj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojStream> msg)
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
     check_dsr_model(target_pos);
+    
     Drfl->servoj(target_pos.data(), target_vel.data(), target_acc.data(), time);
 };
 
@@ -1986,9 +1987,11 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
 
   cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   // Subscription declarations
-  m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb);
+  // Theo - to do : Create topic publisher of those stuff
+  // 실제 로봇 사용해서 토픽 출력
+  m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb); // 지울 것 // 제외하고 만들 것
   m_sub_alter_motion_stream           = get_node()->create_subscription<dsr_msgs2::msg::AlterMotionStream>("alter_motion_stream", 20, alter_cb);
-  m_sub_servoj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServojStream>("servoj_stream", 20, servoj_cb);
+  m_sub_servoj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServojStream>("servoj_stream", 20, servoj_cb);// 체크
   m_sub_servol_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServolStream>("servol_stream", 20, servol_cb);
   m_sub_speedj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::SpeedjStream>("speedj_stream", 20, speedj_cb);
   m_sub_speedl_stream                 = get_node()->create_subscription<dsr_msgs2::msg::SpeedlStream>("speedl_stream", 10, speedl_cb);
@@ -1998,9 +2001,9 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_sub_speedj_rt_stream              = get_node()->create_subscription<dsr_msgs2::msg::SpeedjRtStream>("speedj_rt_stream", 20, speedj_rt_cb);
   m_sub_speedl_rt_stream              = get_node()->create_subscription<dsr_msgs2::msg::SpeedlRtStream>("speedl_rt_stream", 20, speedl_rt_cb);
   m_sub_torque_rt_stream              = get_node()->create_subscription<dsr_msgs2::msg::TorqueRtStream>("torque_rt_stream", 20, torque_rt_cb);
+  // cli으로 토픽주기
   
-  
-  m_nh_srv_set_robot_mode             = get_node()->create_service<dsr_msgs2::srv::SetRobotMode>("system/set_robot_mode", set_robot_mode_cb);
+  m_nh_srv_set_robot_mode             = get_node()->create_service<dsr_msgs2::srv::SetRobotMode>("set_robot_mode", set_robot_mode_cb);
   m_nh_srv_get_robot_mode             = get_node()->create_service<dsr_msgs2::srv::GetRobotMode>("system/get_robot_mode", get_robot_mode_cb);     
   m_nh_srv_set_robot_system           = get_node()->create_service<dsr_msgs2::srv::SetRobotSystem>("system/set_robot_system", set_robot_system_cb);         
   m_nh_srv_get_robot_system           = get_node()->create_service<dsr_msgs2::srv::GetRobotSystem>("system/get_robot_system", get_robot_system_cb);         

@@ -61,6 +61,11 @@ _ros2_get_last_alarm             = g_node.create_client(GetLastAlarm,           
 _ros2_get_current_pose           = g_node.create_client(GetCurrentPose,         _srv_name_prefix +"system/get_current_pose")
 
 #  motion Operations
+#### Theo Add topics (to do : remove this comments):
+_ros2_servoj_stream_pub          = g_node.create_publisher(ServojStream,        _topic_name_prefix + "servoj_stream", 10)
+_ros2_set_safety_mode            = g_node.create_client(SetSafetyMode,          _srv_name_prefix +"system/set_safety_mode")
+#### End of change
+
 _ros2_movej                      = g_node.create_client(MoveJoint,              _srv_name_prefix + "motion/move_joint")
 _ros2_movel                      = g_node.create_client(MoveLine,               _srv_name_prefix +"motion/move_line")
 _ros2_movejx                     = g_node.create_client(MoveJointx,             _srv_name_prefix +"motion/move_jointx")
@@ -1392,6 +1397,90 @@ def set_ref_coord(coord):
 
     #print_result("{0} = set_ref_coord(coord:{1})".format(ret, coord))
     return ret
+
+### Theo add api (to do : remove this comment)
+def servoj(pos, vel, acc, time):
+    # pos
+    if not isinstance(pos, list) or len(pos) != POINT_COUNT:
+        raise DR_Error(DR_ERROR_TYPE, f"Invalid type or length for pos: must be a list of {POINT_COUNT} floats.")
+    if not is_number(pos):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in pos list.")
+    _pos = [float(p) for p in pos]
+
+    # vel
+    if not isinstance(vel, list) or len(vel) != POINT_COUNT:
+        raise DR_Error(DR_ERROR_TYPE, f"Invalid type or length for vel: must be a list of {POINT_COUNT} floats.")
+    if not is_number(vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel list.")
+    _vel = [float(v) for v in vel]
+
+    # acc
+    if not isinstance(acc, list) or len(acc) != POINT_COUNT:
+        raise DR_Error(DR_ERROR_TYPE, f"Invalid type or length for acc: must be a list of {POINT_COUNT} floats.")
+    if not is_number(acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc list.")
+    _acc = [float(a) for a in acc]
+
+    # time
+    if not isinstance(time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time: must be a float.")
+    if time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value for time: must be non-negative.")
+    _time = float(time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = ServojStream()
+        msg.pos = _pos
+        msg.vel = _vel
+        msg.acc = _acc
+        msg.time = _time
+        
+        _ros2_servoj_stream_pub.publish(msg)
+        
+        print_result(f"0 = servoj(pos:{dr_form(pos)}, vel:{dr_form(vel)}, acc:{dr_form(acc)}, time:{_time})")
+        return 0
+    else:
+        # This function is specific to ROS2 Topic communication
+        raise DR_Error(DR_ERROR_TYPE, "servoj is only supported in ROS2 mode.")
+    
+def set_safety_mode(safety_mode, safety_event):
+
+    # Type checking for inputs
+    if type(safety_mode) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : safety_mode")
+    if type(safety_event) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : safety_event")
+
+    # ROS2 service call
+    if __ROS2__:
+        # Create a request object
+        req = SetSafetyMode.Request()
+        req.safety_mode = safety_mode
+        req.safety_event = safety_event
+
+        # Wait for the service to be available
+        while not _ros2_set_safety_mode.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Safety Mode service not available, waiting...")
+
+        # Asynchronously call the service
+        future = _ros2_set_safety_mode.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error(f"set_safety_mode service call failed: {e}")
+            ret = -1
+        else:
+            if result is None:
+                g_node.get_logger().error("set_safety_mode service call returned None.")
+                ret = -1
+            else:
+                ret = 0 if result.success else -1
+    return ret
+
+### End of change
 
 def movej(pos, vel=None, acc=None, time=None, radius=None, mod= DR_MV_MOD_ABS, ra=DR_MV_RA_DUPLICATE, v=None, a=None, t=None, r=None):
     ret = _movej(pos, vel, acc, time, radius, mod, ra, v, a, t, r, _async=0)

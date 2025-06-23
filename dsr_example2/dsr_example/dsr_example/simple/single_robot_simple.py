@@ -1,7 +1,7 @@
 import rclpy
 import os
 import sys
-
+import time
 from rclpy.logging import get_logger
 
 # for single robot
@@ -22,18 +22,29 @@ def main(args=None):
         DR_init.__dsr__node = node
 
         try:
-                from DSR_ROBOT2 import print_ext_result, movej, movejx, movesj, movesx, movel, movec, move_periodic, move_spiral, moveb, set_velx, set_accx, set_robot_mode
-                from DSR_ROBOT2 import posj, posx, posb
-                from DSR_ROBOT2 import DR_LINE, DR_CIRCLE, DR_BASE, DR_TOOL, DR_AXIS_X, DR_AXIS_Z, DR_MV_MOD_ABS, ROBOT_MODE_AUTONOMOUS
+                from DSR_ROBOT2 import print_ext_result, movej, movejx, movesj, movesx, movel, movec, move_periodic, move_spiral, moveb, set_velx, set_accx, set_robot_mode, servoj, set_safety_mode
+                from DSR_ROBOT2 import posj, posx, posb, set_velj, set_accj
+                from DSR_ROBOT2 import DR_LINE, DR_CIRCLE, DR_BASE, DR_TOOL, DR_AXIS_X, DR_AXIS_Z, DR_MV_MOD_ABS, ROBOT_MODE_AUTONOMOUS, SAFETY_MODE_MANUAL, SAFETY_MODE_EVENT_MOVE
                 # print_result("Import DSR_ROBOT2 Success!")
         except ImportError as e:
                 print(f"Error importing DSR_ROBOT2 : {e}")
                 return
         
-        set_robot_mode(ROBOT_MODE_AUTONOMOUS)
+        # set_robot_mode(ROBOT_MODE_AUTONOMOUS)
+
+        # 안전 모드를 '수동 조작', '이동 중' 상태로 설정
+        logger.info(f"Setting safety mode to MANUAL({SAFETY_MODE_MANUAL}), MOVE({SAFETY_MODE_EVENT_MOVE})...")
+        if set_safety_mode(SAFETY_MODE_MANUAL, SAFETY_MODE_EVENT_MOVE) == 0:
+                logger.info("Successfully set safety mode.")
+        else:
+                logger.error("Failed to set safety mode.")
 
         set_velx(30, 20)    # set global task speed : 30(mm/sec), 20(deg/sec)
         set_accx(60, 40)    # set global task speed : 60(mm/sec2), 40(deg/sec2)
+
+        # 2. 전역 속도/가속도 설정
+        set_velj(100)  # 모든 조인트 속도를 100으로 설정
+        set_accj(100)  # 모든 조인트 가속도를 100으로 설정
 
         velx = [50, 50]
         accx = [100, 100]
@@ -85,7 +96,7 @@ def main(args=None):
         b_list1 = [seg11, seg12, seg14, seg15, seg16]
 
         while rclpy.ok():
-                movej(p2, vel=100, acc=100)
+                # movej(p2, vel=100, acc=100)
 
                 # movejx(x1, vel=30, acc=60, sol=0)
 
@@ -104,6 +115,9 @@ def main(args=None):
                 # moveb(b_list1, vel=150, acc=250, ref=DR_BASE, mod=DR_MV_MOD_ABS)
 
                 movej(p1, vel=100, acc=100)
+                # for i in range(45):
+                #         servoj(posj(0,0,0,0,i,0), time=0.1)
+                #         time.sleep(0.5)
 
         print('good bye!')
         rclpy.shutdown()
