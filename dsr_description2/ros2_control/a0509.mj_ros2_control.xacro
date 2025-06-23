@@ -1,0 +1,113 @@
+<?xml version="1.0" ?>
+<robot name="a0509" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:include filename="$(find dsr_description2)/config/macro.gazebo.xacro" />
+    <xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
+    <xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
+
+    <xacro:property name="default_position_kp" value="2500" />
+    <xacro:property name="default_position_ki" value="10" />
+    <xacro:property name="default_position_kd" value="10" />
+    <xacro:property name="default_position_i_max" value="1000" />
+    <xacro:macro name="joint_pid_params" params="kp:=${default_position_kp} ki:=${default_position_ki} kd:=${default_position_kd} i_max:=${default_position_i_max}">
+        <param name="position_kp">${kp}</param>
+        <param name="position_ki">${ki}</param>
+        <param name="position_kd">${kd}</param>
+        <param name="position_i_max">${i_max}</param>
+        <command_interface name="position_pid"/>
+    </xacro:macro>
+    
+    <xacro:macro name="a0509_mj_ros2_control" params="
+    name:=a0509
+    namespace
+    rate:=100
+    standby:=true
+    command:=none
+    host:=0.0.0.0
+    port:=12345
+    mode:=real
+    model:=a0509
+    gripper:=none
+    mobile:=none
+    use_gazebo:=false
+    ">
+
+    <ros2_control name="MujocoSystem" type="system">
+        <hardware>
+            <plugin>mujoco_ros2_control/MujocoSystem</plugin>
+        </hardware>
+
+        <joint name="joint_1">
+            <xacro:joint_pid_params />
+            <state_interface name="position">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+            <state_interface name="velocity">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+        </joint>
+
+        <joint name="joint_2">
+            <xacro:joint_pid_params />
+            <state_interface name="position">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+            <state_interface name="velocity">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+        </joint>
+
+        <joint name="joint_3">
+            <xacro:joint_pid_params />
+            <state_interface name="position">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+            <state_interface name="velocity">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+        </joint>
+
+        <joint name="joint_4">
+            <xacro:joint_pid_params />
+            <state_interface name="position">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+            <state_interface name="velocity">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+        </joint>
+
+        <joint name="joint_5">
+            <xacro:joint_pid_params />
+            <state_interface name="position">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+            <state_interface name="velocity">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+        </joint>
+
+        <joint name="joint_6">
+            <xacro:joint_pid_params />
+            <state_interface name="position">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+            <state_interface name="velocity">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+        </joint>
+
+      <!-- 2f85 Mujoco ROS2 control -->
+      <xacro:if value="${gripper == '2f85'}">
+        <xacro:include filename="$(find dsr_description2)/ros2_control/robotiq_2f85.mj_ros2_control.xacro"/>
+      </xacro:if>
+
+    </ros2_control>
+
+    <!-- Add dummy link for 2f85 Mujoco ROS2 control -->
+    <xacro:if value="${gripper == '2f85'}">
+        <xacro:include filename="$(find dsr_description2)/xacro/robotiq_2f85.xacro"/>
+    </xacro:if>
+    
+    </xacro:macro>
+</robot>
