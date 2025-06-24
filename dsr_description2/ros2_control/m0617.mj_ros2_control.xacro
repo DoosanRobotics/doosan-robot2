@@ -5,10 +5,10 @@
     <xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
     <xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
 
-    <xacro:property name="default_position_kp" value="2500" />
+    <xacro:property name="default_position_kp" value="6000" />
     <xacro:property name="default_position_ki" value="10" />
-    <xacro:property name="default_position_kd" value="10" />
-    <xacro:property name="default_position_i_max" value="1000" />
+    <xacro:property name="default_position_kd" value="0.1" />
+    <xacro:property name="default_position_i_max" value="2000" />
     <xacro:macro name="joint_pid_params" params="kp:=${default_position_kp} ki:=${default_position_ki} kd:=${default_position_kd} i_max:=${default_position_i_max}">
         <param name="position_kp">${kp}</param>
         <param name="position_ki">${ki}</param>

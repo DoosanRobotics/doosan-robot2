@@ -32,5 +32,9 @@
       <geom type="box" name="box" size="0.02 0.02 0.02" condim="3"
        friction="1 .03 .003" rgba="0 0.6 0 1" contype="1" conaffinity="1" solref="0.01 1" density="600"/>
     </body>
+
+    <body name="target" pos="0.3 -0.35 0.19">
+      <geom type="sphere" name="target" size="0.045" contype="0" conaffinity="0" rgba="1 0 0 0.3"/>
+    </body>
   </worldbody>
 </mujoco>
