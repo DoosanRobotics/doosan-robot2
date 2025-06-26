@@ -58,11 +58,11 @@
   </worldbody>
 
 	<actuator>
-		<position joint="joint_1" kp="2" kv="0.002" ctrlrange="-2.617 2.617"/>
-		<position joint="joint_2" kp="2" kv="0.002" ctrlrange="-1.57 1.57"/>
-		<position joint="joint_3" kp="2" kv="0.002" ctrlrange="-2.617 2.617"/>
-		<position joint="joint_4" kp="2" kv="0.002" ctrlrange="-2.617 2.617"/>
-		<position joint="joint_5" kp="2" kv="0.002" ctrlrange="-2.617 2.617"/>
-		<position joint="joint_6" kp="2" kv="0.002" ctrlrange="-2.617 2.617"/>
+		<position joint="joint_1" kp="2" kv="0.002" ctrlrange="-6.2832 6.2832"/>
+		<position joint="joint_2" kp="2" kv="0.002" ctrlrange="-2.1817 2.1817"/>
+		<position joint="joint_3" kp="2" kv="0.002" ctrlrange="-2.7925 2.7925"/>
+		<position joint="joint_4" kp="2" kv="0.002" ctrlrange="-6.2832 6.2832"/>
+		<position joint="joint_5" kp="2" kv="0.002" ctrlrange="-6.2832 6.2832"/>
+		<position joint="joint_6" kp="2" kv="0.002" ctrlrange="-6.2832 6.2832"/>
 	</actuator>
 </mujoco>

@@ -5,7 +5,7 @@
     <xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
     <xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
 
-    <xacro:property name="default_position_kp" value="2500" />
+    <xacro:property name="default_position_kp" value="3500" />
     <xacro:property name="default_position_ki" value="10" />
     <xacro:property name="default_position_kd" value="10" />
     <xacro:property name="default_position_i_max" value="1000" />
