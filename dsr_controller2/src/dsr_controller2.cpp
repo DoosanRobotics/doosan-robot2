@@ -1928,7 +1928,11 @@ auto servoj_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojRtStream>
     float time = msg->time;
     check_dsr_model(target_pos);
     
-    Drfl->servoj_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
+    // Theo - to do : Remove 'int r'
+    int r = Drfl->servoj_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
+    // Theo - to do : Remove test log
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"response : %d servoj_rt called with pos: %f, %f, %f, %f, %f, %f", 
+                r, target_pos[0], target_pos[1], target_pos[2], target_pos[3], target_pos[4], target_pos[5]);
 };
 
 // Callback for servol_rt_stream
@@ -1942,7 +1946,12 @@ auto servol_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServolRtStream>
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
 
-    Drfl->servol_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
+    // Theo - to do : Remove 'int r'
+    int r = Drfl->servol_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
+    // Theo - to do : Remove test log
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"response : %d servoj_rt called with pos: %f, %f, %f, %f, %f, %f", 
+                r, target_pos[0], target_pos[1], target_pos[2], target_pos[3], target_pos[4], target_pos[5]);
+
 };
 
 // Callback for speedj_rt_stream

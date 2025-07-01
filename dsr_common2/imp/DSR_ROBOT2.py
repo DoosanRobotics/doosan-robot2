@@ -63,7 +63,21 @@ _ros2_get_current_pose           = g_node.create_client(GetCurrentPose,         
 #  motion Operations
 #### Theo Add topics (to do : remove this comments):
 _ros2_servoj_stream_pub          = g_node.create_publisher(ServojStream,        _topic_name_prefix + "servoj_stream", 10)
+_ros2_servol_stream_pub          = g_node.create_publisher(ServolStream,        _topic_name_prefix + "servol_stream", 10)
+_ros2_speedj_stream_pub          = g_node.create_publisher(SpeedjStream,        _topic_name_prefix + "speedj_stream", 10)
+_ros2_speedl_stream_pub          = g_node.create_publisher(SpeedlStream,        _topic_name_prefix + "speedl_stream", 10)
+
+_ros2_servoj_rt_stream_pub       = g_node.create_publisher(ServojRtStream,      _topic_name_prefix + "servoj_rt_stream", 10)
+_ros2_servol_rt_stream_pub       = g_node.create_publisher(ServolRtStream,      _topic_name_prefix + "servol_rt_stream", 10)
+_ros2_speedj_rt_stream_pub       = g_node.create_publisher(SpeedjRtStream,      _topic_name_prefix + "speedj_rt_stream", 10)
+_ros2_speedl_rt_stream_pub       = g_node.create_publisher(SpeedlRtStream,      _topic_name_prefix + "speedl_rt_stream", 10)
+_ros2_torque_rt_stream_pub       = g_node.create_publisher(TorqueRtStream,      _topic_name_prefix + "torque_rt_stream", 10)
+
 _ros2_set_safety_mode            = g_node.create_client(SetSafetyMode,          _srv_name_prefix +"system/set_safety_mode")
+
+# RT
+_ros2_connect_rt_control         = g_node.create_client(ConnectRtControl,       _srv_name_prefix + "realtime/connect_rt_control")
+
 #### End of change
 
 _ros2_movej                      = g_node.create_client(MoveJoint,              _srv_name_prefix + "motion/move_joint")
@@ -1399,53 +1413,595 @@ def set_ref_coord(coord):
     return ret
 
 ### Theo add api (to do : remove this comment)
-def servoj(pos, vel, acc, time):
+
+# DSR_ROBOT2.py
+
+def servoj(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
     # pos
-    if not isinstance(pos, list) or len(pos) != POINT_COUNT:
-        raise DR_Error(DR_ERROR_TYPE, f"Invalid type or length for pos: must be a list of {POINT_COUNT} floats.")
-    if not is_number(pos):
-        raise DR_Error(DR_ERROR_VALUE, "Invalid value in pos list.")
-    _pos = [float(p) for p in pos]
+    _pos = get_posj(pos)
 
-    # vel
-    if not isinstance(vel, list) or len(vel) != POINT_COUNT:
-        raise DR_Error(DR_ERROR_TYPE, f"Invalid type or length for vel: must be a list of {POINT_COUNT} floats.")
-    if not is_number(vel):
-        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel list.")
-    _vel = [float(v) for v in vel]
+    # _vel
+    temp = get_param(vel, v)
+    if temp == None:
+        _vel = _g_velj
+    else:
+        if type(temp) == int or type(temp) == float:
+            _vel = [temp] * DR_VELJ_DT_LEN
+        elif type(temp) == list and len(temp) == DR_VELJ_DT_LEN:
+            _vel = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel, v")
 
-    # acc
-    if not isinstance(acc, list) or len(acc) != POINT_COUNT:
-        raise DR_Error(DR_ERROR_TYPE, f"Invalid type or length for acc: must be a list of {POINT_COUNT} floats.")
-    if not is_number(acc):
-        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc list.")
-    _acc = [float(a) for a in acc]
+    if is_number(_vel) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
 
-    # time
-    if not isinstance(time, (int, float)):
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time: must be a float.")
-    if time < 0:
-        raise DR_Error(DR_ERROR_VALUE, "Invalid value for time: must be non-negative.")
-    _time = float(time)
+    for item in _vel:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    # _acc
+    temp = get_param(acc, a)
+    if temp == None:
+        _acc = _g_accj
+    else:
+        if type(temp) == int or type(temp) == float:
+            _acc = [temp] * DR_ACCJ_DT_LEN
+        elif type(temp) == list and len(temp) == DR_ACCJ_DT_LEN:
+            _acc = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc, a")
+
+    if is_number(_acc) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    # _time
+    _time = get_param(time, t)
+    if _time == None:
+        _time = 0.0
+
+    if type(_time) != int and type(_time) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : time, t")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_joint(_vel, _acc, _time)
 
     # Create and publish the message
     if __ROS2__:
         msg = ServojStream()
-        msg.pos = _pos
-        msg.vel = _vel
-        msg.acc = _acc
-        msg.time = _time
+        msg.pos = [float(p) for p in _pos]
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
         
         _ros2_servoj_stream_pub.publish(msg)
         
-        print_result(f"0 = servoj(pos:{dr_form(pos)}, vel:{dr_form(vel)}, acc:{dr_form(acc)}, time:{_time})")
+        print_result("0 = servoj(pos:{0}, vel:{1}, acc:{2}, time:{3})".format(dr_form(_pos), dr_form(_vel), dr_form(_acc), _time))
+        return 0
+
+def servol(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
+    # Constants for servol
+    DR_VELL_DT_LEN = 2
+    DR_ACCL_DT_LEN = 2
+
+    # pos
+    _pos = get_posx(pos)
+
+    # _vel
+    temp = get_param(vel, v)
+    if temp is None:
+        _vel = _g_velx
+    else:
+        if isinstance(temp, (int, float)):
+            _vel = [temp] * DR_VELL_DT_LEN
+        elif isinstance(temp, list) and len(temp) == DR_VELL_DT_LEN:
+            _vel = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel/v: Must be a number or a list of 2 numbers.")
+
+    if not is_number(_vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel/v.")
+
+    for item in _vel:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Velocity components cannot be negative.")
+
+    # _acc
+    temp = get_param(acc, a)
+    if temp is None:
+        _acc = _g_accx
+    else:
+        if isinstance(temp, (int, float)):
+            _acc = [temp] * DR_ACCL_DT_LEN
+        elif isinstance(temp, list) and len(temp) == DR_ACCL_DT_LEN:
+            _acc = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc/a: Must be a number or a list of 2 numbers.")
+
+    if not is_number(_acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc/a.")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # check vel, acc, time (assuming a task-space equivalent check exists or the joint one is applicable)
+    _check_valid_vel_acc_task(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = ServolStream()
+        msg.pos = [float(p) for p in _pos]
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_servol_stream_pub.publish(msg)
+        
+        print_result("0 = servol(pos:{0}, vel:{1}, acc:{2}, time:{3})".format(dr_form(_pos), dr_form(_vel), dr_form(_acc), _time))
+        return 0
+
+def speedj(vel=None, acc=None, time=None, v=None, a=None, t=None):
+
+    # _vel
+    _vel_param = get_param(vel, v)
+    if _vel_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: vel or v")
+
+    if type(_vel_param) == int or type(_vel_param) == float:
+        _vel = [_vel_param] * DR_VELJ_DT_LEN
+    elif type(_vel_param) == list and len(_vel_param) == DR_VELJ_DT_LEN:
+        _vel = _vel_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel, v")
+
+    if is_number(_vel) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    # _acc
+    _acc_param = get_param(acc, a)
+    if _acc_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: acc or a")
+
+    if type(_acc_param) == int or type(_acc_param) == float:
+        _acc = [_acc_param] * DR_ACCJ_DT_LEN
+    elif type(_acc_param) == list and len(_acc_param) == DR_ACCJ_DT_LEN:
+        _acc = _acc_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc, a")
+
+    if is_number(_acc) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0
+
+    if type(_time) != int and type(_time) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : time, t")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_joint(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = SpeedjStream()
+        msg.vel = [float(item) for item in _vel]
+        msg.acc = [float(item) for item in _acc]
+        msg.time = float(_time)
+        
+        _ros2_speedj_stream_pub.publish(msg)
+        
+        print_result("0 = speedj(vel:{0}, acc:{1}, time:{2})".format(dr_form(_vel), dr_form(_acc), _time))
+        return 0
+
+def speedl(vel, acc, time=None, v=None, a=None, t=None):
+    # Constants for speedl
+    DR_VELL_DT_LEN = 6
+    DR_ACCL_DT_LEN = 2
+
+    # _vel
+    _vel_param = get_param(vel, v)
+    if _vel_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: vel or v")
+
+    if isinstance(_vel_param, (int, float)):
+        _vel = [_vel_param] * DR_VELL_DT_LEN
+    elif isinstance(_vel_param, list) and len(_vel_param) == DR_VELL_DT_LEN:
+        _vel = _vel_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel/v: Must be a number or a list of 2 numbers.")
+
+    if not is_number(_vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel/v.")
+
+    # _acc
+    _acc_param = get_param(acc, a)
+    if _acc_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: acc or a")
+
+    if isinstance(_acc_param, (int, float)):
+        _acc = [_acc_param] * DR_ACCL_DT_LEN
+    elif isinstance(_acc_param, list) and len(_acc_param) == DR_ACCL_DT_LEN:
+        _acc = _acc_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc/a: Must be a number or a list of 2 numbers.")
+
+    if not is_number(_acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc/a.")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_task(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = SpeedlStream()
+        msg.vel = [float(item) for item in _vel]
+        msg.acc = [float(item) for item in _acc]
+        msg.time = float(_time)
+        
+        _ros2_speedl_stream_pub.publish(msg)
+        
+        print_result("0 = speedl(vel:{0}, acc:{1}, time:{2})".format(dr_form(_vel), dr_form(_acc), _time))
+        return 0
+
+def servoj_rt(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
+    # pos
+    _pos = get_posj(pos)
+
+    # _vel
+    temp = get_param(vel, v)
+    if temp == None:
+        _vel = _g_velj
+    else:
+        if type(temp) == int or type(temp) == float:
+            _vel = [temp] * DR_VELJ_DT_LEN
+        elif type(temp) == list and len(temp) == DR_VELJ_DT_LEN:
+            _vel = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel, v")
+
+    if is_number(_vel) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    for item in _vel:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    # _acc
+    temp = get_param(acc, a)
+    if temp == None:
+        _acc = _g_accj
+    else:
+        if type(temp) == int or type(temp) == float:
+            _acc = [temp] * DR_ACCJ_DT_LEN
+        elif type(temp) == list and len(temp) == DR_ACCJ_DT_LEN:
+            _acc = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc, a")
+
+    if is_number(_acc) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    # _time
+    _time = get_param(time, t)
+    if _time == None:
+        _time = 0.0
+
+    if type(_time) != int and type(_time) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : time, t")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_joint(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = ServojRtStream()
+        msg.pos = [float(p) for p in _pos]
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_servoj_rt_stream_pub.publish(msg)
+        
+        print_result("0 = servoj_rt(pos:{0}, vel:{1}, acc:{2}, time:{3})".format(dr_form(_pos), dr_form(_vel), dr_form(_acc), _time))
+        return 0
+    
+def servol_rt(pos, vel, acc, time, v=None, a=None, t=None):
+    """
+    Real-time servo control based on linear motion.
+    Caution: This command is premature and may cause jerky motion.
+    It is recommended to tune the time parameter (>= 20ms) or use speedl_rt.
+    """
+    # pos
+    _pos = get_posx(pos)
+
+    # _vel
+    _vel_param = get_param(vel, v)
+    if _vel_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: vel or v")
+    
+    if isinstance(_vel_param, (int, float)):
+        _vel = [_vel_param] * POINT_COUNT
+    elif isinstance(_vel_param, list) and len(_vel_param) == POINT_COUNT:
+        _vel = _vel_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel/v: Must be a number or a list of 6 numbers.")
+
+    if not is_number(_vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel/v.")
+
+    # _acc
+    _acc_param = get_param(acc, a)
+    if _acc_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: acc or a")
+
+    if isinstance(_acc_param, (int, float)):
+        _acc = [_acc_param] * POINT_COUNT
+    elif isinstance(_acc_param, list) and len(_acc_param) == POINT_COUNT:
+        _acc = _acc_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc/a: Must be a number or a list of 6 numbers.")
+
+    if not is_number(_acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc/a.")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: time or t")
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = ServolRtStream()
+        msg.pos = [float(p) for p in _pos]
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_servol_rt_stream_pub.publish(msg)
+        
+        # Per documentation, servol_rt does not have a return value or print confirmation
+        # to maintain real-time performance.
         return 0
     else:
-        # This function is specific to ROS2 Topic communication
-        raise DR_Error(DR_ERROR_TYPE, "servoj is only supported in ROS2 mode.")
-    
-def set_safety_mode(safety_mode, safety_event):
+        raise DR_Error(DR_ERROR_TYPE, "servol_rt is only supported in ROS2 mode.")
 
+def speedj_rt(vel, acc, time=None, t=None):
+    """
+    Real-time Joint-space velocity control. This function is non-blocking.
+    The robot moves at the specified velocity and acceleration for the given synchronization time.
+    This is based on the DRFL `speedj_rt` function.
+
+    :param vel: Target joint velocities [deg/s]. Must be a list of 6 numbers.
+    :param acc: Target joint accelerations [deg/s^2]. Must be a list of 6 numbers.
+    :param time: Synchronization time [sec]. (alias: t)
+                 If time = 0, the robot maintains the velocity until the next command.
+                 If time > 0, the robot maintains the velocity for the specified duration.
+    :param t: Alias for time.
+    """
+    # Constants for speedj_rt
+    DR_VELJ_DT_LEN = 6
+    DR_ACCJ_DT_LEN = 6
+
+    # _vel
+    if not isinstance(vel, list):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel: Must be a list of 6 numbers.")
+    if len(vel) != DR_VELJ_DT_LEN:
+        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for vel: Must be {DR_VELJ_DT_LEN}.")
+    if not is_number(vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel: All elements must be numbers.")
+    _vel = vel
+
+    # _acc
+    if not isinstance(acc, list):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc: Must be a list of 6 numbers.")
+    if len(acc) != DR_ACCJ_DT_LEN:
+        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for acc: Must be {DR_ACCJ_DT_LEN}.")
+    if not is_number(acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc: All elements must be numbers.")
+    # For acceleration, it's conventional for them to be non-negative.
+    for item in acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
+    _acc = acc
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0  # Default sync time as per DRFL documentation style
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = SpeedjRtStream()
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_speedj_rt_stream_pub.publish(msg)
+        
+        print_result("0 = speedj_rt(vel:{0}, acc:{1}, time:{2})".format(dr_form(_vel), dr_form(_acc), _time))
+        return 0
+    
+    # In case ROS2 is not running, though the primary goal is publishing.
+    # This part can be adjusted based on desired behavior when not connected to ROS.
+    print_result("Error: ROS2 is not initialized. Cannot publish speedj_rt.")
+    return -1
+
+def speedl_rt(vel, acc, time=None, t=None):
+    """
+    Real-time Task-space velocity control. This function is non-blocking.
+    The robot moves at the specified velocity and acceleration for the given synchronization time.
+    This is based on the DRFL `speedl_rt` function.
+
+    :param vel: Target task-space velocities [mm/s, deg/s]. Must be a list of 6 numbers (vx, vy, vz, wx, wy, wz).
+    :param acc: Target task-space accelerations [mm/s^2, deg/s^2]. Must be a list of 6 numbers.
+    :param time: Synchronization time [sec]. (alias: t)
+                 If time = 0, the robot maintains the velocity until the next command.
+                 If time > 0, the robot maintains the velocity for the specified duration.
+    :param t: Alias for time.
+    """
+    # Constants for speedl_rt
+    DR_VELL_RT_DT_LEN = 6
+    DR_ACCL_RT_DT_LEN = 6
+
+    # _vel
+    if not isinstance(vel, list):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel: Must be a list of 6 numbers.")
+    if len(vel) != DR_VELL_RT_DT_LEN:
+        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for vel: Must be {DR_VELL_RT_DT_LEN}.")
+    if not is_number(vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel: All elements must be numbers.")
+    _vel = vel
+
+    # _acc
+    if not isinstance(acc, list):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc: Must be a list of 6 numbers.")
+    if len(acc) != DR_ACCL_RT_DT_LEN:
+        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for acc: Must be {DR_ACCL_RT_DT_LEN}.")
+    if not is_number(acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc: All elements must be numbers.")
+    # For acceleration, it's conventional for them to be non-negative.
+    for item in acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
+    _acc = acc
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0  # Default sync time
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = SpeedlRtStream()
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_speedl_rt_stream_pub.publish(msg)
+        
+        print_result("0 = speedl_rt(vel:{0}, acc:{1}, time:{2})".format(dr_form(_vel), dr_form(_acc), _time))
+        return 0
+    
+    print_result("Error: ROS2 is not initialized. Cannot publish speedl_rt.")
+    return -1
+
+def torque_rt(tor, time=None, t=None):
+    """
+    Real-time Joint-space torque control. This function is non-blocking.
+    The robot exerts the specified torque for each joint for the given synchronization time.
+    This is based on the DRFL `torque_rt` function.
+
+    :param tor: Target joint torques [Nm]. Must be a list of 6 numbers.
+    :param time: Synchronization time [sec]. (alias: t)
+                 If time = 0, the robot maintains the torque until the next command.
+                 If time > 0, the robot maintains the torque for the specified duration.
+    :param t: Alias for time.
+    """
+    # Constants for torque_rt
+    DR_TORQUE_RT_DT_LEN = 6
+
+    # _tor
+    if not isinstance(tor, list):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for tor: Must be a list of 6 numbers.")
+    if len(tor) != DR_TORQUE_RT_DT_LEN:
+        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for tor: Must be {DR_TORQUE_RT_DT_LEN}.")
+    if not is_number(tor):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in tor: All elements must be numbers.")
+    _tor = tor
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0  # Default sync time
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = TorqueRtStream()
+        msg.tor = [float(val) for val in _tor]
+        msg.time = float(_time)
+        
+        _ros2_torque_rt_stream_pub.publish(msg)
+        
+        print_result("0 = torque_rt(tor:{0}, time:{1})".format(dr_form(_tor), _time))
+        return 0
+    
+    print_result("Error: ROS2 is not initialized. Cannot publish torque_rt.")
+    return -1
+
+def set_safety_mode(safety_mode, safety_event):
     # Type checking for inputs
     if type(safety_mode) != int:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : safety_mode")
@@ -1461,21 +2017,64 @@ def set_safety_mode(safety_mode, safety_event):
 
         # Wait for the service to be available
         while not _ros2_set_safety_mode.wait_for_service(timeout_sec=1.0):
-            g_node.get_logger().info("Set Safety Mode service not available, waiting...")
+            g_node.get_logger().info("Set Safety Mode service is not available, waiting for service to become available...")
 
-        # Asynchronously call the service
         future = _ros2_set_safety_mode.call_async(req)
         rclpy.spin_until_future_complete(g_node, future)
 
         try:
             result = future.result()
         except Exception as e:
-            g_node.get_logger().error(f"set_safety_mode service call failed: {e}")
-            ret = -1
+            g_node.get_logger().info('set_safety_mode Service call failed %r' % (e,))
+        else:
+            if result == None:
+                ret = -1    
+            else:        
+                ret = 0 if (result.success == True) else -1
+    return ret
+
+# RT
+def connect_rt_control(ip_address=None, port=None):
+    """
+    Connects to the real-time control server.
+    If no arguments are given, it attempts to connect to the default UDP.
+    :param ip_address: The IP address to connect to. (Optional)
+    :type ip_address: str or None
+    :param port: The port number to connect to. (Optional)
+    :type port: int or None
+    :return: 0 if successful, -1 otherwise.
+    :rtype: int
+    """
+    # Handle optional arguments for the ROS2 service request
+    req_ip = ip_address if ip_address is not None else ""
+    req_port = port if port is not None else 0
+
+    # Type validation only if arguments are provided
+    if ip_address is not None and type(ip_address) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for ip_address: expected str")
+    if port is not None and type(port) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for port: expected int")
+
+    ret = -1
+    # ROS2 service call
+    if __ROS2__:
+        req = ConnectRtControl.Request()
+        req.ip_address = req_ip
+        req.port = req_port
+
+        while not _ros2_connect_rt_control.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Connect RT Control Service is not available, waiting for it to become available...")
+
+        future = _ros2_connect_rt_control.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('connect_rt_control Service call failed: %r' % (e,))
         else:
             if result is None:
-                g_node.get_logger().error("set_safety_mode service call returned None.")
-                ret = -1
+                g_node.get_logger().error('connect_rt_control Service call returned None')
             else:
                 ret = 0 if result.success else -1
     return ret
