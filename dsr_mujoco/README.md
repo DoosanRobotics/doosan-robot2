@@ -7,9 +7,10 @@
 This package enables controlling Doosan robots in MuJoCo simulation using ROS 2.
 
 Supported models:
-- **m1013** (white)  
-- **m0609** (white)
-- **h2017** (blue)
+- H-SERIES :  **h2515** (blue), **h2017** (blue)
+- M-SERIES :  **m1013** (white), **m0609** (white), **m1509** (white), **m0617** (white)
+- A-SERIES :  **a0509** (blue), **a0912** (blue)
+- E-SERIES :  **e0509** (white)
 
 ## Prerequisites
 
