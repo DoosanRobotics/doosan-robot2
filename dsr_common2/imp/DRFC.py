@@ -144,6 +144,12 @@ SAFETY_MODE_EVENT_MOVE                = 1
 SAFETY_MODE_EVENT_STOP                = 2
 SAFETY_MODE_EVENT_LAST                = 3
 
+#
+# servoj type enumerated value
+#
+DR_SERVO_OVERRIDE = 0
+DR_SERVO_QUEUE = 1
+
 ### End of change  
 
 #                                     

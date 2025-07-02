@@ -1871,9 +1871,10 @@ auto servoj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojStream> msg)
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
+    DR_SERVOJ_TYPE mode = (DR_SERVOJ_TYPE)msg->mode;
     check_dsr_model(target_pos);
     
-    Drfl->servoj(target_pos.data(), target_vel.data(), target_acc.data(), time);
+    Drfl->servoj(target_pos.data(), target_vel.data(), target_acc.data(), time, mode);
 };
 
 // Callback for servol_stream
@@ -1907,7 +1908,7 @@ auto speedj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedjStream> msg)
 // Callback for speedl_stream
 auto speedl_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedlStream> msg) -> void
 {
-    std::array<float, NUM_JOINT> target_vel;
+    std::array<float, 6> target_vel;
     std::copy(msg->vel.cbegin(), msg->vel.cend(), target_vel.begin());
     std::array<float, 2> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());

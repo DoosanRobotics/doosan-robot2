@@ -1434,7 +1434,7 @@ def set_ref_coord(coord):
 
 # DSR_ROBOT2.py
 
-def servoj(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
+def servoj(pos, vel=None, acc=None, time=None, mode=DR_SERVO_QUEUE, v=None, a=None, t=None, m=None):
     # pos
     _pos = get_posj(pos)
 
@@ -1487,6 +1487,15 @@ def servoj(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
     if _time < 0:
         raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
 
+    # _mode
+    _mode = get_param(mode, m)
+    if _mode == None:
+        _mode = DR_SERVO_QUEUE
+    if type(_mode) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : mode, m")
+    if _mode != DR_SERVO_OVERRIDE and _mode != DR_SERVO_QUEUE:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : mode, m")
+
     # check vel, acc, time
     _check_valid_vel_acc_joint(_vel, _acc, _time)
 
@@ -1497,10 +1506,11 @@ def servoj(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
         msg.vel = [float(v) for v in _vel]
         msg.acc = [float(a) for a in _acc]
         msg.time = float(_time)
+        msg.mode = _mode
         
         _ros2_servoj_stream_pub.publish(msg)
         
-        print_result("0 = servoj(pos:{0}, vel:{1}, acc:{2}, time:{3})".format(dr_form(_pos), dr_form(_vel), dr_form(_acc), _time))
+        print_result("0 = servoj(pos:{0}, vel:{1}, acc:{2}, time:{3}, mode:{4})".format(dr_form(_pos), dr_form(_vel), dr_form(_acc), _time, _mode))
         return 0
 
 def servol(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
