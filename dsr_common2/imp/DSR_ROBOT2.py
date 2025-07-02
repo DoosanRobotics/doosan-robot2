@@ -77,7 +77,25 @@ _ros2_set_safety_mode            = g_node.create_client(SetSafetyMode,          
 
 # RT
 _ros2_connect_rt_control         = g_node.create_client(ConnectRtControl,       _srv_name_prefix + "realtime/connect_rt_control")
+_ros2_disconnect_rt_control      = g_node.create_client(DisconnectRtControl,    _srv_name_prefix + "realtime/disconnect_rt_control")
+_ros2_get_rt_control_output_version_list = g_node.create_client(GetRtControlOutputVersionList, _srv_name_prefix + "realtime/get_rt_control_output_version_list")
+_ros2_get_rt_control_input_version_list = g_node.create_client(GetRtControlInputVersionList, _srv_name_prefix + "realtime/get_rt_control_input_version_list")
+_ros2_get_rt_control_input_data_list = g_node.create_client(GetRtControlInputDataList, _srv_name_prefix + "realtime/get_rt_control_input_data_list")
+_ros2_get_rt_control_output_data_list = g_node.create_client(GetRtControlOutputDataList, _srv_name_prefix + "realtime/get_rt_control_output_data_list")
 
+_ros2_start_rt_control = g_node.create_client(StartRtControl, _srv_name_prefix + "realtime/start_rt_control")
+_ros2_stop_rt_control  = g_node.create_client(StopRtControl,  _srv_name_prefix + "realtime/stop_rt_control")
+
+_ros2_set_rt_control_input  = g_node.create_client(SetRtControlInput,  _srv_name_prefix + "realtime/set_rt_control_input")
+_ros2_set_rt_control_output = g_node.create_client(SetRtControlOutput, _srv_name_prefix + "realtime/set_rt_control_output")
+
+_ros2_set_velj_rt = g_node.create_client(SetVeljRt, _srv_name_prefix + "realtime/set_velj_rt")
+_ros2_set_accj_rt = g_node.create_client(SetAccjRt, _srv_name_prefix + "realtime/set_accj_rt")
+_ros2_set_velx_rt = g_node.create_client(SetVelxRt, _srv_name_prefix + "realtime/set_velx_rt")
+_ros2_set_accx_rt = g_node.create_client(SetAccxRt, _srv_name_prefix + "realtime/set_accx_rt")
+
+_ros2_read_data_rt  = g_node.create_client(ReadDataRt,  _srv_name_prefix + "realtime/read_data_rt")
+_ros2_write_data_rt = g_node.create_client(WriteDataRt, _srv_name_prefix + "realtime/write_data_rt")
 #### End of change
 
 _ros2_movej                      = g_node.create_client(MoveJoint,              _srv_name_prefix + "motion/move_joint")
@@ -2035,28 +2053,19 @@ def set_safety_mode(safety_mode, safety_event):
 
 # RT
 def connect_rt_control(ip_address=None, port=None):
-    """
-    Connects to the real-time control server.
-    If no arguments are given, it attempts to connect to the default UDP.
-    :param ip_address: The IP address to connect to. (Optional)
-    :type ip_address: str or None
-    :param port: The port number to connect to. (Optional)
-    :type port: int or None
-    :return: 0 if successful, -1 otherwise.
-    :rtype: int
-    """
-    # Handle optional arguments for the ROS2 service request
-    req_ip = ip_address if ip_address is not None else ""
-    req_port = port if port is not None else 0
 
-    # Type validation only if arguments are provided
+    req_ip = ip_address if ip_address is not None else "192.168.137.100"
+    # req_ip = ip_address if ip_address is not None else "192.168.137.50"
+    # req_ip = ip_address if ip_address is not None else "127.0.0.1"
+
+    req_port = port if port is not None else 12347
+
     if ip_address is not None and type(ip_address) != str:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type for ip_address: expected str")
     if port is not None and type(port) != int:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type for port: expected int")
 
-    ret = -1
-    # ROS2 service call
+    ret = 0 # Default to failure
     if __ROS2__:
         req = ConnectRtControl.Request()
         req.ip_address = req_ip
@@ -2076,9 +2085,490 @@ def connect_rt_control(ip_address=None, port=None):
             if result is None:
                 g_node.get_logger().error('connect_rt_control Service call returned None')
             else:
-                ret = 0 if result.success else -1
+                ret = 1 if result.success else 0
     return ret
 
+def disconnect_rt_control():
+
+    ret = 0 # Default to failure
+    # ROS2 service call
+    if __ROS2__:
+        req = DisconnectRtControl.Request()
+
+        while not _ros2_disconnect_rt_control.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Disconnect RT Control Service is not available, waiting for it to become available...")
+
+        future = _ros2_disconnect_rt_control.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('disconnect_rt_control Service call failed: %r' % (e,))
+        else:
+            if result is None:
+                g_node.get_logger().error('disconnect_rt_control Service call returned None')
+            else:
+                ret = 1 if result.success else 0
+    return ret
+
+def get_rt_control_output_version_list():
+    ret = ""
+    # ROS2 service call
+    if __ROS2__:
+        req = GetRtControlOutputVersionList.Request()
+
+        while not _ros2_get_rt_control_output_version_list.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Get RT Control Output Version List Service is not available, waiting...")
+
+        future = _ros2_get_rt_control_output_version_list.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('get_rt_control_output_version_list Service call failed: %r' % (e,))
+        else:
+            if result is not None and result.success:
+                ret = result.version
+            else:
+                g_node.get_logger().error('Failed to get RT control output version list.')
+    return ret
+
+def get_rt_control_input_version_list():
+    ret = ""
+    # ROS2 service call
+    if __ROS2__:
+        req = GetRtControlInputVersionList.Request()
+
+        while not _ros2_get_rt_control_input_version_list.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Get RT Control Input Version List Service is not available, waiting...")
+
+        future = _ros2_get_rt_control_input_version_list.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('get_rt_control_input_version_list Service call failed: %r' % (e,))
+        else:
+            if result is not None and result.success:
+                ret = result.version
+            else:
+                g_node.get_logger().error('Failed to get RT control input version list.')
+    return ret
+
+def get_rt_control_input_data_list(version):
+    if type(version) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for version: expected str")
+
+    ret = "" # Default to empty string
+    # ROS2 service call
+    if __ROS2__:
+        req = GetRtControlInputDataList.Request()
+        req.version = version
+
+        while not _ros2_get_rt_control_input_data_list.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Get RT Control Input Data List Service is not available, waiting...")
+
+        future = _ros2_get_rt_control_input_data_list.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('get_rt_control_input_data_list Service call failed: %r' % (e,))
+        else:
+            if result is not None and result.success:
+                ret = result.data
+            else:
+                g_node.get_logger().error('Failed to get RT control input data list.')
+    return ret
+
+def get_rt_control_output_data_list(version):
+    if type(version) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for version: expected str")
+
+    ret = "" # Default to empty string
+    # ROS2 service call
+    if __ROS2__:
+        req = GetRtControlOutputDataList.Request()
+        req.version = version
+
+        while not _ros2_get_rt_control_output_data_list.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Get RT Control Output Data List Service is not available, waiting...")
+
+        future = _ros2_get_rt_control_output_data_list.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('get_rt_control_output_data_list Service call failed: %r' % (e,))
+        else:
+            if result is not None and result.success:
+                ret = result.data
+            else:
+                g_node.get_logger().error('Failed to get RT control output data list.')
+    return ret
+
+def start_rt_control():
+    ret = 0 # Default to failure
+    # ROS2 service call
+    if __ROS2__:
+        req = StartRtControl.Request()
+
+        while not _ros2_start_rt_control.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Start RT Control Service is not available, waiting...")
+
+        future = _ros2_start_rt_control.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('start_rt_control Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+            else:
+                g_node.get_logger().error('start_rt_control Service call returned None')
+    return ret
+
+def stop_rt_control():
+    ret = 0 # Default to failure
+    # ROS2 service call
+    if __ROS2__:
+        req = StopRtControl.Request()
+
+        while not _ros2_stop_rt_control.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Stop RT Control Service is not available, waiting...")
+
+        future = _ros2_stop_rt_control.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('stop_rt_control Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+            else:
+                g_node.get_logger().error('stop_rt_control Service call returned None')
+    return ret
+
+def set_rt_control_input(version, period, loss):
+    """
+    Set the configuration for the real-time control input.
+
+    :param version: The version string (e.g., "v1.0").
+    :type version: str
+    :param period: The control period in seconds (e.g., 0.008).
+    :type period: float
+    :param loss: The number of permissible consecutive data losses.
+    :type loss: int
+    :return: 1 if successful, 0 otherwise.
+    :rtype: int
+    """
+    if type(version) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for version: expected str")
+    if type(period) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for period: expected float")
+    if type(loss) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for loss: expected int")
+
+    ret = 0 # Default to failure
+    # ROS2 service call
+    if __ROS2__:
+        req = SetRtControlInput.Request()
+        req.version = version
+        req.period = period
+        req.loss = loss
+
+        while not _ros2_set_rt_control_input.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set RT Control Input Service is not available, waiting...")
+
+        future = _ros2_set_rt_control_input.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_rt_control_input Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+            else:
+                g_node.get_logger().error('set_rt_control_input Service call returned None')
+    return ret
+
+def set_rt_control_output(version, period, loss):
+    """
+    Set the configuration for the real-time control output.
+
+    :param version: The version string (e.g., "v1.0").
+    :type version: str
+    :param period: The control period in seconds (e.g., 0.008).
+    :type period: float
+    :param loss: The number of permissible consecutive data losses.
+    :type loss: int
+    :return: 1 if successful, 0 otherwise.
+    :rtype: int
+    """
+    if type(version) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for version: expected str")
+    if type(period) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for period: expected float")
+    if type(loss) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for loss: expected int")
+        
+    ret = 0 # Default to failure
+    # ROS2 service call
+    if __ROS2__:
+        req = SetRtControlOutput.Request()
+        req.version = version
+        req.period = period
+        req.loss = loss
+
+        while not _ros2_set_rt_control_output.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set RT Control Output Service is not available, waiting...")
+
+        future = _ros2_set_rt_control_output.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_rt_control_output Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+            else:
+                g_node.get_logger().error('set_rt_control_output Service call returned None')
+    return ret
+
+def set_velj_rt(vel):
+    """
+    Set the joint velocity for real-time control.
+
+    :param vel: A list or tuple of 6 joint velocities.
+    :type vel: list or tuple
+    :return: 1 if successful, 0 otherwise.
+    :rtype: int
+    """
+    if type(vel) not in (list, tuple) or len(vel) != 6:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel: expected list or tuple of 6 floats")
+
+    ret = 0 # Default to failure
+    if __ROS2__:
+        req = SetVeljRt.Request()
+        req.vel = vel
+
+        while not _ros2_set_velj_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Velj RT Service is not available, waiting...")
+
+        future = _ros2_set_velj_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_velj_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+    return ret
+
+def set_accj_rt(acc):
+    """
+    Set the joint acceleration for real-time control.
+
+    :param acc: A list or tuple of 6 joint accelerations.
+    :type acc: list or tuple
+    :return: 1 if successful, 0 otherwise.
+    :rtype: int
+    """
+    if type(acc) not in (list, tuple) or len(acc) != 6:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc: expected list or tuple of 6 floats")
+
+    ret = 0 # Default to failure
+    if __ROS2__:
+        req = SetAccjRt.Request()
+        req.acc = acc
+
+        while not _ros2_set_accj_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Accj RT Service is not available, waiting...")
+
+        future = _ros2_set_accj_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_accj_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+    return ret
+
+def set_velx_rt(trans, rotation):
+    """
+    Set the task space velocity for real-time control.
+
+    :param trans: Translational velocity.
+    :type trans: float
+    :param rotation: Rotational velocity.
+    :type rotation: float
+    :return: 1 if successful, 0 otherwise.
+    :rtype: int
+    """
+    if type(trans) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for trans: expected float")
+    if type(rotation) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for rotation: expected float")
+        
+    ret = 0 # Default to failure
+    if __ROS2__:
+        req = SetVelxRt.Request()
+        req.trans = trans
+        req.rotation = rotation
+
+        while not _ros2_set_velx_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Velx RT Service is not available, waiting...")
+
+        future = _ros2_set_velx_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_velx_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+    return ret
+
+def set_accx_rt(trans, rotation):
+    """
+    Set the task space acceleration for real-time control.
+
+    :param trans: Translational acceleration.
+    :type trans: float
+    :param rotation: Rotational acceleration.
+    :type rotation: float
+    :return: 1 if successful, 0 otherwise.
+    :rtype: int
+    """
+    if type(trans) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for trans: expected float")
+    if type(rotation) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for rotation: expected float")
+
+    ret = 0 # Default to failure
+    if __ROS2__:
+        req = SetAccxRt.Request()
+        req.trans = trans
+        req.rotation = rotation
+
+        while not _ros2_set_accx_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Accx RT Service is not available, waiting...")
+
+        future = _ros2_set_accx_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_accx_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+    return ret
+
+def read_data_rt():
+    """
+    Reads the real-time data from the robot controller.
+
+    :return: An RtOutputDataList object containing the robot's real-time data, or None on failure.
+    :rtype: dsr_msgs2.msg.RtOutputDataList or None
+    """
+    ret = None # Default to None
+    # ROS2 service call
+    if __ROS2__:
+        req = ReadDataRt.Request()
+
+        while not _ros2_read_data_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Read Data RT Service is not available, waiting...")
+
+        future = _ros2_read_data_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('read_data_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = result.data
+            else:
+                g_node.get_logger().error('read_data_rt Service call returned None')
+    return ret
+
+def write_data_rt(external_force_torque, external_digital_input, external_digital_output, external_analog_input, external_analog_output):
+    """
+    Writes external data to the robot controller in real-time.
+
+    :param external_force_torque: A list/tuple of 6 floats for external force/torque.
+    :type external_force_torque: list or tuple
+    :param external_digital_input: 16-bit unsigned integer for external digital input.
+    :type external_digital_input: int
+    :param external_digital_output: 16-bit unsigned integer for external digital output.
+    :type external_digital_output: int
+    :param external_analog_input: A list/tuple of 6 floats for external analog input.
+    :type external_analog_input: list or tuple
+    :param external_analog_output: A list/tuple of 6 floats for external analog output.
+    :type external_analog_output: list or tuple
+    :return: 1 if successful, 0 otherwise.
+    :rtype: int
+    """
+    if type(external_force_torque) not in (list, tuple) or len(external_force_torque) != 6:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_force_torque: expected list/tuple of 6 floats")
+    if type(external_digital_input) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_digital_input: expected int")
+    if type(external_digital_output) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_digital_output: expected int")
+    if type(external_analog_input) not in (list, tuple) or len(external_analog_input) != 6:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_analog_input: expected list/tuple of 6 floats")
+    if type(external_analog_output) not in (list, tuple) or len(external_analog_output) != 6:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_analog_output: expected list/tuple of 6 floats")
+
+    ret = 0 # Default to failure
+    # ROS2 service call
+    if __ROS2__:
+        req = WriteDataRt.Request()
+        req.external_force_torque = external_force_torque
+        req.external_digital_input = external_digital_input
+        req.external_digital_output = external_digital_output
+        req.external_analog_input = external_analog_input
+        req.external_analog_output = external_analog_output
+
+        while not _ros2_write_data_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Write Data RT Service is not available, waiting...")
+
+        future = _ros2_write_data_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('write_data_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 1 if result.success else 0
+            else:
+                g_node.get_logger().error('write_data_rt Service call returned None')
+    return ret
 ### End of change
 
 def movej(pos, vel=None, acc=None, time=None, radius=None, mod= DR_MV_MOD_ABS, ra=DR_MV_RA_DUPLICATE, v=None, a=None, t=None, r=None):
