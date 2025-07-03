@@ -1778,8 +1778,8 @@ def servoj_rt(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
     if type(_time) != int and type(_time) != float:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : time, t")
 
-    if _time < 0:
-        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+    # if _time < 0:
+    #     raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
 
     # check vel, acc, time
     _check_valid_vel_acc_joint(_vel, _acc, _time)
@@ -1797,55 +1797,45 @@ def servoj_rt(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
         print_result("0 = servoj_rt(pos:{0}, vel:{1}, acc:{2}, time:{3})".format(dr_form(_pos), dr_form(_vel), dr_form(_acc), _time))
         return 0
     
-def servol_rt(pos, vel, acc, time, v=None, a=None, t=None):
-    """
-    Real-time servo control based on linear motion.
-    Caution: This command is premature and may cause jerky motion.
-    It is recommended to tune the time parameter (>= 20ms) or use speedl_rt.
-    """
+def servol_rt(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
+
     # pos
     _pos = get_posx(pos)
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: time or t")
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+    if _time < 0:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
 
     # _vel
     _vel_param = get_param(vel, v)
     if _vel_param is None:
-        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: vel or v")
-    
-    if isinstance(_vel_param, (int, float)):
+        _vel = [DR_COND_NONE] * POINT_COUNT
+    elif isinstance(_vel_param, (int, float)):
         _vel = [_vel_param] * POINT_COUNT
     elif isinstance(_vel_param, list) and len(_vel_param) == POINT_COUNT:
         _vel = _vel_param
     else:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel/v: Must be a number or a list of 6 numbers.")
-
     if not is_number(_vel):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel/v.")
 
     # _acc
     _acc_param = get_param(acc, a)
     if _acc_param is None:
-        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: acc or a")
-
-    if isinstance(_acc_param, (int, float)):
+        _acc = [DR_COND_NONE] * POINT_COUNT
+    elif isinstance(_acc_param, (int, float)):
         _acc = [_acc_param] * POINT_COUNT
     elif isinstance(_acc_param, list) and len(_acc_param) == POINT_COUNT:
         _acc = _acc_param
     else:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc/a: Must be a number or a list of 6 numbers.")
-
     if not is_number(_acc):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc/a.")
-
-    # _time
-    _time = get_param(time, t)
-    if _time is None:
-        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: time or t")
-
-    if not isinstance(_time, (int, float)):
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
-
-    if _time < 0:
-        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
 
     # Create and publish the message
     if __ROS2__:
@@ -1857,25 +1847,12 @@ def servol_rt(pos, vel, acc, time, v=None, a=None, t=None):
         
         _ros2_servol_rt_stream_pub.publish(msg)
         
-        # Per documentation, servol_rt does not have a return value or print confirmation
-        # to maintain real-time performance.
         return 0
     else:
         raise DR_Error(DR_ERROR_TYPE, "servol_rt is only supported in ROS2 mode.")
 
 def speedj_rt(vel, acc, time=None, t=None):
-    """
-    Real-time Joint-space velocity control. This function is non-blocking.
-    The robot moves at the specified velocity and acceleration for the given synchronization time.
-    This is based on the DRFL `speedj_rt` function.
 
-    :param vel: Target joint velocities [deg/s]. Must be a list of 6 numbers.
-    :param acc: Target joint accelerations [deg/s^2]. Must be a list of 6 numbers.
-    :param time: Synchronization time [sec]. (alias: t)
-                 If time = 0, the robot maintains the velocity until the next command.
-                 If time > 0, the robot maintains the velocity for the specified duration.
-    :param t: Alias for time.
-    """
     # Constants for speedj_rt
     DR_VELJ_DT_LEN = 6
     DR_ACCJ_DT_LEN = 6
@@ -1944,7 +1921,7 @@ def speedl_rt(vel, acc, time=None, t=None):
     :param t: Alias for time.
     """
     # Constants for speedl_rt
-    DR_VELL_RT_DT_LEN = 6
+    DR_VELL_RT_DT_LEN = 6 # Theo - to do : Change this param name
     DR_ACCL_RT_DT_LEN = 6
 
     # _vel

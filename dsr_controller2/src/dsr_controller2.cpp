@@ -1858,7 +1858,11 @@ auto alter_cb = [this](const std::shared_ptr<dsr_msgs2::msg::AlterMotionStream> 
 {
     std::array<float, NUM_JOINT> target_pos;
     std::copy(msg->pos.cbegin(), msg->pos.cend(), target_pos.begin());
-    Drfl->alter_motion(target_pos.data());
+
+    // Theo - to do : Remove 'int r'
+    int r = Drfl->alter_motion(target_pos.data());
+    // Theo - to do : Remove test log
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2")," alter response : %d", r);
 };
 
 // Callback for servoj_stream
@@ -1871,6 +1875,7 @@ auto servoj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojStream> msg)
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
+    // Theo - to do : Add mode parameter
     DR_SERVOJ_TYPE mode = (DR_SERVOJ_TYPE)msg->mode;
     check_dsr_model(target_pos);
     
@@ -1908,7 +1913,7 @@ auto speedj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedjStream> msg)
 // Callback for speedl_stream
 auto speedl_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedlStream> msg) -> void
 {
-    std::array<float, 6> target_vel;
+    std::array<float, NUM_TASK> target_vel; // changed from NUM_JOINT to 6, Theo - to do : remove this comment
     std::copy(msg->vel.cbegin(), msg->vel.cend(), target_vel.begin());
     std::array<float, 2> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
@@ -1992,7 +1997,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
 };
 
 
-	error_log_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotError>("error", 100);
+  error_log_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotError>("error", 100);
   disconnect_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotDisconnection>("robot_disconnection", 100);
 
   cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
