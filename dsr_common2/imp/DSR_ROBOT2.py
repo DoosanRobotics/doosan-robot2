@@ -72,6 +72,7 @@ _ros2_servol_rt_stream_pub       = g_node.create_publisher(ServolRtStream,      
 _ros2_speedj_rt_stream_pub       = g_node.create_publisher(SpeedjRtStream,      _topic_name_prefix + "speedj_rt_stream", 10)
 _ros2_speedl_rt_stream_pub       = g_node.create_publisher(SpeedlRtStream,      _topic_name_prefix + "speedl_rt_stream", 10)
 _ros2_torque_rt_stream_pub       = g_node.create_publisher(TorqueRtStream,      _topic_name_prefix + "torque_rt_stream", 10)
+_ros2_alter_motion_stream_pub    = g_node.create_publisher(AlterMotionStream,   _topic_name_prefix + "alter_motion_stream", 10)
 
 _ros2_set_safety_mode            = g_node.create_client(SetSafetyMode,          _srv_name_prefix +"system/set_safety_mode")
 
@@ -1433,6 +1434,20 @@ def set_ref_coord(coord):
 ### Theo add api (to do : remove this comment)
 
 # DSR_ROBOT2.py
+
+def alter_motion_stream(pos):
+    _pos = get_posx(pos)
+
+    if __ROS2__:
+        msg = AlterMotionStream()
+        msg.pos = [float(p) for p in _pos]
+        
+        _ros2_alter_motion_stream_pub.publish(msg)
+        
+        print_result("0 = alter_motion(pos:{0})".format(dr_form(_pos)))
+        return 0
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "alter_motion is only supported in ROS2 mode.")
 
 def servoj(pos, vel=None, acc=None, time=None, mode=DR_SERVO_QUEUE, v=None, a=None, t=None, m=None):
     # pos
