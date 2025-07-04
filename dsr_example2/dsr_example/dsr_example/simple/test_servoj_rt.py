@@ -124,7 +124,7 @@ def main(args=None):
         servoj_rt(posj(0,0,0,0,0,0),vel=[0,0,0,0,50,50], acc=[0,0,0,0,0,0],time=2.0)
         time.sleep(2.0)
 
-        i = 0
+        i = 1
         while i < 1:
                 # movej(p2, vel=100, acc=100)
 

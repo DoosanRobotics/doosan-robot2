@@ -29,10 +29,10 @@ def main(args=None):
         print(f"Error importing DSR_ROBOT2 : {e}")
         return
 
-    # It's recommended to be in manual mode for RT control for safety.
-    if get_robot_mode() != ROBOT_MODE_MANUAL:
-        set_robot_mode(ROBOT_MODE_MANUAL)
-        time.sleep(1)
+    # # It's recommended to be in manual mode for RT control for safety.
+    # if get_robot_mode() != ROBOT_MODE_MANUAL:
+    #     set_robot_mode(ROBOT_MODE_MANUAL)
+    #     time.sleep(1)
 
     # --- RT Control Setup ---
     try:
@@ -69,19 +69,31 @@ def main(args=None):
         print("Starting speedl_rt test loop...")
         
         # Move forward along the tool's Z-axis for 2 seconds
-        print("Moving forward (tool Z-axis)...")
         vel = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0]  # 50 mm/s along tool's Z
-        acc = [100.0] * 6
+        # acc = [100.0] * 6
+        acc = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0]
         speedl_rt(vel, acc, time=2.0)
         time.sleep(2.1)
         
         # Move backward along the tool's Z-axis for 2 seconds
-        print("Moving backward (tool Z-axis)...")
         vel = [0.0, 0.0, -50.0, 0.0, 0.0, 0.0] # -50 mm/s along tool's Z
-        acc = [100.0] * 6
+        # acc = [100.0] * 6
+        acc = [0.0, 0.0, 50.0, 0.0, 0.0, 0.0]
         speedl_rt(vel, acc, time=2.0)
         time.sleep(2.1)
 
+        speedl_rt([0.0, 0.0, -50.0, 0.0, 0.0, 0.0], acc = None, time=2.0)
+        time.sleep(2.1)
+        speedl_rt([0.0, 0.0, 50.0, 0.0, 0.0, 0.0], acc = None, time=2.0)
+        time.sleep(2.1)
+        speedl_rt([0.0, 0.0, -50.0, 0.0, 0.0, 0.0], time=2.0)
+        time.sleep(2.1)
+        speedl_rt([0.0, 0.0, 50.0, 0.0, 0.0, 0.0], time=2.0)
+        time.sleep(2.1)
+        speedl_rt([0.0, 0.0, -50.0, 0.0, 0.0, 0.0], acc = [0.0]*6, time=2.0)
+        time.sleep(2.1)
+        speedl_rt([0.0, 0.0, 50.0, 0.0, 0.0, 0.0], acc = [0.0]*6, time=2.0)
+        time.sleep(2.1)
         servoj_rt(start_pos, time=2.0)
         
         # Gradually increase rotational speed around the tool's Z-axis

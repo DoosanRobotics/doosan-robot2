@@ -26,6 +26,7 @@ setup(
                 'test_servoj = dsr_example.simple.test_servoj:main',
                 'test_servoj_rt = dsr_example.simple.test_servoj_rt:main',
                 'test_movel = dsr_example.simple.test_movel:main',
+                'test_movel_amovel = dsr_example.simple.test_movel_amovel:main',
                 'test_servol = dsr_example.simple.test_servol:main',
                 'test_servol_rt = dsr_example.simple.test_servol_rt:main',
                 'test_speedj = dsr_example.simple.test_speedj:main',
@@ -33,6 +34,7 @@ setup(
                 'test_speedl = dsr_example.simple.test_speedl:main',
                 'test_speedl_rt = dsr_example.simple.test_speedl_rt:main',
                 'test_torque_rt = dsr_example.simple.test_torque_rt:main',
+                'test_rt_service = dsr_example.simple.test_rt_service:main',
         ],
     },
 )
