@@ -121,11 +121,8 @@ ROBOT_MODE_MANUAL                     = 0
 ROBOT_MODE_AUTONOMOUS                 = 1
 ROBOT_MODE_MEASURE                    = 2
 
-### Theo (to do : Rearrange the elements here)
-
 #                                     
 # safety mode
-# C-Header: DRFC.h -> typedef enum { ... } SAFETY_MODE;
 #                                     
 SAFETY_MODE_MANUAL                    = 0
 SAFETY_MODE_AUTONOMOUS                = 1
@@ -137,7 +134,6 @@ SAFETY_MODE_LAST                      = 6
 
 #                                     
 # safety event
-# C-Header: DRFC.h -> typedef enum { ... } SAFETY_MODE_EVENT;
 #                                     
 SAFETY_MODE_EVENT_ENTER               = 0
 SAFETY_MODE_EVENT_MOVE                = 1

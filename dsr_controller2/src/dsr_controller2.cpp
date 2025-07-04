@@ -1859,10 +1859,7 @@ auto alter_cb = [this](const std::shared_ptr<dsr_msgs2::msg::AlterMotionStream> 
     std::array<float, NUM_JOINT> target_pos;
     std::copy(msg->pos.cbegin(), msg->pos.cend(), target_pos.begin());
 
-    // Theo - to do : Remove 'int r'
-    int r = Drfl->alter_motion(target_pos.data());
-    // Theo - to do : Remove test log
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2")," alter response : %d", r);
+    Drfl->alter_motion(target_pos.data());
 };
 
 // Callback for servoj_stream
@@ -1875,7 +1872,6 @@ auto servoj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojStream> msg)
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
-    // Theo - to do : Add mode parameter
     DR_SERVOJ_TYPE mode = (DR_SERVOJ_TYPE)msg->mode;
     check_dsr_model(target_pos);
     
@@ -1913,7 +1909,7 @@ auto speedj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedjStream> msg)
 // Callback for speedl_stream
 auto speedl_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedlStream> msg) -> void
 {
-    std::array<float, NUM_TASK> target_vel; // changed from NUM_JOINT to 6, Theo - to do : remove this comment
+    std::array<float, NUM_TASK> target_vel;
     std::copy(msg->vel.cbegin(), msg->vel.cend(), target_vel.begin());
     std::array<float, 2> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
@@ -1934,11 +1930,7 @@ auto servoj_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojRtStream>
     float time = msg->time;
     check_dsr_model(target_pos);
     
-    // Theo - to do : Remove 'int r'
-    int r = Drfl->servoj_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
-    // Theo - to do : Remove test log
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"response : %d servoj_rt called with pos: %f, %f, %f, %f, %f, %f", 
-                r, target_pos[0], target_pos[1], target_pos[2], target_pos[3], target_pos[4], target_pos[5]);
+    Drfl->servoj_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
 };
 
 // Callback for servol_rt_stream
@@ -1952,12 +1944,7 @@ auto servol_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServolRtStream>
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
 
-    // Theo - to do : Remove 'int r'
-    int r = Drfl->servol_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
-    // Theo - to do : Remove test log
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"response : %d servoj_rt called with pos: %f, %f, %f, %f, %f, %f", 
-                r, target_pos[0], target_pos[1], target_pos[2], target_pos[3], target_pos[4], target_pos[5]);
-
+    Drfl->servol_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
 };
 
 // Callback for speedj_rt_stream
@@ -2002,8 +1989,6 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
 
   cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   // Subscription declarations
-  // Theo - to do : Create topic publisher of those stuff
-  // 실제 로봇 사용해서 토픽 출력
   m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb); // 지울 것 // 제외하고 만들 것
   m_sub_alter_motion_stream           = get_node()->create_subscription<dsr_msgs2::msg::AlterMotionStream>("alter_motion_stream", 20, alter_cb);
   m_sub_servoj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServojStream>("servoj_stream", 20, servoj_cb);// 체크
@@ -2016,7 +2001,6 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_sub_speedj_rt_stream              = get_node()->create_subscription<dsr_msgs2::msg::SpeedjRtStream>("speedj_rt_stream", 20, speedj_rt_cb);
   m_sub_speedl_rt_stream              = get_node()->create_subscription<dsr_msgs2::msg::SpeedlRtStream>("speedl_rt_stream", 20, speedl_rt_cb);
   m_sub_torque_rt_stream              = get_node()->create_subscription<dsr_msgs2::msg::TorqueRtStream>("torque_rt_stream", 20, torque_rt_cb);
-  // cli으로 토픽주기
   
   m_nh_srv_set_robot_mode             = get_node()->create_service<dsr_msgs2::srv::SetRobotMode>("set_robot_mode", set_robot_mode_cb);
   m_nh_srv_get_robot_mode             = get_node()->create_service<dsr_msgs2::srv::GetRobotMode>("system/get_robot_mode", get_robot_mode_cb);     
