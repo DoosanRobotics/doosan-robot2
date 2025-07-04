@@ -33,7 +33,6 @@
 #include <dsr_msgs2/msg/robot_error.hpp>
 #include <dsr_msgs2/msg/robot_state.hpp>
 #include <dsr_msgs2/msg/robot_stop.hpp>
-#include <dsr_msgs2/msg/jog_multi_axis.hpp>
 #include <dsr_msgs2/msg/alter_motion_stream.hpp>
 #include <dsr_msgs2/msg/servoj_stream.hpp>
 #include <dsr_msgs2/msg/servol_stream.hpp>
@@ -562,7 +561,6 @@ protected:
   // We may need to distinguish the callback group based on the traits of the services.
   rclcpp::CallbackGroup::SharedPtr cb_group_;
 
-  rclcpp::Subscription<dsr_msgs2::msg::JogMultiAxis>::SharedPtr        m_sub_jog_multi_axis;
   rclcpp::Subscription<dsr_msgs2::msg::AlterMotionStream>::SharedPtr   m_sub_alter_motion_stream;
   rclcpp::Subscription<dsr_msgs2::msg::ServojStream>::SharedPtr        m_sub_servoj_stream;
   rclcpp::Subscription<dsr_msgs2::msg::ServolStream>::SharedPtr        m_sub_servol_stream;

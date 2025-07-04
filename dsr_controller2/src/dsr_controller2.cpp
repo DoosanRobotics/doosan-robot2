@@ -1845,20 +1845,11 @@ auto write_data_rt_cb = [this](const std::shared_ptr<dsr_msgs2::srv::WriteDataRt
 };
 
 
-  // Callback for jog_multi
-auto jog_multi_axis_cb = [this](const std::shared_ptr<dsr_msgs2::msg::JogMultiAxis> msg) -> void
-{
-    std::array<float, NUM_JOINT> target_pos;
-    std::copy(msg->jog_axis.cbegin(), msg->jog_axis.cend(), target_pos.begin());
-    Drfl->multi_jog(target_pos.data(), static_cast<MOVE_REFERENCE>(msg->move_reference), msg->speed);
-};
-
 // Callback for alter_motion_stream
 auto alter_cb = [this](const std::shared_ptr<dsr_msgs2::msg::AlterMotionStream> msg) -> void
 {
     std::array<float, NUM_JOINT> target_pos;
     std::copy(msg->pos.cbegin(), msg->pos.cend(), target_pos.begin());
-
     Drfl->alter_motion(target_pos.data());
 };
 
@@ -1989,9 +1980,8 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
 
   cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   // Subscription declarations
-  m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb); // 지울 것 // 제외하고 만들 것
   m_sub_alter_motion_stream           = get_node()->create_subscription<dsr_msgs2::msg::AlterMotionStream>("alter_motion_stream", 20, alter_cb);
-  m_sub_servoj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServojStream>("servoj_stream", 20, servoj_cb);// 체크
+  m_sub_servoj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServojStream>("servoj_stream", 20, servoj_cb);
   m_sub_servol_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServolStream>("servol_stream", 20, servol_cb);
   m_sub_speedj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::SpeedjStream>("speedj_stream", 20, speedj_cb);
   m_sub_speedl_stream                 = get_node()->create_subscription<dsr_msgs2::msg::SpeedlStream>("speedl_stream", 10, speedl_cb);
@@ -2002,7 +1992,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_sub_speedl_rt_stream              = get_node()->create_subscription<dsr_msgs2::msg::SpeedlRtStream>("speedl_rt_stream", 20, speedl_rt_cb);
   m_sub_torque_rt_stream              = get_node()->create_subscription<dsr_msgs2::msg::TorqueRtStream>("torque_rt_stream", 20, torque_rt_cb);
   
-  m_nh_srv_set_robot_mode             = get_node()->create_service<dsr_msgs2::srv::SetRobotMode>("set_robot_mode", set_robot_mode_cb);
+  m_nh_srv_set_robot_mode             = get_node()->create_service<dsr_msgs2::srv::SetRobotMode>("system/set_robot_mode", set_robot_mode_cb);
   m_nh_srv_get_robot_mode             = get_node()->create_service<dsr_msgs2::srv::GetRobotMode>("system/get_robot_mode", get_robot_mode_cb);     
   m_nh_srv_set_robot_system           = get_node()->create_service<dsr_msgs2::srv::SetRobotSystem>("system/set_robot_system", set_robot_system_cb);         
   m_nh_srv_get_robot_system           = get_node()->create_service<dsr_msgs2::srv::GetRobotSystem>("system/get_robot_system", get_robot_system_cb);         
