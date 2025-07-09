@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>dsr_controller2</name>
+  <version>2.33.0</version>
+  <description>dsr_controller2</description>
+  <author email="minsoo.song@doosan.com">Minsoo Song</author>   
+
+  <maintainer email="minsoo.song@doosan.com">Minsoo Song</maintainer>
+  <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
+
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>backward_ros</depend>
+  <depend>forward_command_controller</depend>
+  <depend>pluginlib</depend>
+  <depend>controller_interface</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>hardware_interface</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>dsr_msgs2</depend>
+  <depend>moveit_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>dsr_hardware2</depend>
+  <depend>yaml-cpp</depend> 
+  <depend>ament_index_cpp</depend>
+  <depend>libpoco-dev</depend>
+
+  <test_depend>ament_cmake_gmock</test_depend>
+  <test_depend>controller_manager</test_depend>
+  <test_depend>hardware_interface_testing</test_depend>
+  <test_depend>hardware_interface</test_depend>
+  <test_depend>ros2_control_test_assets</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,10 @@
+#____________________________________________________________________________________________
+# get_current_posx()  
+#____________________________________________________________________________________________
+# This service returns the current task position.
+
+int8       ref               # DR_BASE(0), DR_WORLD(2), user coord(101~200)
+                             # <ref is only available in M2.40 or later> 
+---
+std_msgs/Float64MultiArray[] task_pos_info  # task pos = task_pos_info[0][0:5], solution sapce = task_pos_info[0][6]
+bool        success   

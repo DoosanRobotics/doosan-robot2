@@ -1,0 +1,14 @@
+
+dsr_control_node2:
+  ros__parameters:
+    name:    "dsr01"
+    rate:    100
+    standby: 5000
+    command: True
+    host:    "127.0.0.1"
+    port:    12345
+    mode:    "virtual"
+    model:   "m1013"
+    gripper: "none"
+    mobile:  "none"
+    rt_host: "192.168.137.50"

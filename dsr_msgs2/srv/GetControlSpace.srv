@@ -1,0 +1,8 @@
+#____________________________________________________________________________________________
+# get_control_space()  
+#____________________________________________________________________________________________
+# This service returns the current control space.
+
+---
+int8    space        # Control mode : Joint space control(1), Task space control(2)
+bool    success

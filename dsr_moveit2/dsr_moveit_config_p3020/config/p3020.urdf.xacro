@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="p3020">
+    <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+
+    <!-- Import p3020 urdf file -->
+    <xacro:include filename="$(find dsr_description2)/urdf/p3020.urdf" />
+
+    <!-- Import p3020 ros2_control description -->
+    
+    <xacro:include filename="dsr.ros2_control.xacro" />
+
+    <xacro:dsr_moveit_ros2_control name="DSRFakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+</robot>

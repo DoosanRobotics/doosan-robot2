@@ -1,0 +1,141 @@
+<?xml version="1.0"?>
+<robot name="dsr_decorations" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="mobile_decorate">
+
+    <!-- Spawn chassis -->
+    <link name="top_chassis_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://dsr_description/meshes/mobile/top_chassis.dae" />
+        </geometry>
+      </visual>
+    </link>
+
+    <!-- Attach chassis to the robot -->
+    <joint name="top_chassis_joint" type="fixed">
+      <parent link="base_link" />
+      <child link="top_chassis_link" />
+    </joint>
+
+    <xacro:if value="$(optenv MOBILE_USER_RAIL_ENABLED true)">
+      <!-- Spawn user rails -->
+      <link name="user_rail_link">
+        <visual>
+          <geometry>
+            <mesh filename="package://dsr_description/meshes/mobile/user_rail.dae" />
+          </geometry>
+        </visual>
+      </link>
+
+      <!-- Attach user rails to base link -->
+      <joint name="user_rail" type="fixed">
+        <origin xyz="0.272 0 0.245" rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="user_rail_link" />
+      </joint>
+    </xacro:if>
+
+    <xacro:if value="$(optenv MOBILE_FRONT_BUMPER_ENABLED true)">
+      <!-- Spawn front bumper link -->
+      <link name="front_bumper_link">
+        <visual>
+          <geometry>
+            <mesh filename="package://dsr_description/meshes/mobile/bumper.dae" />
+          </geometry>
+        </visual>
+      </link>
+
+      <!-- Attach front bumper -->
+      <joint name="front_bumper" type="fixed">
+        <origin xyz="0.48 0 0.091" rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="front_bumper_link" />
+      </joint>
+    </xacro:if>
+
+    <xacro:if value="$(optenv MOBILE_REAR_BUMPER_ENABLED true)">
+      <!-- Spawn rear bumper link -->
+      <link name="rear_bumper_link">
+        <visual>
+          <geometry>
+            <mesh filename="package://dsr_description/meshes/mobile/bumper.dae" />
+          </geometry>
+        </visual>
+      </link>
+
+      <!-- Attach rear bumper -->
+      <joint name="rear_bumper" type="fixed">
+        <origin xyz="-0.48 0 0.091" rpy="0 0 ${M_PI}" />
+        <parent link="base_link" />
+        <child link="rear_bumper_link" />
+      </joint>
+    </xacro:if>
+
+    <xacro:if value="$(optenv MOBILE_TOP_PLATE_ENABLED true)">
+      <!-- Spawn the top plate -->
+      <xacro:if value="$(optenv MOBILE_LARGE_TOP_PLATE false)">
+        <link name="top_plate_link">
+          <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+              <mesh filename="package://dsr_description/meshes/mobile/large_top_plate.dae" />
+            </geometry>
+          </visual>
+          <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+              <mesh filename="package://dsr_description/meshes/mobile/large_top_plate_collision.stl" />
+            </geometry>
+          </collision>
+          <collision>
+            <!-- Extra collision tag for widgets on top plate -->
+            <geometry>
+              <box size="0.32 0.41 0.09" rpy="0 0 0"/>
+            </geometry>
+          </collision>
+        </link>
+        <!-- Attach top plate -->
+        <joint name="top_plate_joint" type="fixed">
+          <parent link="base_link" />
+          <child link="top_plate_link"/>
+          <origin xyz="0.0812 0 0.225" rpy="0 0 0"/>
+        </joint>
+      </xacro:if>
+
+      <xacro:unless value="$(optenv MOBILE_LARGE_TOP_PLATE false)">
+        <link name="top_plate_link">
+          <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+              <mesh filename="package://dsr_description/meshes/mobile/top_plate.dae" />
+            </geometry>
+          </visual>
+          <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+              <mesh filename="package://dsr_description/meshes/mobile/top_plate.dae" />
+            </geometry>
+          </collision>
+          <collision>
+            <!-- Extra collision tag for widgets on top plate -->
+            <geometry>
+              <box size="0.32 0.41 0.09" rpy="0 0 0"/>
+            </geometry>
+          </collision>
+        </link>
+
+        <!-- Attach top plate -->
+        <joint name="top_plate_joint" type="fixed">
+          <parent link="base_link" />
+          <child link="top_plate_link"/>
+          <origin xyz="0.0812 0 0.245" rpy="0 0 0"/>
+        </joint>
+      </xacro:unless>
+
+    </xacro:if>
+
+  </xacro:macro>
+
+</robot>

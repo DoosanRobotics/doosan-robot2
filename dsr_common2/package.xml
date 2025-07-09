@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>dsr_common2</name>
+  <version>1.1.0</version>
+  <description>dsr_common2 package for Doosan Robot</description>
+
+  <author email="minsoo.song@doosan.com">Minsoo Song</author>   
+
+  <maintainer email="minsoo.song@doosan.com">Minsoo Song</maintainer>
+  <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
+
+  <license>BSD</license>
+  <url type="website">http://wiki.ros.org/doosan_robotics</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>gazebo_ros</build_depend>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>libpoco-dev</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

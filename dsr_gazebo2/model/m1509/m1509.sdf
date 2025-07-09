@@ -1,0 +1,310 @@
+<sdf version='1.7'>
+  <model name='m1509'>
+    <joint name='fixed_base' type='fixed'>
+      <parent>world</parent>
+      <child>base</child>
+    </joint>
+    <link name='base'>
+      <inertial>
+        <pose>-1.2e-05 -6e-05 0.050723 0 -0 0</pose>
+        <mass>3.722</mass>
+        <inertia>
+          <ixx>0.011</ixx>
+          <ixy>-7.19e-06</ixy>
+          <ixz>-1.94e-06</ixz>
+          <iyy>0.011</iyy>
+          <iyz>4.9e-06</iyz>
+          <izz>0.014</izz>
+        </inertia>
+      </inertial>
+      <visual name='base_link_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_0_0.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='joint_1' type='revolute'>
+      <pose relative_to='base'>0 0 0.1525 0 -0 0</pose>
+      <parent>base</parent>
+      <child>link_1</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-2.617</lower>
+          <upper>2.617</upper>
+          <effort>30</effort>
+          <velocity>1.571</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='link_1'>
+      <pose relative_to='joint_1'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>7e-05 0.044281 0.143327 0 -0 0</pose>
+        <mass>7.446</mass>
+        <inertia>
+          <ixx>0.039</ixx>
+          <ixy>2.1e-05</ixy>
+          <ixz>-3.61e-05</ixz>
+          <iyy>0.023</iyy>
+          <iyz>-0.003</iyz>
+          <izz>0.039</izz>
+        </inertia>
+      </inertial>
+      <visual name='link_1_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_1_0.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='joint_2' type='revolute'>
+      <pose relative_to='link_1'>0 0.0345 0 3.14159 -1.57059 1.57059</pose>
+      <parent>link_1</parent>
+      <child>link_2</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-2.617</lower>
+          <upper>2.617</upper>
+          <effort>30</effort>
+          <velocity>1.571</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='link_2'>
+      <pose relative_to='joint_2'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>-1.6e-05 0.189372 0.418558 0 -0 0</pose>
+        <mass>10.569</mass>
+        <inertia>
+          <ixx>0.82</ixx>
+          <ixy>1.19e-05</ixy>
+          <ixz>-0.000263</ixz>
+          <iyy>0.82</iyy>
+          <iyz>-0.008</iyz>
+          <izz>0.031</izz>
+        </inertia>
+      </inertial>
+      <visual name='link_2_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_2_0.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name='link_2_visual_1'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_2_1.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name='link_2_visual_2'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_2_2.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='joint_3' type='revolute'>
+      <pose relative_to='link_2'>0.411 0 0 0 -0 1.571</pose>
+      <parent>link_2</parent>
+      <child>link_3</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-2.617</lower>
+          <upper>2.617</upper>
+          <effort>30</effort>
+          <velocity>1.571</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='link_3'>
+      <pose relative_to='joint_3'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>6e-06 0.07917 0.781807 0 -0 0</pose>
+        <mass>3.614</mass>
+        <inertia>
+          <ixx>0.012</ixx>
+          <ixy>-4.38e-06</ixy>
+          <ixz>-1.2e-06</ixz>
+          <iyy>0.008</iyy>
+          <iyz>0.002</iyz>
+          <izz>0.011</izz>
+        </inertia>
+      </inertial>
+      <visual name='link_3_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_3_0.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='joint_4' type='revolute'>
+      <pose relative_to='link_3'>0 -0.368 0 1.571 -0 0</pose>
+      <parent>link_3</parent>
+      <child>link_4</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-2.617</lower>
+          <upper>2.617</upper>
+          <effort>30</effort>
+          <velocity>1.571</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='link_4'>
+      <pose relative_to='joint_4'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>-2.1e-05 0.12337 1.148 0 -0 0</pose>
+        <mass>3.785</mass>
+        <inertia>
+          <ixx>0.177</ixx>
+          <ixy>-2.34e-06</ixy>
+          <ixz>-4.92e-06</ixz>
+          <iyy>0.161</iyy>
+          <iyz>-0.05</iyz>
+          <izz>0.022</izz>
+        </inertia>
+      </inertial>
+      <visual name='link_4_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_4_0.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name='link_4_visual_1'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_4_1.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='joint_5' type='revolute'>
+      <pose relative_to='link_4'>0 0 0 -1.571 0 0</pose>
+      <parent>link_4</parent>
+      <child>link_5</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-2.617</lower>
+          <upper>2.617</upper>
+          <effort>30</effort>
+          <velocity>1.571</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='link_5'>
+      <pose relative_to='joint_5'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>-1.7e-05 0.06662 1.33103 0 -0 0</pose>
+        <mass>2.598</mass>
+        <inertia>
+          <ixx>0.007</ixx>
+          <ixy>-4.93e-06</ixy>
+          <ixz>-5.57e-06</ixz>
+          <iyy>0.004</iyy>
+          <iyz>-6.64e-05</iyz>
+          <izz>0.007</izz>
+        </inertia>
+      </inertial>
+      <visual name='link_5_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_5_0.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <joint name='joint_6' type='revolute'>
+      <pose relative_to='link_5'>0 -0.121 0 1.571 -0 0</pose>
+      <parent>link_5</parent>
+      <child>link_6</child>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-2.617</lower>
+          <upper>2.617</upper>
+          <effort>30</effort>
+          <velocity>1.571</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+      </axis>
+    </joint>
+    <link name='link_6'>
+      <pose relative_to='joint_6'>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose>-0.000174 0.034708 1.40022 0 -0 0</pose>
+        <mass>1.128</mass>
+        <inertia>
+          <ixx>0.001</ixx>
+          <ixy>-2.79e-06</ixy>
+          <ixz>5.78e-06</ixz>
+          <iyy>0.001</iyy>
+          <iyz>-6.67e-06</iyz>
+          <izz>0.001</izz>
+        </inertia>
+      </inertial>
+      <visual name='link_6_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://m1509/meshes/MF1509_6_0.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

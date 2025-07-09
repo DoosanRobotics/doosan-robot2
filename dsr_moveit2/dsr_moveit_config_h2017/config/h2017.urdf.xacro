@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="h2017">
+    <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+
+    <!-- Import h2017 urdf file -->
+    <xacro:include filename="$(find dsr_description2)/urdf/h2017.urdf" />
+
+    <!-- Import h2017 ros2_control description -->
+    
+    <xacro:include filename="dsr.ros2_control.xacro" />
+
+    <xacro:dsr_moveit_ros2_control name="DSRFakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+</robot>

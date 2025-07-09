@@ -1,0 +1,297 @@
+<?xml version="1.0"?>
+<robot name="a0509" xmlns:xacro="http://www.ros.org/wiki/xacro">
+		<link name="base_link">
+			<inertial>
+				<mass value="2.198"/>
+				<origin xyz="-1e-06   -0.001096    0.058957"/>
+				<inertia ixx="0.010511" ixy="4.9786e-06" ixz="7.1839e-06" iyy="0.012033"
+					iyz="-2.3529e-05"
+					izz="0.012481"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_0_0.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_0_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<link name="base"/>
+		<joint name="base_link-base" type="fixed">
+			<origin rpy="0 0 0" xyz="0 0 0.450"/>
+			<parent link="base_link"/>
+			<child link="base"/>
+		</joint>
+		<!-- joint 1 -->
+		<joint name="joint_1" type="revolute">
+			<parent link="base_link" />
+			<child link="link_1" />
+			<origin rpy="0 0 0" xyz="0 0 0.1555" />
+			<axis xyz="0 0 1" />
+			<limit effort="194" lower="-6.2832" upper="6.2832" velocity="3.1416"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_1">
+			<inertial>
+				<mass value="3.715"/>
+				<origin xyz="-6.9e-05    0.024423   -0.007375"/>
+				<inertia ixx="0.01899" ixy="7.8574e-07" ixz="1.865e-05" iyy="0.013731" iyz="-0.00072828"
+					izz="0.01686"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_1_0.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_1_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_1_1.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+            <visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_1_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_1_2.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+            <visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_1_2.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint2 -->
+		<joint name="joint_2" type="revolute">
+			<parent link="link_1" />
+			<child link="link_2" />
+			<origin rpy="0 -1.571 -1.571" xyz="0 0 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="194" lower="-6.2832" upper="6.2832" velocity="3.1416"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_2">
+			<inertial>
+				<mass value="6.837"/>
+				<origin xyz="0.20449 -1.2521e-17     0.13271"/>
+				<inertia ixx="0.019399" ixy="0.00010317" ixz="4.2985e-06" iyy="0.25627" iyz="5.1674e-06"
+					izz="0.25442"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_2_0.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_2_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_2_1.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_2_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_2_2.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_2_2.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint3 -->
+		<joint name="joint_3" type="revolute">
+			<parent link="link_2" />
+			<child link="link_3" />
+			<origin rpy="0 0 1.571" xyz="0.409 0 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="163" lower="-2.7925" upper="2.7925" velocity="3.1416"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_3">
+			<inertial>
+				<mass value="2.769"/>
+				<origin xyz="7.1e-05   -0.005123    0.033009"/>
+				<inertia ixx="0.012526" ixy="-7.1869e-06" ixz="1.3345e-05" iyy="0.013868"
+					iyz="-0.00047287"
+					izz="0.0088186"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_3_0.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_3_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_3_1.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+            <visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_3_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint4 -->
+		<joint name="joint_4" type="revolute">
+			<parent link="link_3" />
+			<child link="link_4" />
+			<origin rpy="1.571 0 0" xyz="0 -0.367 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="50" lower="-6.2832" upper="6.2832" velocity="6.2832"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_4">
+			<inertial>
+				<mass value="2.679"/>
+				<origin xyz="-8.6e-05    0.086348   -0.086031"/>
+				<inertia ixx="0.056068" ixy="2.2109e-05" ixz="1.4522e-05" iyy="0.047122" iyz="-0.014997"
+					izz="0.013329"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_4_0.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_4_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_4_1.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_4_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint5 -->
+		<joint name="joint_5" type="revolute">
+			<parent link="link_4" />
+			<child link="link_5" />
+			<origin rpy="-1.571 0 0" xyz="0 0 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="50" lower="-6.2832" upper="6.2832" velocity="6.2832"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_5">
+			<inertial>
+				<mass value="2.051"/>
+				<origin xyz="9.1e-05   -0.006457    0.015434"/>
+				<inertia ixx="0.0090788" ixy="-5.3997e-06" ixz="8.3955e-06" iyy="0.0084721"
+					iyz="-0.0001816"
+					izz="0.010453"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_5_0.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_5_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_5_1.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+            <visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_5_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint6 -->
+		<joint name="joint_6" type="revolute">
+			<parent link="link_5" />
+			<child link="link_6" />
+			<origin rpy="1.571 0 0" xyz="0 -0.124 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="50" lower="-6.2832" upper="6.2832" velocity="6.2832"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_6">
+			<inertial>
+				<mass value="0.773"/>
+				<origin xyz="-2.2e-05      -7e-06   -0.051746"/>
+				<inertia ixx="0.0087483" ixy="7.9428e-06" ixz="1.7034e-06" iyy="0.0078566"
+					iyz="9.6857e-06"
+					izz="0.0044452"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+                <geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_collision/A0509_6_0.dae" scale="0.001 0.001 0.001" />
+                </geometry>
+            </collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/a0509_white/A0509_6_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- <link name="tool0"/>
+		<joint name="joint_6-tool0" type="fixed">
+			<origin rpy="3.1415926535 -1.570796327 0" xyz="0 0 0"/>
+			<parent link="link_6"/>
+			<child link="tool0"/>
+		</joint> -->
+</robot>

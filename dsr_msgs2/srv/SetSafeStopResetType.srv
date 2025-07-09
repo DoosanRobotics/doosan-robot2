@@ -1,0 +1,7 @@
+#____________________________________________________________________________________________
+# set_safe_stop_reset_type
+#____________________________________________________________________________________________
+
+int8 reset_type     # 0=SAFE_STOP_RESET_TYPE_DEFAULT = SAFE_STOP_RESET_TYPE_PROGRAM_STOP , 1= SAFE_STOP_RESET_TYPE_PROGRAM_RESUME 
+---
+bool success

@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: dsr_moveit_config_p3020
+    relative_path: urdf/p3020.urdf
+    xacro_args: ""
+  SRDF:
+    relative_path: config/dsr.srdf
+  CONFIG:
+    author_name: Minsoo Song
+    author_email: minsoo.song@doosan.com
+    generated_timestamp: 901009

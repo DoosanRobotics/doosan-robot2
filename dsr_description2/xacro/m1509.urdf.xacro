@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="m1509" >
+
+  <xacro:arg name="color"   default="white"/>
+  <xacro:arg name="gripper" default="none"/>
+  <xacro:arg name="namespace" default=""/>
+  <xacro:arg name="use_gazebo" default="false"/>
+
+  <xacro:property name="cr" value="$(arg color)"/>
+  <xacro:property name="gr" value="$(arg gripper)"/>
+  <xacro:property name="gz" value="$(arg use_gazebo)"/>
+
+  <xacro:if value="${cr == 'white'}">
+     <xacro:include filename="$(find dsr_description2)/xacro/macro.m1509.white.xacro" />
+  </xacro:if>
+  <xacro:if value="${cr == 'blue'}">
+     <xacro:include filename="$(find dsr_description2)/xacro/macro.m1509.blue.xacro" />
+  </xacro:if>
+  
+  <xacro:m1509 namespace="$(arg namespace)"/>
+
+   
+  <!-- World fixed joint-->
+  <link name="world"/>
+  <joint name="world_fixed" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+
+  <xacro:if value="${gz}">
+    <xacro:include filename="$(find dsr_description2)/ros2_control/m1509.gz_ros2_control.xacro" />
+    <xacro:m1509_gz_ros2_control namespace="$(arg namespace)"/>
+  </xacro:if>
+  <xacro:unless value="${gz}">
+    <xacro:include filename="$(find dsr_description2)/ros2_control/m1509.ros2_control.xacro" />
+    <xacro:m1509_ros2_control name="m1509"/>
+  </xacro:unless>
+
+</robot>
+

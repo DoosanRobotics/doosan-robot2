@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>dsr_bringup2</name>
+  <version>1.1.0</version>
+  <description>dsr_bringup2 package</description>
+
+  <author email="minsoo.song@doosan.com">Minsoo Song</author>
+
+  <maintainer email="minsoo.song@doosan.com">Minsoo Song</maintainer>
+  <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
+
+  <license>BSD</license>
+  <url type="website">http://wiki.ros.org/doosan_robotics</url>
+
+
+  <!--build_depend>roslaunch</build_depend-->
+  <build_depend>gazebo_ros</build_depend>
+  <!--???
+  exec_depend>gazebo_ros</run_depend-->
+  <!--???
+  exec_depend>rviz</run_depend-->
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>dsr_msgs2</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

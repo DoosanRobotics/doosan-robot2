@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: dsr_description2
+    relative_path: urdf/m1013.urdf
+  srdf:
+    relative_path: config/m1013.srdf
+  package_settings:
+    author_name: Minju Lee
+    author_email: minju3.lee@doosan.com
+    generated_timestamp: 1747618878
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity

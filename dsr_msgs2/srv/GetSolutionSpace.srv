@@ -1,0 +1,9 @@
+#____________________________________________________________________________________________
+# get_solution_space(pos)  
+#____________________________________________________________________________________________
+# This service obtains the solution space value.
+
+float64[6] pos               # joint angle list [degree] 
+---
+int8       sol_space         # solution space : 0 ~ 7
+bool       success

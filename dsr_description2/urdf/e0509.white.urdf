@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="e0509">
+   <material name="black">
+      <color rgba="0.0 0.0 0.0 1.0"/>
+   </material>
+   <material name="white">
+      <color rgba="1.0 1.0 1.0 1.0"/>
+   </material>
+   <material name="orange">
+      <color rgba="1.0 0.4 0.0 1.0"/>
+   </material>
+   <material name="dr_gray">
+      <color rgba="0.490 0.490 0.486 1.0"/>
+   </material>
+   <material name="dr_white">
+      <color rgba="0.941 0.941 0.941 1.0"/>
+   </material>
+   <link name="base"/>
+   <joint name="fixed" type="fixed">
+      <parent link="base"/>
+      <child link="base_link"/>
+   </joint>
+   <link name="base_link">
+      <inertial>
+         <mass value="1.803"/>
+         <origin xyz="2.7e-05   -0.002651    0.035122"/>
+         <inertia ixx="0.010608" ixy="1.7706e-06" ixz="6.6982e-06" iyy="0.0092656"
+                  iyz="-4.7833e-05"
+                  izz="0.0092125"/>
+      </inertial>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_0_0.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_gray"/>
+      </visual>
+   </link>
+   <joint name="joint_1" type="revolute">
+      <parent link="base_link"/>
+      <child link="link_1"/>
+      <origin rpy="0 0 0" xyz="0 0 0.2045"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="194" lower="-6.2832" upper="6.2832" velocity="3.1416"/>
+   </joint>
+   <link name="link_1">
+      <inertial>
+         <mass value="5.75"/>
+         <origin xyz="1e-06    0.049633   -0.049635"/>
+         <inertia ixx="0.046214" ixy="1.4982e-05" ixz="1.281e-05" iyy="0.032573" iyz="-0.013997"
+                  izz="0.030999"/>
+      </inertial>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_1_1.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_1_2.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_1_3.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_1_4.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+   </link>
+   <joint name="joint_2" type="revolute">
+      <parent link="link_1"/>
+      <child link="link_2"/>
+      <origin rpy="0     -1.5708     -1.5708" xyz="0  0  0"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="194" lower="-6.2832" upper="6.2832" velocity="3.1416"/>
+   </joint>
+   <link name="link_2">
+      <inertial>
+         <mass value="3.461"/>
+         <origin xyz="0.18647 -1.1418e-17     0.17311"/>
+         <inertia ixx="0.012039" ixy="7.7771e-06" ixz="3.7559e-06" iyy="0.091203"
+                  iyz="3.1825e-06"
+                  izz="0.094721"/>
+      </inertial>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_2_1.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_2_2.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+   </link>
+   <joint name="joint_3" type="revolute">
+      <parent link="link_2"/>
+      <child link="link_3"/>
+      <origin rpy="0           0      1.5708" xyz="0.373           0           0"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="194" lower="-2.7053" upper="2.7053" velocity="3.1416"/>
+   </joint>
+   <link name="link_3">
+      <inertial>
+         <mass value="4.582"/>
+         <origin xyz="1.2e-05    -0.02919    0.062355"/>
+         <inertia ixx="0.032606" ixy="6.548e-06" ixz="-6.9939e-07" iyy="0.024211"
+                  iyz="-0.0079929"
+                  izz="0.019284"/>
+      </inertial>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_3_1.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_3_2.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+   </link>
+   <joint name="joint_4" type="revolute">
+      <parent link="link_3"/>
+      <child link="link_4"/>
+      <origin rpy="1.5708           0           0" xyz="0      -0.373           0"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="66" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+   </joint>
+   <link name="link_4">
+      <inertial>
+         <mass value="2.207"/>
+         <origin xyz="4e-06    0.095573    -0.12813"/>
+         <inertia ixx="0.03547" ixy="8.0794e-06" ixz="7.9905e-06" iyy="0.030841" iyz="-0.011996"
+                  izz="0.019615"/>
+      </inertial>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_4_1.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_4_2.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+   </link>
+   <joint name="joint_5" type="revolute">
+      <parent link="link_4"/>
+      <child link="link_5"/>
+      <origin rpy="-1.5708           0           0" xyz="0  0  0"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="66" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+   </joint>
+   <link name="link_5">
+      <inertial>
+         <mass value="3.545"/>
+         <origin xyz="-3e-06   -0.038009    0.043841"/>
+         <inertia ixx="0.023526" ixy="9.9368e-06" ixz="7.6673e-06" iyy="0.018415"
+                  iyz="-0.0059939"
+                  izz="0.014249"/>
+      </inertial>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_5_1.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_5_2.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_white"/>
+      </visual>
+   </link>
+   <joint name="joint_6" type="revolute">
+      <parent link="link_5"/>
+      <child link="link_6"/>
+      <origin rpy="1.5708           0           0" xyz="0     -0.1725           0"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="66" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+   </joint>
+   <link name="link_6">
+      <inertial>
+         <mass value="0.721"/>
+         <origin xyz="5.4e-05   -0.000114   -0.032091"/>
+         <inertia ixx="0.0048272" ixy="5.6302e-06" ixz="5.5274e-06" iyy="0.0046772"
+                  iyz="3.9598e-06"
+                  izz="0.0079424"/>
+      </inertial>
+      <visual>
+         <origin rpy="0 0 0" xyz="0 0 0"/>
+         <geometry>
+            <mesh filename="package://dsr_description/meshes/e0509/E0509_6_1.dae"
+                  scale="0.001 0.001 0.001"/>
+         </geometry>
+         <material name="dr_gray"/>
+      </visual>
+   </link>
+</robot>

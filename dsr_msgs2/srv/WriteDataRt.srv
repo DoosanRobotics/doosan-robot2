@@ -1,0 +1,10 @@
+#____________________________________________________________________________________________
+# write_data_rt
+#____________________________________________________________________________________________
+float64[6] external_force_torque
+int32      external_digital_input
+int32      external_digital_output
+float64[6] external_analog_input
+float64[6] external_analog_output
+---
+bool       success

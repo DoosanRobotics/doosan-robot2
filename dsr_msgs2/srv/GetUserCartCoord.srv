@@ -1,0 +1,10 @@
+#____________________________________________________________________________________________
+# posx, ref = get_user_cart_coord(id)   
+#____________________________________________________________________________________________
+# This service is only available in M2.50 or later
+
+int8       id                # ID of user coord 
+---
+float64[6] conv_posx         # task pos(posx)  
+int8       ref               # Reference coordinate of the coordinate to get
+bool       success

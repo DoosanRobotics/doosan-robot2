@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<robot name="dsr_materials" xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:macro name="dsr_materials">
+		<material name="black">
+			<color rgba="0.0 0.0 0.0 1.0" />
+		</material>
+		<material name="white">
+			<color rgba="1.0 1.0 1.0 1.0" />
+		</material>
+		<material name="orange">
+			<color rgba="1.0 0.4 0.0 1.0" />
+		</material>
+		<material name="dr_gray">
+			<color rgba="0.490 0.490 0.486 1.0" />
+		</material>
+		<material name="dr_white">
+			<color rgba="0.941 0.941 0.941 1.0" />
+		</material>
+		<material name="dr_blue">
+			<color rgba="0 0 0.15 1" />
+		</material>
+	</xacro:macro>
+</robot>

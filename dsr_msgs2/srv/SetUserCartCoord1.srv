@@ -1,0 +1,10 @@
+#____________________________________________________________________________________________
+# set_user_cart_coord(pos, ref)   
+#____________________________________________________________________________________________
+
+float64[6] pos                # task pos(posx)  
+int8       ref                # DR_BASE(0), DR_WORLD(2)
+                              # <ref is only available in M2.40 or later> 
+---
+int8    id                    # set user coord (101~120) or fail(-1)
+bool        success    

@@ -1,0 +1,9 @@
+<library path="dsr_hardware2">
+  <class name="dsr_hardware2/DRHWInterface"
+         type="dsr_hardware2::DRHWInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      dsr_hardware2 interface 
+    </description>
+  </class>
+</library>

@@ -1,0 +1,35 @@
+
+# rgbd_camera_gz.yaml
+# Author: Chemin Ahn (chemx3937@gmail.com)
+  
+# Copyright (c) 2024 Doosan Robotics
+# Use of this source code is governed by the BSD, see LICENSE
+
+camera_name: "rgbd_camera"
+image_width: 960
+image_height: 600
+
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [335.696428, 0.000000, 479.709600, 0.000000, 335.698297, 299.360736 ,0.000000, 0.000000, 1.000000]
+
+
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.000303, -0.000094, -0.000003, 0.000013, 0.000000]
+
+
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [335.422485, 0.000000, 479.237088, 0.000000, 0.000000, 335.226318, 298.857758, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]
+
+
+

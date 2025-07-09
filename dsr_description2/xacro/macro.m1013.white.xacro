@@ -1,0 +1,248 @@
+<?xml version="1.0"?>
+
+<robot name="m1013" xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:include filename="$(find dsr_description2)/config/macro.gazebo.xacro" />
+	<xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
+	<xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
+	<xacro:macro name="m1013" params="namespace">
+		<xacro:dsr_materials />
+		<link name="base_link">
+			<inertial>
+				<mass value="4.12"/>
+				<origin xyz="-3.4e-05   -0.004815    0.048482"/>
+				<inertia ixx="0.016331" ixy="-6.4837e-06" ixz="2.0048e-06" iyy="0.014945"
+					iyz="-0.00051686"
+					izz="0.022577"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_0_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_0_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint 1 -->
+		<joint name="joint_1" type="revolute">
+			<parent link="base_link" />
+			<child link="link_1" />
+			<origin rpy="0 0 0" xyz="0 0 0.1525" />
+			<axis xyz="0 0 1" />
+			<limit effort="346" lower="-6.2832" upper="6.2832" velocity="2.0944"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_1">
+			<inertial>
+				<mass value="7.8"/>
+				<origin xyz="0.000119      0.0428   -0.006383"/>
+				<inertia ixx="0.04506" ixy="4.1126e-05" ixz="-5.2533e-05" iyy="0.029679"
+					iyz="-0.0019959"
+					izz="0.047056"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_1_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_1_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint2 -->
+		<joint name="joint_2" type="revolute">
+			<parent link="link_1" />
+			<child link="link_2" />
+			<origin rpy="0 -1.571 -1.571" xyz="0 0.0345 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="346" lower="-6.2832" upper="6.2832" velocity="2.0944"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_2">
+			<inertial>
+				<mass value="10.83"/>
+				<origin xyz="0.25973    -5.3e-05     0.15782"/>
+				<inertia ixx="0.037586" ixy="-0.00036999" ixz="-0.0069927" iyy="0.84943"
+					iyz="4.0201e-05"
+					izz="0.85021"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_2_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_2_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_2_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_2_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_2_2.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_2_2.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint3 -->
+		<joint name="joint_3" type="revolute">
+			<parent link="link_2" />
+			<child link="link_3" />
+			<origin rpy="0 0 1.571" xyz="0.62 0 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="163" lower="-2.7925" upper="2.7925" velocity="3.1416"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_3">
+			<inertial>
+				<mass value="3.68"/>
+				<origin xyz="-1.5e-05   -0.006702    0.044608"/>
+				<inertia ixx="0.018748" ixy="7.8071e-06" ixz="-5.0324e-06" iyy="0.018972"
+					iyz="-0.00099342"
+					izz="0.011502"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_3_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+            <visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_3_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint4 -->
+		<joint name="joint_4" type="revolute">
+			<parent link="link_3" />
+			<child link="link_4" />
+			<origin rpy="1.571 0 0" xyz="0 -0.559 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="50" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_4">
+			<inertial>
+				<mass value="3.82"/>
+				<origin xyz="7.1e-05    0.091879    -0.18252"/>
+				<inertia ixx="0.19063" ixy="-1.8037e-05" ixz="-3.8576e-05" iyy="0.17268" iyz="-0.052996"
+					izz="0.030386"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_4_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_4_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_4_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_4_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint5 -->
+		<joint name="joint_5" type="revolute">
+			<parent link="link_4" />
+			<child link="link_5" />
+			<origin rpy="-1.571 0 0" xyz="0 0 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="50" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_5">
+			<inertial>
+				<mass value="2.82"/>
+				<origin xyz="-0.000273    0.003651    0.032088"/>
+				<inertia ixx="0.015583" ixy="2.135e-05" ixz="-5.1895e-06" iyy="0.011519"
+					iyz="0.00042553"
+					izz="0.0088671"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_5_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_5_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint6 -->
+		<joint name="joint_6" type="revolute">
+			<parent link="link_5" />
+			<child link="link_6" />
+			<origin rpy="1.571 0 0" xyz="0 -0.121 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="50" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+			<dynamics friction="0" />
+		</joint>
+		<link name="link_6">
+			<inertial>
+				<mass value="1.16"/>
+				<origin xyz="-0.000292       7e-06     -0.0539"/>
+				<inertia ixx="0.0048282" ixy="4.1298e-06" ixz="6.9879e-06" iyy="0.0059519"
+					iyz="4.252e-06"
+					izz="0.0061263"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_collision/MF1013_6_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m1013_white/MF1013_6_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<xacro:dsr_transmission />
+		<xacro:dsr_gazebo namespace="${namespace}" />
+	</xacro:macro>
+</robot>

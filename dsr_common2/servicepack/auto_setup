@@ -1,0 +1,8 @@
+echo "auto_setup run"
+
+echo "Copying gazebo car model to ~/.gazebo/models"
+cd ~/catkin_ws/src/doosan-robot/dsr_common2/servicepack
+cd model
+cp -arp * ~/.gazebo/models
+
+

@@ -1,0 +1,9 @@
+<library path="dsr_joint_trajectory">
+  <class name="dsr_joint_trajectory/RobotController"
+         type="dsr_joint_trajectory::RobotController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      dsr_joint_trajectory controller plugin for 6 dof robot tutorial.
+    </description>
+  </class>
+</library>

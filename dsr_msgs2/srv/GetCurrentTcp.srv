@@ -1,0 +1,8 @@
+#____________________________________________________________________________________________
+# get_current_tcp  
+# It is the service to get the currently set TCP information from the robot controller
+#____________________________________________________________________________________________
+
+---
+string         info # tcp name
+bool        success

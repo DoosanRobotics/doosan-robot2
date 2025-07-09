@@ -1,0 +1,8 @@
+#____________________________________________________________________________________________
+# get_control_mode()  
+#____________________________________________________________________________________________
+# This service returns the current control mode.
+
+---
+int8    control_mode        # Control mode : Position control mode(3), Torque control mode(4)
+bool    success 
