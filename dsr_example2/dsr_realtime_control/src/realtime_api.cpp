@@ -279,7 +279,8 @@ void TorqueRtNode::TorqueRtAPI()
         trq_d[i] = trq(i);  
     }
     Drfl.torque_rt(trq_d,0);
-    RCLCPP_INFO(this->get_logger(), "trq_d[0]%f[1]%f[2]%f[3]%f[4]%f[5]%f",trq_d[0],trq_d[1],trq_d[2],trq_d[3],trq_d[4],trq_d[5]);
+    // Theo - to do : Release the comment out below
+    // RCLCPP_INFO(this->get_logger(), "trq_d[0]%f[1]%f[2]%f[3]%f[4]%f[5]%f",trq_d[0],trq_d[1],trq_d[2],trq_d[3],trq_d[4],trq_d[5]);
 }
 Vector6f TorqueRtNode::GravityCompensation()
 {
@@ -358,6 +359,7 @@ int main(int argc, char **argv)
     }
     auto options = options_reader.get_options();
 
+    // Theo - to do : Try to remove init
     // -------------------- RT Initalize -------------------- // 
     assert(Drfl.connect_rt_control("192.168.137.100",12347));
     Drfl.set_rt_control_output("v1.0",0.001,4);

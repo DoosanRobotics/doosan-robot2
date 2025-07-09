@@ -74,7 +74,7 @@ $ ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=real host:=192.168.
 $ ros2 run dsr_realtime_control rt_init
 
 # By entering the following command line, option2 will be executed
-$ ros2 run dsr_realtime_control realtime_control
+$ ros2 run dsr_realtime_control dsr_realtime_control
 
 # If you want to stop realtime connection(Not mandatory), Enter the following command line
 $ ros2 run dsr_realtime_control rt_shutdown
