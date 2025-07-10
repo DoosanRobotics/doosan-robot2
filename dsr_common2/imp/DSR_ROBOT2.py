@@ -2004,7 +2004,8 @@ def set_safety_mode(safety_mode, safety_event):
     return ret
 
 def connect_rt_control(ip_address=None, port=None):
-    req_ip = ip_address if ip_address is not None else "192.168.137.100"
+    g_node.get_logger().warning("RT service connection may already have been established by dsr_hw_interface; Need caution using this function again.")
+    req_ip = ip_address if ip_address is not None else "192.168.137.100" # Need set to 192.168.137.50 in version below 3.4
     req_port = port if port is not None else 12347
 
     if ip_address is not None and type(ip_address) != str:
