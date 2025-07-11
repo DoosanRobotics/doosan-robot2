@@ -153,8 +153,7 @@ void ReadDataRtNode::ReadDataRtClient()
                     g_stRTState.jacobian_matrix[i][j] = response->data.coriolis_matrix[i].data[j];
                 }
             }
-            // Theo - to do : Rollback the log below
-            RCLCPP_INFO(this->get_logger(), "time stamp : %f, posej-4 : %f",g_stRTState.time_stamp, g_stRTState.actual_joint_position[4]);
+            // RCLCPP_INFO(this->get_logger(), "time stamp : %f",g_stRTState.time_stamp);
         }
         catch(const std::exception &e)
         {
@@ -185,8 +184,7 @@ void TorqueRtNode::TorqueRtStreamPublisher()
     if(first_get)
     {
         this->publisher_->publish(message);
-        // Theo - to do : Release the comment out below
-        // RCLCPP_INFO(this->get_logger(), "trq_d[0]%f[1]%f[2]%f[3]%f[4]%f[5]%f",trq_d[0],trq_d[1],trq_d[2],trq_d[3],trq_d[4],trq_d[5]);
+        RCLCPP_INFO(this->get_logger(), "trq_d[0]%f[1]%f[2]%f[3]%f[4]%f[5]%f",trq_d[0],trq_d[1],trq_d[2],trq_d[3],trq_d[4],trq_d[5]);
     } 
 }
 
