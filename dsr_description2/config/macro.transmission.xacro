@@ -1,72 +1,68 @@
 <?xml version="1.0"?>
-
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-	<xacro:macro name="dsr_transmission">
-		<!-- Transmission 1 -->
-		<transmission name="tran1">
-			<type>transmission_interface/SimpleTransmission</type>
-			<joint name="joint1">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-			</joint>
-			<actuator name="motor1">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-				<mechanicalReduction>1</mechanicalReduction>
-			</actuator>
-		</transmission>
-		<!-- Transmission 2 -->
-		<transmission name="tran2">
-			<type>transmission_interface/SimpleTransmission</type>
-			<joint name="joint2">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-			</joint>
-			<actuator name="motor2">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-				<mechanicalReduction>1</mechanicalReduction>
-			</actuator>
-		</transmission>
-		<!-- Transmission 3 -->
-		<transmission name="tran3">
-			<type>transmission_interface/SimpleTransmission</type>
-			<joint name="joint3">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-			</joint>
-			<actuator name="motor3">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-				<mechanicalReduction>1</mechanicalReduction>
-			</actuator>
-		</transmission>
-		<!-- Transmission 4 -->
-		<transmission name="tran4">
-			<type>transmission_interface/SimpleTransmission</type>
-			<joint name="joint4">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-			</joint>
-			<actuator name="motor4">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-				<mechanicalReduction>1</mechanicalReduction>
-			</actuator>
-		</transmission>
-		<!-- Transmission 5 -->
-		<transmission name="tran5">
-			<type>transmission_interface/SimpleTransmission</type>
-			<joint name="joint5">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-			</joint>
-			<actuator name="motor5">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-				<mechanicalReduction>1</mechanicalReduction>
-			</actuator>
-		</transmission>
-		<!-- Transmission 6 -->
-		<transmission name="tran6">
-			<type>transmission_interface/SimpleTransmission</type>
-			<joint name="joint6">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-			</joint>
-			<actuator name="motor6">
-				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-				<mechanicalReduction>1</mechanicalReduction>
-			</actuator>
-		</transmission>
-	</xacro:macro>
+
+  <!--
+    DSR Transmission (ROS2 Control Style)
+    - ROS1의 transmission_interface/SimpleTransmission 제거
+    - 각 joint에 ros2_control command/state_interface 명시
+    - hardware_interface::SystemInterface(DRHWInterface)와 직접 매핑
+  -->
+
+  <xacro:macro name="dsr_transmission">
+    
+    <!-- Joint1 -->
+    <joint name="joint1" type="revolute">
+      <ros2_control>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </ros2_control>
+    </joint>
+
+    <!-- Joint2 -->
+    <joint name="joint2" type="revolute">
+      <ros2_control>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </ros2_control>
+    </joint>
+
+    <!-- Joint3 -->
+    <joint name="joint3" type="revolute">
+      <ros2_control>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </ros2_control>
+    </joint>
+
+    <!-- Joint4 -->
+    <joint name="joint4" type="revolute">
+      <ros2_control>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </ros2_control>
+    </joint>
+
+    <!-- Joint5 -->
+    <joint name="joint5" type="revolute">
+      <ros2_control>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </ros2_control>
+    </joint>
+
+    <!-- Joint6 -->
+    <joint name="joint6" type="revolute">
+      <ros2_control>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </ros2_control>
+    </joint>
+
+  </xacro:macro>
 </robot>

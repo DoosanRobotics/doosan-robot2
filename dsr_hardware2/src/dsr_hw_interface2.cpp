@@ -141,12 +141,31 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     joint_position_command_.assign(dof, 0);
     joint_velocities_command_.assign(dof, 0);
 
+
     //[modified]
     if(dof == 0) {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "[on_init] No joints found!");
         return CallbackReturn::ERROR;
     }
 
+    //--------------------------------------------------
+    // hw_mapping_initialization and joint index mapping
+    // Maps logical joint names (e.g., "joint_1") to zero-based hardware indices.
+    // This mapping is later used in read/write to correctly reference hardware joints.
+    //-----------------------------------------------------------------    
+    hw_mapping_.clear();
+    for (size_t i = 0; i < info.joints.size(); ++i)
+    {
+        // joint name에서 숫자 부분만 추출 (joint_1 -> 0 인덱스)
+        const std::string & name = info.joints[i].name;
+        if (name.rfind("joint_", 0) == 0) {  // joint_ 로 시작할 때만 처리
+            int hw_index = std::stoi(name.substr(6)) - 1;
+            hw_mapping_.push_back(hw_index);
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[on_init] Mapping active joint '%s' to hw_index %d",
+                        name.c_str(), hw_index);
+        }
+    }
     //if(6 != info_.joints.size()) {
     //    RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), 
     //        "[on_init] Hardware joint size : %zu, expected : 6", info.joints.size());
@@ -453,12 +472,14 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
 
     if(m_mode == "real") 
     {
+        
         const LPRT_OUTPUT_DATA_LIST data = Drfl.read_data_rt();
         for (size_t i = 0; i < dof; i++) // [modified] Loop over DOF instead of fixed 6
-        {
-            joint_position_[i] = static_cast<float>(data->actual_joint_position[i] * (M_PI / 180.0f));
-            joint_velocities_[i] = static_cast<float>(data->actual_joint_velocity[i] * (M_PI / 180.0f));
-        }
+        {   
+            //[added] test
+            int hw_idx = hw_mapping_[i];  // [modified] Map logical joint index to hardware index
+            joint_position_[i]  = static_cast<float>(data->actual_joint_position[hw_idx] * (M_PI / 180.0f));
+            joint_velocities_[i] = static_cast<float>(data->actual_joint_velocity[hw_idx] * (M_PI / 180.0f));
         // // [added] Log the joint data (real mode)
         // std::ostringstream real_log;
         // real_log << "[read][real] joint_position_: {";
@@ -472,8 +493,8 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
         //     real_log << joint_velocities_[i] << (i < dof - 1 ? ", " : "}");
         // }
         // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "%s", real_log.str().c_str());
+        }
     }
-
     else if(m_mode == "virtual") 
     {
         LPROBOT_POSE pose = Drfl.GetCurrentPose();
@@ -484,10 +505,11 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
         return return_type::ERROR; //? what effection of this to control node 
         }
         for (size_t i = 0; i < dof; i++) // [modified] Loop over DOF instead of fixed 6
-        {
-            joint_position_[i] = deg2rad(pose->_fPosition[i]);
+        {   
+            //[added] test
+            int hw_idx = hw_mapping_[i]; // [modified] Map logical joint index to hardware index
+            joint_position_[i] = deg2rad(pose->_fPosition[hw_idx]); // [modified] Apply mapping for virtual pose
         }
-
 
         // // [added] Log the joint data (virtual mode)
         // std::ostringstream virtual_log;
@@ -540,13 +562,15 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     //         ,joint_velocities_command_[3]
     //         ,joint_velocities_command_[4]
     //         ,joint_velocities_command_[5]);
-    static bool idle = false;
 
+    static bool idle = false;
     size_t dof = joint_position_command_.size(); // [modified] Get current DOF dynamically
 
     // TODO: this seems to be a workaround. refer to hardware design of 'prepare_command_mode_switch'
+    // [note] Check if joint position command has changed significantly
     if(positionCommandRunning(pre_joint_position_command_, joint_position_command_)) {
-        if(true == idle) {
+        if(true == idle) 
+        {
             // This is workaround to overcome issues :
             // move_joint (drfl) API internally sent safety_off right after moving. 
             // which occurs problems like :
@@ -555,15 +579,26 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
             idle = false;
         }
         // [modified] Use std::vector instead of fixed-size array
-        std::vector<float> pos(dof);
-        std::vector<float> targetVel(dof);
+        // std::vector<float> pos(dof);
+        // std::vector<float> targetVel(dof);
         //float pos[6];
         //float targetVel[6];
-        
-        for (size_t i = 0; i < dof; i++) {
-            pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
-            targetVel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
 
+        // [modified] Use fixed-size array for compatibility with DRFL API
+        float pos[6] = {0.0f};
+        float targetVel[6] = {0.0f};
+
+        // for (size_t i = 0; i < dof; i++) {
+        //     pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
+        //     targetVel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
+        
+        // [modified] Use hw_mapping_ to map logical joint indices to hardware indices
+        for (size_t i = 0; i < dof; i++) 
+        {
+            int hw_idx = hw_mapping_[i];// [modified] Mapping joint index
+            pos[hw_idx]      = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
+            targetVel[hw_idx] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
+        
             // [DEBUG] Print joint name with its command
             RCLCPP_INFO(
                 rclcpp::get_logger("dsr_hw_interface2"),
@@ -575,15 +610,25 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
             );
         }
 
-        if (m_mode == "real") {
+        // if (m_mode == "real") {
+        //     float margin = 1.5f;
+        //     std::vector<float> acc(dof, 0.0f);
+        //     Drfl.servoj_rt(pos.data(), targetVel.data(), acc.data(), float(dt.seconds() * margin));
+        // } else { // virtual
+        //     std::vector<float> target_vel_acc(dof, 70.0f);
+        //     Drfl.amovej(pos.data(), target_vel_acc.data(), target_vel_acc.data());
+        // }
+
+        if (m_mode == "real")
+        {
+            float acc[6] = {0};
             float margin = 1.5f;
-            std::vector<float> acc(dof, 0.0f);
-            Drfl.servoj_rt(pos.data(), targetVel.data(), acc.data(), float(dt.seconds() * margin));
-        } else { // virtual
-            std::vector<float> target_vel_acc(dof, 70.0f);
-            Drfl.amovej(pos.data(), target_vel_acc.data(), target_vel_acc.data());
+            Drfl.servoj_rt(pos, targetVel, acc, float(dt.seconds() * margin));
         }
-        
+        else {
+            float target_vel_acc[6] = {70, 70, 70, 70, 70, 70};
+            Drfl.amovej(pos, target_vel_acc, target_vel_acc);
+        }
         // // [added] Log the sent command
         // std::ostringstream log_msg;
         // log_msg << "[write] Sent joint commands (dof=" << dof << ") pos: {";

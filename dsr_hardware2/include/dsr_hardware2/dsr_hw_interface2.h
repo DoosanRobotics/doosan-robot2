@@ -489,6 +489,8 @@ std::string m_model;
 std::string m_gripper;
 std::string m_mobile;
 std::string m_rt_host;
+
+
 unsigned int m_rate;
 unsigned int m_standby;
 bool m_command;
@@ -522,6 +524,7 @@ public:
 
 protected:
     /// The size of this vector is (standard_interfaces_.size() x nr_joints)
+    
     std::vector<double> joint_position_command_;
     std::vector<double> joint_velocities_command_;
     std::vector<double> joint_effort_command_; /* not used*/
@@ -539,6 +542,9 @@ protected:
     
     std::unordered_map<std::string, std::vector<std::string>> joint_comm_interfaces = {
         {"position", {}}, {"velocity", {}}, {"effort", {}}};
+
+    // [added] Hardware joint index mapping
+    std::vector<int> hw_mapping_;   // URDF joints -> hardware joints mapping
 };
 
 }
