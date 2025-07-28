@@ -372,7 +372,11 @@ auto movesx_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSplineTask::Re
 auto moveb_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveBlending::Request> req, std::shared_ptr<dsr_msgs2::srv::MoveBlending::Response> res)-> void    
 {
     res->success = false;
-    MOVE_POSB posb[req->pos_cnt];
+    //MOVE_POSB posb[req->pos_cnt];
+
+    //[modified] Use std::vector instead of VLA for safe dynamic allocation (C++ standard-compliant)
+    std::vector<MOVE_POSB> posb(req->pos_cnt);
+
     for(int i=0; i<req->pos_cnt; i++){
         std_msgs::msg::Float64MultiArray segment = req->segment.at(i);
         for(int j=0; j<NUM_TASK; j++){
@@ -404,11 +408,13 @@ auto moveb_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveBlending::Reque
 
     if(req->sync_type == 0){
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveb_cb() called and calling Drfl->moveb");
-        res->success = Drfl->moveb(posb, req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
+        //[modified] Convert std::vector<MOVE_POSB> to MOVE_POSB* using .data()
+        res->success = Drfl->moveb(posb.data(), req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
     }
     else{
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveb_cb() called and calling Drfl->amoveb");
-        res->success = Drfl->amoveb(posb, req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
+        //[modified] Convert std::vector<MOVE_POSB> to MOVE_POSB* using .data()
+        res->success = Drfl->amoveb(posb.data(), req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
     }
 };
 
@@ -2005,7 +2011,11 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_srv_jog                        = get_node()->create_service<dsr_msgs2::srv::Jog>("motion/jog", jog_cb);              
   m_nh_srv_jog_multi                  = get_node()->create_service<dsr_msgs2::srv::JogMulti>("motion/jog_multi", jog_multi_cb);                      
   m_nh_srv_move_pause                 = get_node()->create_service<dsr_msgs2::srv::MovePause>("motion/move_pause", move_pause_cb);                      
-  m_nh_srv_move_stop                  = get_node()->create_service<dsr_msgs2::srv::MoveStop>("motion/move_stop", move_stop_cb, rmw_qos_profile_services_default, cb_group_);
+  // m_nh_srv_move_stop                  = get_node()->create_service<dsr_msgs2::srv::MoveStop>("motion/move_stop", move_stop_cb, rmw_qos_profile_services_default, cb_group_);
+  //[modified] `rmw_qos_profile_services_default` has been deprecated using qos(depth) instead
+  rclcpp::QoS qos_profile(10);
+  m_nh_srv_move_stop = get_node()->create_service<dsr_msgs2::srv::MoveStop>("motion/move_stop", move_stop_cb, qos_profile, cb_group_);  m_nh_srv_move_resume                = get_node()->create_service<dsr_msgs2::srv::MoveResume>("motion/move_resume", move_resume_cb);                  
+  
   m_nh_srv_move_resume                = get_node()->create_service<dsr_msgs2::srv::MoveResume>("motion/move_resume", move_resume_cb);                  
   m_nh_srv_trans                      = get_node()->create_service<dsr_msgs2::srv::Trans>("motion/trans", trans_cb);                  
   m_nh_srv_fkin                       = get_node()->create_service<dsr_msgs2::srv::Fkin>("motion/fkin", fkin_cb);              
