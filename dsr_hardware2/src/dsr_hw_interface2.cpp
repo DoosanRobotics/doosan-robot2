@@ -311,7 +311,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     Drfl.set_on_homming_completed(DSRInterface::OnHommingCompletedCB);
     Drfl.set_on_program_stopped(DSRInterface::OnProgramStoppedCB);
     Drfl.set_on_monitoring_modbus(DSRInterface::OnMonitoringModbusCB);
-    Drfl.set_on_monitoring_data(DSRInterface::OnMonitoringDataCB);           // Callback function in M2.4 and earlier
+    ㅋDrfl.set_on_monitoring_data(DSRInterface::OnMonitoringDataCB);           // Callback function in M2.4 and earlier
     Drfl.set_on_monitoring_ctrl_io(DSRInterface::OnMonitoringCtrlIOCB);       // Callback function in M2.4 and earlier
     Drfl.set_on_monitoring_state(DSRInterface::OnMonitoringStateCB);//RELATED TO LOGIC
     Drfl.set_on_monitoring_access_control(DSRInterface::OnMonitoringAccessControlCB);//RELATED TO LOGIC

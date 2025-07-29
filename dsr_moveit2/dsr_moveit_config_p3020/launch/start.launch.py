@@ -27,84 +27,7 @@ from moveit_configs_utils import MoveItConfigsBuilder
 import yaml  # [MODIFIED] YAML 파일 읽기/쓰기 위해 추가
 import subprocess # [MODIFIED] 
 from urdf_parser_py.urdf import URDF # [MODIFIED] 
-
-# [modified] 
-def adjust_dsr_controller_yaml(yaml_path, active_joints, passive_joints):
-    """
-    Modify dsr_controller2.yaml file by:
-    - Replacing all 'joints' entries with the provided active_joints (excluding fixed joints).
-    - Removing 'passive_joints' if it exists.
-    - Applying changes only to a specific list of controllers.
-    """
-
-    temp_yaml = "/tmp/adjusted_dsr_controller2.yaml"  # Temporary path for the modified YAML
-
-    # Load the original YAML file
-    with open(yaml_path, 'r') as f:
-        data = yaml.safe_load(f)
-
-    # Controllers whose 'joints' list will be updated
-    controllers = [
-        "dsr_controller2",
-        "dsr_moveit_controller",
-        "dsr_position_controller",
-        "dsr_joint_trajectory",
-    ]
-
-    # Update each selected controller
-    for ctrl in controllers:
-        if ctrl in data:
-            params = data[ctrl].get("ros__parameters", {})
-            params["joints"] = list(active_joints)  # Replace joints with active_joints
-            if "passive_joints" in params:
-                params.pop("passive_joints", None)  # Remove passive_joints if present
-            data[ctrl]["ros__parameters"] = params
-            print(f"[DEBUG] Updated joints for controller: {ctrl} -> {active_joints}")
-
-    # Save the modified YAML to a temporary file
-    with open(temp_yaml, 'w') as f:
-        yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
-
-    print(f"[INFO] Adjusted yaml file saved to: {temp_yaml}")
-
-    # Print the content of the modified YAML for debugging
-    with open(temp_yaml, 'r') as debug_file:
-        print("[DEBUG] Adjusted YAML content:\n" + debug_file.read())
-
-    return temp_yaml
-
-# [modified]
-def parse_joints_from_urdf(model, color):
-    """
-    Parse URDF (generated from xacro) and extract joint lists.
-    - Active joints: All non-fixed joints (revolute, prismatic, etc.).
-    - Passive joints: All fixed joints.
-    """
-
-    # Build the path to the xacro file based on the robot model
-    xacro_file = os.path.join(
-        get_package_share_directory('dsr_description2'),
-        'xacro',
-        f"{model}.urdf.xacro"
-    )
-
-    # Generate URDF XML string by executing xacro
-    urdf_xml = subprocess.check_output(['xacro', xacro_file, f'color:={color}']).decode('utf-8')
-
-    # Parse URDF model from the XML string
-    robot_model = URDF.from_xml_string(urdf_xml)
-
-    # Extract active joints (non-fixed)
-    active_joints = [joint.name for joint in robot_model.joints if joint.type != "fixed"]
-
-    # Extract passive joints (fixed)
-    passive_joints = [joint.name for joint in robot_model.joints if joint.type == "fixed"]
-
-    # Debug print for verification
-    print(f"[DEBUG] Active joints (for controllers): {active_joints}")
-    print(f"[DEBUG] Passive joints (fixed): {passive_joints}")
-
-    return urdf_xml, active_joints, passive_joints
+from dsr_bringup2.utils.controller_config import adjust_dsr_controller_yaml, parse_joints_from_urdf # [modified]
 
 # [modified]
 def generate_robot_description_action(context, *args, **kwargs):
@@ -115,21 +38,38 @@ def generate_robot_description_action(context, *args, **kwargs):
     """
 
     # Retrieve 'model' and 'color' arguments from the launch context
+    dynamic_yaml = LaunchConfiguration('dynamic_yaml').perform(context).lower() == 'true'
     model = LaunchConfiguration('model').perform(context)
     color = LaunchConfiguration('color').perform(context)
 
     # Parse URDF to extract active and passive joints
     urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color)
 
-    # Adjust the dsr_controller2.yaml file using active joints (exclude fixed joints)
-    original_yaml = os.path.join(
-        get_package_share_directory("dsr_controller2"),
-        "config",
-        "dsr_controller2.yaml"
-    )
-    adjusted_yaml = adjust_dsr_controller_yaml(original_yaml, active_joints, passive_joints)
+    if dynamic_yaml:
+        original_yaml = os.path.join(
+            get_package_share_directory("dsr_controller2"),
+            "config",
+            "dsr_controller2.yaml"
+        )
+        adjusted_yaml = adjust_dsr_controller_yaml(original_yaml, active_joints, passive_joints)
+        print(f"[INFO] Using dynamically generated controller.yaml: {adjusted_yaml}")
+    else:
+        static_yaml = os.path.join(
+            get_package_share_directory("dsr_controller2"),
+            "config",
+            f"dsr_controller2_{model}.yaml"
+        )
+        if os.path.exists(static_yaml):
+            adjusted_yaml = static_yaml
+            print(f"[INFO] Using static controller.yaml: {adjusted_yaml}")
+        else:
+            adjusted_yaml = os.path.join(
+                get_package_share_directory("dsr_controller2"),
+                "config",
+                "dsr_controller2.yaml"
+            )
+            print(f"[WARN] Model-specific YAML not found. Using default: {adjusted_yaml}")
 
-    # Provide robot_description (URDF) and controller YAML as launch configurations
     return [
         SetLaunchConfiguration('robot_description', urdf_xml),
         SetLaunchConfiguration('controller_yaml', adjusted_yaml)
@@ -199,30 +139,32 @@ def generate_launch_description():
         DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
-        
+        DeclareLaunchArgument('dynamic_yaml', default_value = 'false', description='Use dynamic generation of controller.yaml (true/false)')
     ]
-    xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
-
-    # [modified] Generate dynamic controller YAML and robot_description
-    robot_description_action = OpaqueFunction(function=generate_robot_description_action)
+    # xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
 
     # gui = LaunchConfiguration("gui")
     
     # Get URDF via xacro
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name="xacro")]),
-            " ",
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("dsr_description2"),
-                    "xacro",
-                    LaunchConfiguration('model'),
-                ]
-            ),
-            ".urdf.xacro",
-        ]
-    )
+    # robot_description_content = Command(
+    #     [
+    #         PathJoinSubstitution([FindExecutable(name="xacro")]),
+    #         " ",
+    #         PathJoinSubstitution(
+    #             [
+    #                 FindPackageShare("dsr_description2"),
+    #                 "xacro",
+    #                 LaunchConfiguration('model'),
+    #             ]
+    #         ),
+    #         ".urdf.xacro",
+    #     ]
+    # )
+    
+    # robot_description = {"robot_description": robot_description_content}
+
+    # [modified] Generate dynamic controller YAML and robot_description
+    robot_description_action = OpaqueFunction(function=generate_robot_description_action)
 
     set_config_node = Node(
         package="dsr_bringup2",

@@ -37,7 +37,7 @@ def include_launch_description(context):
     )]
 
 def generate_launch_description():
-    ARGUMENTS = [ 
+    ARGUMENTS = [
         DeclareLaunchArgument('name',  default_value='', description='NAME_SPACE'),
         DeclareLaunchArgument('host',  default_value='127.0.0.1', description='ROBOT_IP'),
         DeclareLaunchArgument('port',  default_value='12345', description='ROBOT_PORT'),
