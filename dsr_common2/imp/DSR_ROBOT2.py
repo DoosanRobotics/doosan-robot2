@@ -444,15 +444,24 @@ def set_velj(vel):
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
 
         vel_list = [vel] * DR_VELJ_DT_LEN
-    elif type(vel) == list and len(vel) == POINT_COUNT:
-        vel_list = vel
+    elif type(vel) == list:
+        if len(vel) == POINT_COUNT:
+            vel_list = vel
+        elif _robot_model == "p3020" and len(vel) == 5:
+            # For model p3020, add 0.0 for joint 4, which is a dummy joint running in DRCF.
+            vel_list = vel
+            vel_list.insert(3, 0.0)
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type or length for vel list")
+
 
         if is_number(vel_list) != True:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
 
         for item in vel:
-            if item <= 0:
-                raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel")
+            if item < 0: # Theo - to do : update this part
+                raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel list: items must be >= 0")
+
     else:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
 
@@ -476,6 +485,7 @@ def set_accj(acc):
     elif type(acc) == list and len(acc) == POINT_COUNT:
         acc_list = acc
 
+
         if is_number(acc_list) != True:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
 
@@ -486,6 +496,41 @@ def set_accj(acc):
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
 
     # set global velj
+    global _g_accj
+
+    _g_accj = acc_list
+
+    print_result("0 = set_accj(acc:{0})".format(dr_form(acc)))
+    return 0
+
+def set_accj(acc):
+    acc_list = None
+
+    # acc
+    if type(acc) == int or type(acc) == float:
+        if acc <= 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc")
+        acc_list = [acc] * DR_ACCJ_DT_LEN
+    elif type(acc) == list:
+        if len(acc) == POINT_COUNT:
+            acc_list = acc
+        elif _robot_model == "p3020" and len(acc) == 5:
+            # For model p3020, add 0.0 for joint 4, which is a dummy joint running in DRCF.
+            acc_list = acc
+            acc_list.insert(3, 0.0)
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type or length for acc list")
+
+        if is_number(acc_list) != True:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
+
+        for item in acc_list:
+            if item < 0:
+                raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc")
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
+
+    # set global accj
     global _g_accj
 
     _g_accj = acc_list
@@ -855,14 +900,18 @@ def get_current_posj():
             result = future.result()
         except Exception as e:
             g_node.get_logger().info('get_current_posj Service call failed %r' % (e,))
+            ret = -1
         else:
-            if result == None:
+            if result is None:
                 ret = -1    
             else:     
-                pos = list(result.pos)  # Convert tuple to list   
-                # set posj
-                cur_pos = posj(pos)
-                ret = cur_pos           
+                cur_pos = posj(list(result.pos))
+                
+                # For p3020, remove the 4th joint value.
+                if _robot_model == "p3020":
+                    del cur_pos[3]
+                
+                ret = cur_pos
     return ret
 
 def get_current_velj():
@@ -876,11 +925,18 @@ def get_current_velj():
             result = future.result()
         except Exception as e:
             g_node.get_logger().info('get_current_velj Service call failed %r' % (e,))
+            ret = -1
         else:
-            if result == None:
+            if result is None:
                 ret = -1    
             else:        
-                ret = list(result.joint_speed)  # Convert tuple to list            
+                vel_list = list(result.joint_speed)  # Convert tuple to list
+                
+                # For p3020, remove the 4th joint velocity for the user
+                if _robot_model == "p3020":
+                    del vel_list[3]
+                
+                ret = vel_list
     return ret
 
 def get_desired_posj():
