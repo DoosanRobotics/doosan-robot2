@@ -13,8 +13,7 @@
     gripper:=none
     mobile:=none
   ">
-    <!--gijungnam-->
-    <!-- Precompute pi-based values using xacro to avoid runtime parsing errors in ros2_control -->
+
     <xacro:property name="double_pi" value="${2.0 * pi}"/>
     <xacro:property name="neg_double_pi" value="${-2.0 * pi}"/>
     <xacro:property name="neg_pi" value="${-1.0 * pi}"/>

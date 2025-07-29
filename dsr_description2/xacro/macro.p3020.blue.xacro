@@ -303,7 +303,7 @@
             <child link="link_4"/>
             <origin rpy="1.5708           0           0" xyz="0       -0.89           -0.1731"/>
             <axis xyz="0 0 1"/>
-            <limit effort="163" lower="0" upper="0" velocity="0"/>
+            <!--<limit effort="163" lower="0" upper="0" velocity="0"/>-->
         </joint>
 
        <joint name="joint_5" type="revolute">

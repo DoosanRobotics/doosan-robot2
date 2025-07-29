@@ -1,11 +1,8 @@
-# [modified]
-# [Changes since Jazzy] The old `planning_plugin` (str) is now replaced with `planning_plugins` (List[str])
+# The old `planning_plugin` (str) is now replaced with `planning_plugins` (List[str])
 planning_plugins:
   - ompl_interface/OMPLPlanner
 
-# [Changes since Jazzy] Adapters are now split into `request_adapters` and `response_adapters`
-# - `request_adapters`: Pre-processing steps before planning
-# - `response_adapters`: Post-processing steps after planning
+# Adapters are now split into `request_adapters` and `response_adapters`
 request_adapters:
   - default_planning_request_adapters/ResolveConstraintFrames
   - default_planning_request_adapters/ValidateWorkspaceBounds

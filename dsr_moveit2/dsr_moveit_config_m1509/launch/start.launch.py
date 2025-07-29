@@ -24,138 +24,72 @@ from launch.actions import OpaqueFunction, SetLaunchConfiguration
 
 # Moveit2
 from moveit_configs_utils import MoveItConfigsBuilder
-import yaml  # [MODIFIED] YAML 파일 읽기/쓰기 위해 추가
-import subprocess # [MODIFIED] 
-from urdf_parser_py.urdf import URDF # [MODIFIED] 
+import yaml
+import subprocess
+from urdf_parser_py.urdf import URDF
+from dsr_bringup2.utils.controller_config import adjust_dsr_controller_yaml, parse_joints_from_urdf
 
-# [modified] 
-def adjust_dsr_controller_yaml(yaml_path, active_joints, passive_joints):
-    """
-    Modify dsr_controller2.yaml file by:
-    - Replacing all 'joints' entries with the provided active_joints (excluding fixed joints).
-    - Removing 'passive_joints' if it exists.
-    - Applying changes only to a specific list of controllers.
-    """
-
-    temp_yaml = "/tmp/adjusted_dsr_controller2.yaml"  # Temporary path for the modified YAML
-
-    # Load the original YAML file
-    with open(yaml_path, 'r') as f:
-        data = yaml.safe_load(f)
-
-    # Controllers whose 'joints' list will be updated
-    controllers = [
-        "dsr_controller2",
-        "dsr_moveit_controller",
-        "dsr_position_controller",
-        "dsr_joint_trajectory",
-    ]
-
-    # Update each selected controller
-    for ctrl in controllers:
-        if ctrl in data:
-            params = data[ctrl].get("ros__parameters", {})
-            params["joints"] = list(active_joints)  # Replace joints with active_joints
-            if "passive_joints" in params:
-                params.pop("passive_joints", None)  # Remove passive_joints if present
-            data[ctrl]["ros__parameters"] = params
-            print(f"[DEBUG] Updated joints for controller: {ctrl} -> {active_joints}")
-
-    # Save the modified YAML to a temporary file
-    with open(temp_yaml, 'w') as f:
-        yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
-
-    print(f"[INFO] Adjusted yaml file saved to: {temp_yaml}")
-
-    # Print the content of the modified YAML for debugging
-    with open(temp_yaml, 'r') as debug_file:
-        print("[DEBUG] Adjusted YAML content:\n" + debug_file.read())
-
-    return temp_yaml
-
-# [modified]
-def parse_joints_from_urdf(model, color):
-    """
-    Parse URDF (generated from xacro) and extract joint lists.
-    - Active joints: All non-fixed joints (revolute, prismatic, etc.).
-    - Passive joints: All fixed joints.
-    """
-
-    # Build the path to the xacro file based on the robot model
-    xacro_file = os.path.join(
-        get_package_share_directory('dsr_description2'),
-        'xacro',
-        f"{model}.urdf.xacro"
-    )
-
-    # Generate URDF XML string by executing xacro
-    urdf_xml = subprocess.check_output(['xacro', xacro_file, f'color:={color}']).decode('utf-8')
-
-    # Parse URDF model from the XML string
-    robot_model = URDF.from_xml_string(urdf_xml)
-
-    # Extract active joints (non-fixed)
-    active_joints = [joint.name for joint in robot_model.joints if joint.type != "fixed"]
-
-    # Extract passive joints (fixed)
-    passive_joints = [joint.name for joint in robot_model.joints if joint.type == "fixed"]
-
-    # Debug print for verification
-    print(f"[DEBUG] Active joints (for controllers): {active_joints}")
-    print(f"[DEBUG] Passive joints (fixed): {passive_joints}")
-
-    return urdf_xml, active_joints, passive_joints
-
-# [modified]
+# Generate robot_description and select controller YAML based on the URDF model.
 def generate_robot_description_action(context, *args, **kwargs):
-    """
-    Generate robot_description and dynamic controller YAML based on the URDF model.
-    - Extracts active/passive joints from URDF.
-    - Updates controller YAML with the list of active joints.
-    """
 
-    # Retrieve 'model' and 'color' arguments from the launch context
+    # Retrieve 'dynamic_yaml'and 'model', 'color' arguments from the launch context
+    dynamic_yaml = LaunchConfiguration('dynamic_yaml').perform(context).lower() == 'true'
     model = LaunchConfiguration('model').perform(context)
     color = LaunchConfiguration('color').perform(context)
 
     # Parse URDF to extract active and passive joints
     urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color)
 
-    # Adjust the dsr_controller2.yaml file using active joints (exclude fixed joints)
-    original_yaml = os.path.join(
-        get_package_share_directory("dsr_controller2"),
-        "config",
-        "dsr_controller2.yaml"
-    )
-    adjusted_yaml = adjust_dsr_controller_yaml(original_yaml, active_joints, passive_joints)
+    # If `dynamic_yaml` is true, generates a temporary controller.yaml with active joints only.
+    if dynamic_yaml:
+        original_yaml = os.path.join(
+            get_package_share_directory("dsr_controller2"),
+            "config",
+            "dsr_controller2.yaml"
+        )
+        adjusted_yaml = adjust_dsr_controller_yaml(original_yaml, active_joints, passive_joints)
+        print(f"[INFO] Using dynamically generated controller.yaml: {adjusted_yaml}")
 
-    # Provide robot_description (URDF) and controller YAML as launch configurations
+    # If 'dynamic_yaml' is false, attempts to use a model-specific static controller.yaml (e.g., dsr_controller2_<model>.yaml).
+    else:
+        static_yaml = os.path.join(
+            get_package_share_directory("dsr_controller2"),
+            "config",
+            f"dsr_controller2_{model}.yaml"
+        )
+        if os.path.exists(static_yaml):
+            adjusted_yaml = static_yaml
+            print(f"[INFO] Using static controller.yaml: {adjusted_yaml}")
+        # Falls back to the default dsr_controller2.yaml if a model-specific YAML is not found
+        else:
+            adjusted_yaml = os.path.join(
+                get_package_share_directory("dsr_controller2"),
+                "config",
+                "dsr_controller2.yaml"
+            )
+            print(f"[WARN] Model-specific YAML not found. Using default: {adjusted_yaml}")
+
     return [
         SetLaunchConfiguration('robot_description', urdf_xml),
         SetLaunchConfiguration('controller_yaml', adjusted_yaml)
     ]
-#----------------------------------------------------------------------------------------------------------------------------------------
+
 def rviz_node_function(context):
-    """런치 시점에서 model 값을 평가하고, 패키지 경로를 찾은 후 launch 파일 실행"""
     model_value = LaunchConfiguration('model').perform(context)
 
-    # 패키지 이름 생성
     model_value_str = f"{model_value}"
     package_name_str = f"dsr_moveit_config_{model_value}"
 
-    # FindPackageShare 평가
     package_path_str = FindPackageShare(package_name_str).perform(context)
 
     print("패키지 이름:", package_name_str)
     print("패키지 경로:", package_path_str)
 
-    # Moveit2 config 
     moveit_config = (
         MoveItConfigsBuilder(model_value_str, "robot_description", package_name_str)
         .robot_description(file_path=f"config/{model_value}.urdf.xacro")
         .robot_description_semantic(file_path="config/dsr.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
-        # [modified]
         .planning_pipelines(pipelines=["ompl", "chomp"],      # List of planning pipelines to load (each loaded from config/<name>_planning.yaml)
                             default_planning_pipeline="ompl", # Name of the default planning pipeline (used if none is explicitly selected)
                             load_all= False                   # If pipelines is None: True loads all from config/default packages; False loads only from config package
@@ -184,7 +118,6 @@ def rviz_node_function(context):
         # namespace=LaunchConfiguration('name'),
         output="log",
         arguments=["-d", rviz_full_config],
-        # [modified], Pass all MoveIt2 parameters as a dictionary to the node
         parameters=[moveit_config.to_dict()],
     )]
 
@@ -199,30 +132,11 @@ def generate_launch_description():
         DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
-        
+        DeclareLaunchArgument('dynamic_yaml', default_value = 'false', description='Use dynamic generation of controller.yaml (true/false)')
     ]
-    xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
 
-    # [modified] Generate dynamic controller YAML and robot_description
+    # Generate dynamic controller YAML and robot_description
     robot_description_action = OpaqueFunction(function=generate_robot_description_action)
-
-    # gui = LaunchConfiguration("gui")
-    
-    # Get URDF via xacro
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name="xacro")]),
-            " ",
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("dsr_description2"),
-                    "xacro",
-                    LaunchConfiguration('model'),
-                ]
-            ),
-            ".urdf.xacro",
-        ]
-    )
 
     set_config_node = Node(
         package="dsr_bringup2",
@@ -266,19 +180,16 @@ def generate_launch_description():
         output="screen",
     )
     
-    # [modified] using temp yaml file
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
         namespace=LaunchConfiguration('name'),
         parameters=[
             {"robot_description": LaunchConfiguration('robot_description')},
-            LaunchConfiguration('controller_yaml')
+            LaunchConfiguration('controller_yaml')     # using static or dynamic yaml file
         ],
         output="both",
     )
-
-
 
     robot_state_pub_node = Node(
         package='robot_state_publisher',
@@ -292,7 +203,7 @@ def generate_launch_description():
         #         "/dsr/joint_states",
         #     ),
         # ],
-        parameters=[{'robot_description': LaunchConfiguration('robot_description')}], # [modified] using robot_description
+        parameters=[{'robot_description': LaunchConfiguration('robot_description')}], # using robot_description from generate_robot_description_action function
     )
 
     joint_state_broadcaster_spawner = Node(
@@ -320,12 +231,9 @@ def generate_launch_description():
         ],
     )
 
-
-    # [modified] MoveIt2 configuration and RViz launch
     rviz_node = OpaqueFunction(function=rviz_node_function)
 
-
-    # [modified] Delay ros2_control_node until set_config_node finishes
+    # Delay ros2_control_node until set_config_node finishes
     delay_control_node_after_set_config = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=set_config_node,
@@ -336,7 +244,7 @@ def generate_launch_description():
         )
     )
 
-    # [modified] Delay robot_controller (dsr_controller2) until joint_state_broadcaster is active
+    # Delay robot_controller (dsr_controller2) until joint_state_broadcaster is active
     delay_robot_controller_after_joint_state = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -347,20 +255,18 @@ def generate_launch_description():
         )
     )
 
-    # [modified] Delay dsr_moveit_controller until robot_controller is active
+    #  Delay dsr_moveit_controller until robot_controller is active
     delay_dsr_moveit_controller_after_robot_controller = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=robot_controller_spawner,
             on_exit=[
                 LogInfo(msg=">> [STEP 3 COMPLETED] dsr_controller2 active. Starting dsr_moveit_controller..."),
                 dsr_moveit_controller_spawner,
-                # [modified]
-                # ExecuteProcess(cmd=["ros2", "control", "list_controllers"], output="screen"),
             ],
         )
     )
 
-    # [modified] Delay RViz and move_group until dsr_moveit_controller is active
+    # Delay RViz and move_group until dsr_moveit_controller is active
     delay_rviz_after_moveit_controller = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=dsr_moveit_controller_spawner,
@@ -372,16 +278,16 @@ def generate_launch_description():
     )
 
     nodes = [
-        LogInfo(msg=">> [START] Launching Doosan Robot Bringup with MoveIt2..."),  # [modified] Launch start log
-        robot_description_action,        # [modified] Generate robot_description and adjusted controller YAML dynamically
-        set_config_node,                 # [modified] Robot parameter configuration node
-        run_emulator_node,               # [modified] Emulator node for virtual mode
-        robot_state_pub_node,            # [modified] Robot state publisher (publishes /robot_description)
-        delay_control_node_after_set_config,  # [modified] Wait for set_config_node before starting ros2_control_node
-        joint_state_broadcaster_spawner, # [modified] Broadcast /joint_states
-        delay_robot_controller_after_joint_state,  # [modified] Wait for joint_state_broadcaster before dsr_controller2
-        delay_dsr_moveit_controller_after_robot_controller,  # [modified] Wait for dsr_controller2 before dsr_moveit_controller
-        delay_rviz_after_moveit_controller,        # [modified] Wait for MoveIt2 controllers before RViz and move_group
+        LogInfo(msg=">> [START] Launching Doosan Robot Bringup with MoveIt2..."),  # Launch start log
+        robot_description_action,                                                  # Generate robot_description and adjusted controller YAML dynamically
+        set_config_node,                                                           # robot parameter configuration node
+        run_emulator_node,                                                         # Emulator node for virtual mode
+        robot_state_pub_node,                                                      # Robot state publisher (publishes /robot_description)
+        delay_control_node_after_set_config,                                       # Wait for set_config_node before starting ros2_control_node
+        joint_state_broadcaster_spawner,                                           # Broadcast /joint_states
+        delay_robot_controller_after_joint_state,                                  # Wait for joint_state_broadcaster before dsr_controller2
+        delay_dsr_moveit_controller_after_robot_controller,                        # Wait for dsr_controller2 before dsr_moveit_controller
+        delay_rviz_after_moveit_controller,                                        # Wait for MoveIt2 controllers before RViz and move_group
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

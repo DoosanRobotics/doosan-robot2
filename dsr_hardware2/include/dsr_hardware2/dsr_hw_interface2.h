@@ -543,7 +543,6 @@ protected:
     std::unordered_map<std::string, std::vector<std::string>> joint_comm_interfaces = {
         {"position", {}}, {"velocity", {}}, {"effort", {}}};
 
-    // [added] Hardware joint index mapping
     std::vector<int> hw_mapping_;   // URDF joints -> hardware joints mapping
 };
 
