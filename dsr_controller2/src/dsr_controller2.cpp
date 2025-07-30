@@ -1828,14 +1828,6 @@ auto write_data_rt_cb = [this](const std::shared_ptr<dsr_msgs2::srv::WriteDataRt
 };
 
 
-  // Callback for jog_multi
-auto jog_multi_axis_cb = [this](const std::shared_ptr<dsr_msgs2::msg::JogMultiAxis> msg) -> void
-{
-    std::array<float, NUM_JOINT> target_pos;
-    std::copy(msg->jog_axis.cbegin(), msg->jog_axis.cend(), target_pos.begin());
-    Drfl->multi_jog(target_pos.data(), static_cast<MOVE_REFERENCE>(msg->move_reference), msg->speed);
-};
-
 // Callback for alter_motion_stream
 auto alter_cb = [this](const std::shared_ptr<dsr_msgs2::msg::AlterMotionStream> msg) -> void
 {
@@ -1854,8 +1846,10 @@ auto servoj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojStream> msg)
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
+    DR_SERVOJ_TYPE mode = (DR_SERVOJ_TYPE)msg->mode;
     check_dsr_model(target_pos);
-    Drfl->servoj(target_pos.data(), target_vel.data(), target_acc.data(), time);
+
+    Drfl->servoj(target_pos.data(), target_vel.data(), target_acc.data(), time, mode);
 };
 
 // Callback for servol_stream
@@ -1889,7 +1883,7 @@ auto speedj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedjStream> msg)
 // Callback for speedl_stream
 auto speedl_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedlStream> msg) -> void
 {
-    std::array<float, NUM_JOINT> target_vel;
+    std::array<float, NUM_TASK> target_vel;
     std::copy(msg->vel.cbegin(), msg->vel.cend(), target_vel.begin());
     std::array<float, 2> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
@@ -1965,7 +1959,6 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
   // Subscription declarations
-  m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb);
   m_sub_alter_motion_stream           = get_node()->create_subscription<dsr_msgs2::msg::AlterMotionStream>("alter_motion_stream", 20, alter_cb);
   m_sub_servoj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServojStream>("servoj_stream", 20, servoj_cb);
   m_sub_servol_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServolStream>("servol_stream", 20, servol_cb);
