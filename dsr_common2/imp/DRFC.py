@@ -121,7 +121,7 @@ ROBOT_MODE_MANUAL                     = 0
 ROBOT_MODE_AUTONOMOUS                 = 1
 ROBOT_MODE_MEASURE                    = 2
 
-        #                                     
+#                                     
 # safety mode
 #                                     
 SAFETY_MODE_MANUAL                    = 0
