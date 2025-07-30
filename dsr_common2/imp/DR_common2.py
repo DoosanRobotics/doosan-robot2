@@ -15,6 +15,7 @@ import collections.abc
 import numpy            #for ROS2 add type ndarray 
 from DR_error2 import *
 
+import DR_init
 # point count
 POINT_COUNT = 6
 
@@ -40,18 +41,32 @@ class posj(list):
     # @return     없음
     # @exception  - DR_ERROR_TYPE : argument의 type 비정상
     #
-    def __init__(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0):
-        if (type(q1) == list and len(q1) == POINT_COUNT) or (type(q1) == posj):
-            org_list = q1
+    def __init__(self, *args):
+        q = [0.0] * POINT_COUNT
+        if len(args) == 0:
+            pass # all zeros
+        # Need additional handling in case of using 5 dof ordered for P3020.
+        elif len(args) == 1:
+            if (type(args[0]) == list and len(args[0]) >= 5) or type(args[0]) == posj:
+                if len(args[0]) == 5 and getattr(DR_init, '__dsr__model') == "p3020":
+                    q = args[0][:3] + [0.0] + args[0][3:]
+                elif len(args[0]) == 6:
+                    q = args[0]
+                else:
+                    raise DR_Error(DR_ERROR_TYPE, "Invalid list length for posj.")
+            else:
+                 raise DR_Error(DR_ERROR_TYPE, "Invalid argument type for posj.")
+        elif len(args) == 5:
+            if getattr(DR_init, '__dsr__model') == "p3020":
+                q = list(args[:3]) + [0.0] + list(args[3:])
+            else:
+                raise DR_Error(DR_ERROR_TYPE, "5 arguments for posj is only supported for p3020 model.")
+        elif len(args) == 6:
+            q = list(args)
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid number of arguments for posj.")
 
-            q1 = org_list[0]
-            q2 = org_list[1]
-            q3 = org_list[2]
-            q4 = org_list[3]
-            q5 = org_list[4]
-            q6 = org_list[5]
-
-        pos_list = [q1, q2, q3, q4, q5, q6]
+        pos_list = q
 
         if is_number(pos_list) != True:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : q1, q2, q3, q4, q5, q6.")

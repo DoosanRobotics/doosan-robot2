@@ -4,7 +4,7 @@
   <xacro:macro name="p3020_ros2_control" params="
   name
   rate:=100
-  standby:=ture
+  standby:=true
   command:=none
   host:=0.0.0.0
   port:=12345
