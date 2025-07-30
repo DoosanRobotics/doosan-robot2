@@ -247,7 +247,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 	// Basically, Controller automatically servo-off after elapse time (5 min)
 	// Deactivate it.
 	Drfl.set_auto_servo_off(0, 5.0);
-
 	// Virtual controller doesn't support real time connection.
 	if(mode != "virtual") {
 		if(m_nVersionDRCF >= 3000000 && m_nVersionDRCF < 3040000) {
@@ -270,7 +269,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to start RT control");
 			return CallbackReturn::FAILURE;
 		}
-
 		RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "Setting velocity and acceleration limits");
 		float limit[6] = {70.0f,70.0f,70.0f,70.0f,70.0f,70.0f};
 		if (!Drfl.set_velj_rt(limit)) return CallbackReturn::ERROR;
@@ -412,8 +410,9 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 
 DRHWInterface::~DRHWInterface()
 {
-	Drfl.close_connection();
+	Drfl.stop_rt_control();
 	Drfl.disconnect_rt_control();
+	Drfl.close_connection();
 
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    CONNECTION IS CLOSED");

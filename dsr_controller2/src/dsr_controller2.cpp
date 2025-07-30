@@ -2585,7 +2585,10 @@ void OnLogAlarm(LPLOG_ALARM pLogAlarm)
 
 void OnDisConnected(){
 	RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"),"Disconnected.. Please check out Ethernet Cable.. ");
+	Drfl->stop_rt_control();
+    Drfl->disconnect_rt_control();
 	Drfl->close_connection(); // clean-up
+
 	
 	if(0 == instance->disconnect_pub_.use_count())	return;
 	dsr_msgs2::msg::RobotDisconnection msg;

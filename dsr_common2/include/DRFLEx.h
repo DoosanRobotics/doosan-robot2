@@ -62,7 +62,7 @@
 
 // Specified by user. 2 or 3.
 #ifndef DRCF_VERSION
-    #define DRCF_VERSION 3 
+    #define DRCF_VERSION 3
 #endif
 
 namespace DRAFramework 
@@ -80,6 +80,11 @@ namespace DRAFramework
     typedef void (*TOnMonitoringSafetyStateCB)(const SAFETY_STATE);
     typedef void (*TOnMonitoringRobotSystemCB)(const ROBOT_SYSTEM);
     typedef void (*TOnMonitoringSafetyStopTypeCB)(const unsigned char);
+    typedef void (*TOnMonitoringWeldingDataCB)(const LPROBOT_WELDING_DATA);
+    typedef void (*TOnMonitoringAnalogWeldingDataCB)(const LPMONITORING_ALALOG_WELDING);
+    typedef void (*TOnMonitoringDigitalWeldingDataCB)(const LPMONITORING_DIGITAL_WELDING);
+
+
 
 #ifdef __cplusplus
     extern "C" 
@@ -219,6 +224,10 @@ namespace DRAFramework
         DRFL_API void _set_on_monitoring_ctrl_io(LPROBOTCONTROL pCtrl, TOnMonitoringCtrlIOCB pCallbackFunc);
         DRFL_API void _set_on_monitoring_ctrl_io_ex(LPROBOTCONTROL pCtrl, TOnMonitoringCtrlIOExCB pCallbackFunc);
         DRFL_API void _set_on_monitoring_ctrl_io_ex2(LPROBOTCONTROL pCtrl, TOnMonitoringCtrlIOEx2CB pCallbackFunc);
+        DRFL_API void _set_on_monitoring_welding_data(LPROBOTCONTROL pCtrl, TOnMonitoringWeldingDataCB pCallbackFunc);
+        DRFL_API void _set_on_monitoring_analog_welding_data(LPROBOTCONTROL pCtrl, TOnMonitoringAnalogWeldingDataCB pCallbackFunc);
+        DRFL_API void _set_on_monitoring_digital_welding_data(LPROBOTCONTROL pCtrl, TOnMonitoringDigitalWeldingDataCB pCallbackFunc);
+
 
         DRFL_API void _set_on_monitoring_modbus(LPROBOTCONTROL pCtrl, TOnMonitoringModbusCB pCallbackFunc);
         DRFL_API void _set_on_monitoring_speed_mode(LPROBOTCONTROL pCtrl, TOnMonitoringSpeedModeCB pCallbackFunc);
@@ -287,16 +296,16 @@ namespace DRAFramework
         DRFL_API bool _amovej(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_JOINT], float fTargetVel, float fTargetAcc, float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE);
         DRFL_API bool _amovej_ex(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_JOINT], float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE);
         // linear motion
-        DRFL_API bool _movel(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE);
-        DRFL_API bool _amovel(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE);
+        DRFL_API bool _movel(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, DR_MV_APP eAppType = DR_MV_APP_NONE);
+        DRFL_API bool _amovel(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, DR_MV_APP eAppType = DR_MV_APP_NONE);
         // circle motion
         DRFL_API bool _movec(LPROBOTCONTROL pCtrl, float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE);
-        DRFL_API bool _movec_ex(LPROBOTCONTROL pCtrl, float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, MOVE_ORIENTATION eOrientation = DR_MV_ORI_TEACH);
+        DRFL_API bool _movec_ex(LPROBOTCONTROL pCtrl, float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, MOVE_ORIENTATION eOrientation = DR_MV_ORI_TEACH, DR_MV_APP eAppType = DR_MV_APP_NONE);
         DRFL_API bool _amovec(LPROBOTCONTROL pCtrl, float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE);
-        DRFL_API bool _amovec_ex(LPROBOTCONTROL pCtrl, float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, MOVE_ORIENTATION eOrientation = DR_MV_ORI_TEACH);
+        DRFL_API bool _amovec_ex(LPROBOTCONTROL pCtrl, float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, MOVE_ORIENTATION eOrientation = DR_MV_ORI_TEACH, DR_MV_APP eAppType = DR_MV_APP_NONE);
         // bleind motion
-        DRFL_API bool _moveb(LPROBOTCONTROL pCtrl, MOVE_POSB tTargetPos[MAX_MOVEB_POINT], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE);
-        DRFL_API bool _amoveb(LPROBOTCONTROL pCtrl, MOVE_POSB tTargetPos[MAX_MOVEB_POINT], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE);
+        DRFL_API bool _moveb(LPROBOTCONTROL pCtrl, MOVE_POSB tTargetPos[MAX_MOVEB_POINT], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, DR_MV_APP eAppType = DR_MV_APP_NONE);
+        DRFL_API bool _amoveb(LPROBOTCONTROL pCtrl, MOVE_POSB tTargetPos[MAX_MOVEB_POINT], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, DR_MV_APP eAppType = DR_MV_APP_NONE);
         // joint motion as task information
         DRFL_API bool _movejx(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_JOINT], unsigned char iSolutionSpace, float fTargetVel, float fTargetAcc, float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE);
         DRFL_API bool _movejx_ex(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_JOINT], unsigned char iSolutionSpace, float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE);
@@ -321,7 +330,7 @@ namespace DRAFramework
 
         // environment adaptive motion
         DRFL_API bool _servoj(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_JOINT], float fLimitVel[NUM_JOINT], float fLimitAcc[NUM_JOINT], float fTargetTime, DR_SERVOJ_TYPE eTargetMod = DR_SERVO_OVERRIDE);
-        DRFL_API bool _servol(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime);
+        DRFL_API bool _servol(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fLimitVel[2], float fLimitAcc[2], float fTargetTime);
 
         DRFL_API bool _speedj(LPROBOTCONTROL pCtrl, float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime);
         DRFL_API bool _speedl(LPROBOTCONTROL pCtrl, float fTargetVel[NUM_TASK], float fTargetAcc[2], float fTargetTime);
@@ -382,8 +391,8 @@ namespace DRAFramework
         ////////////////////////////////////////////////////////////////////////////
         //  Flange Serial Operations                                              //
         ////////////////////////////////////////////////////////////////////////////
-        DRFL_API bool _flange_serial_open(LPROBOTCONTROL pCtrl, int baudrate = 115200, BYTE_SIZE eByteSize = BYTE_SIZE_EIGHTBITS, PARITY_CHECK eParity = PARITY_CHECK_NONE, STOP_BITS eStopBits = STOPBITS_ONE);
-        DRFL_API bool _flange_serial_close(LPROBOTCONTROL pCtrl);
+        DRFL_API bool _flange_serial_open(LPROBOTCONTROL pCtrl, int nPort, int baudrate = 115200, BYTE_SIZE eByteSize = BYTE_SIZE_EIGHTBITS, PARITY_CHECK eParity = PARITY_CHECK_NONE, STOP_BITS eStopBits = STOPBITS_ONE);
+        DRFL_API bool _flange_serial_close(LPROBOTCONTROL pCtrl, int nPort);
         DRFL_API bool _flange_serial_write(LPROBOTCONTROL pCtrl, int nSize, char* pSendData, int nPort = 1);
         DRFL_API LPFLANGE_SER_RXD_INFO_EX _flange_serial_read(LPROBOTCONTROL pCtrl, float fTimeout = -1, int nPort = 1);     
   
@@ -498,7 +507,7 @@ namespace DRAFramework
         //brief(274) :app_weld_enable_analog
         DRFL_API bool _app_weld_enable_analog(LPROBOTCONTROL pCtrl, CONFIG_ANALOG_WELDING_INTERFACE pConfiganalogweldinginterface);
         //brief(275) :app_weld_set_weld_cond_analog
-        DRFL_API bool _app_weld_set_weld_cond_analog(LPROBOTCONTROL pCtrl, unsigned char iVirtualWelding, float fTargetVoltage, float fTargetCurrent, float fTargetVel, float fMinVel, float fMaxVel, float fTargetFeedingSpeed);
+        DRFL_API bool _app_weld_set_weld_cond_analog(LPROBOTCONTROL pCtrl, CONFIG_ANALOG_WELDING_SETTING pConfigAnalogWeldingSetting);
         //brief(276) :app_weld_adj_welding_cond_analog
         DRFL_API bool _app_weld_adj_welding_cond_analog(LPROBOTCONTROL pCtrl, unsigned char bRealTime, unsigned char bResetFlag, float fTargetVol, float fFeedingVel, float fTargetVel, float fOffsetY, float fOffsetZ, float fWidthRate);
         //brief(277) :app_weld_set_interface_eip_r2m_process
@@ -529,7 +538,7 @@ namespace DRAFramework
         //brief(288) :app_weld_adj_welding_cond_digital
         DRFL_API bool _app_weld_adj_welding_cond_digital(LPROBOTCONTROL pCtrl, CONFIG_DIGITAL_WELDING_ADJUST pConfigdigitalweldingadjust);
         //brief(289) :measure_welding_tcp
-        DRFL_API bool _measure_welding_tcp(LPROBOTCONTROL pCtrl, unsigned char iMode, float fStickout, float fTargetPos[9][NUMBER_OF_JOINT]);
+        DRFL_API LPMEASURE_TCP_RESPONSE _measure_welding_tcp(LPROBOTCONTROL pCtrl, unsigned char iMode, float fStickout, float fTargetPos[9][NUMBER_OF_JOINT]);
         
         //brief(290) :set_welding_cockpit_setting
         DRFL_API bool _set_welding_cockpit_setting(LPROBOTCONTROL pCtrl, unsigned char bEnable, unsigned char bWeldingType);
@@ -539,7 +548,13 @@ namespace DRAFramework
         DRFL_API bool _set_digital_welding_monitoring_mode(LPROBOTCONTROL pCtrl, unsigned char bEnable);
         //brief(293) :app_weld_adj_motion_offset
         DRFL_API bool _app_weld_adj_motion_offset(LPROBOTCONTROL pCtrl, float fOffsetY, float fOffsetZ);
-
+        //brief(294) :set_welding_cockpit_setting_time_setting
+        DRFL_API void _set_welding_cockpit_setting_time_setting(LPROBOTCONTROL pCtrl, int time);
+        //LED custom setting
+        DRFL_API bool _state_led_reset(LPROBOTCONTROL _rbtCtrl);
+        DRFL_API bool _set_state_led_off(LPROBOTCONTROL _rbtCtrl);
+        DRFL_API bool _set_state_led_color(LPROBOTCONTROL _rbtCtrl, int red, int green, int blue);
+        DRFL_API unsigned char _get_state_led_rule(LPROBOTCONTROL _rbtCtrl);
 
 #ifdef __cplusplus
     };
@@ -603,6 +618,9 @@ namespace DRAFramework
 #if DRCF_VERSION == 2
         /*Latest version. callbacks invoked after setup_monitoring_version(1)*/
         void set_on_monitoring_ctrl_io_ex(TOnMonitoringCtrlIOExCB pCallbackFunc) { _set_on_monitoring_ctrl_io_ex(_rbtCtrl, pCallbackFunc); };
+        void set_on_monitoring_welding_data(TOnMonitoringWeldingDataCB pCallbackFunc) { _set_on_monitoring_welding_data(_rbtCtrl, pCallbackFunc);};
+        void set_on_monitoring_analog_welding_data(TOnMonitoringAnalogWeldingDataCB pCallbackFunc) { _set_on_monitoring_analog_welding_data(_rbtCtrl, pCallbackFunc);};
+        void set_on_monitoring_digital_welding_data(TOnMonitoringDigitalWeldingDataCB pCallbackFunc) { _set_on_monitoring_digital_welding_data(_rbtCtrl, pCallbackFunc);};
 #elif DRCF_VERSION == 3
         /*Latest version. callbacks invoked after setup_monitoring_version(1)*/
         void set_on_monitoring_ctrl_io_ex(TOnMonitoringCtrlIOEx2CB pCallbackFunc) { _set_on_monitoring_ctrl_io_ex2(_rbtCtrl, pCallbackFunc); };
@@ -755,16 +773,19 @@ namespace DRAFramework
         bool amovej(float fTargetPos[NUM_JOINT], float fTargetVel, float fTargetAcc, float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _amovej(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eBlendingType); };
         bool amovej(float fTargetPos[NUM_JOINT], float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _amovej_ex(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eBlendingType); };
         // motion control: linear move
-        bool movel(float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _movel(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fBlendingRadius, eBlendingType); }
-        bool amovel(float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _amovel(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, eBlendingType); }
+        bool movel(float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, DR_MV_APP eAppType = DR_MV_APP_NONE) { return _movel(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fBlendingRadius, eBlendingType, eAppType); }
+        bool amovel(float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, DR_MV_APP eAppType = DR_MV_APP_NONE) { return _amovel(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, eBlendingType, eAppType); }
         // motion control: circle move
+#if DRCF_VERSION == 2
+        bool movec(float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, MOVE_ORIENTATION eOrientation = DR_MV_ORI_TEACH, DR_MV_APP eAppType = DR_MV_APP_NONE) { return _movec_ex(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fTargetAngle1, fTargetAngle2, fBlendingRadius, eBlendingType, eOrientation, eAppType); };
+        bool amovec(float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, MOVE_ORIENTATION eOrientation = DR_MV_ORI_TEACH, DR_MV_APP eAppType = DR_MV_APP_NONE) { return _amovec_ex(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fTargetAngle1, fTargetAngle2, eBlendingType, eOrientation, eAppType); };
+#elif DRCF_VERSION == 3        
         bool movec(float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _movec(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fTargetAngle1, fTargetAngle2, fBlendingRadius, eBlendingType); };
-        bool movec_ex(float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, MOVE_ORIENTATION eOrientation = DR_MV_ORI_TEACH) { return _movec_ex(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fTargetAngle1, fTargetAngle2, fBlendingRadius, eBlendingType, eOrientation); };
         bool amovec(float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _amovec(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fTargetAngle1, fTargetAngle2, eBlendingType); };
-        bool amovec_ex(float fTargetPos[2][NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fTargetAngle1 = 0.f , float fTargetAngle2 = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE, MOVE_ORIENTATION eOrientation = DR_MV_ORI_TEACH) { return _amovec_ex(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fTargetAngle1, fTargetAngle2, eBlendingType, eOrientation); };
+#endif
         // motion control: blending move
-        bool moveb(MOVE_POSB tTargetPos[MAX_MOVEB_POINT], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE) { return _moveb(_rbtCtrl, tTargetPos, nPosCount, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference); };
-        bool amoveb(MOVE_POSB tTargetPos[MAX_MOVEB_POINT], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE) { return _amoveb(_rbtCtrl, tTargetPos, nPosCount, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference); };
+        bool moveb(MOVE_POSB tTargetPos[MAX_MOVEB_POINT], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, DR_MV_APP eAppType = DR_MV_APP_NONE) { return _moveb(_rbtCtrl, tTargetPos, nPosCount, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, eAppType); };
+        bool amoveb(MOVE_POSB tTargetPos[MAX_MOVEB_POINT], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, DR_MV_APP eAppType = DR_MV_APP_NONE) { return _amoveb(_rbtCtrl, tTargetPos, nPosCount, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, eAppType); };
         // motion control: joint move as task information
         bool movejx(float fTargetPos[NUM_JOINT], unsigned char iSolutionSpace, float fTargetVel, float fTargetAcc, float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _movejx(_rbtCtrl, fTargetPos, iSolutionSpace, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fBlendingRadius, eBlendingType); };
         bool movejx(float fTargetPos[NUM_JOINT], unsigned char iSolutionSpace, float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _movejx_ex(_rbtCtrl, fTargetPos, iSolutionSpace, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fBlendingRadius, eBlendingType); };
@@ -788,8 +809,8 @@ namespace DRAFramework
         bool amove_periodic(float fAmplitude[NUM_TASK], float fPeriodic[NUM_TASK], float fAccelTime, unsigned int nRepeat, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_TOOL) { return _amove_periodic(_rbtCtrl, fAmplitude, fPeriodic, fAccelTime, nRepeat, eMoveReference); };
 		
         // environment adaptive motion
-        bool servoj(float fTargetPos[NUM_JOINT], float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime, DR_SERVOJ_TYPE eTargetMod = DR_SERVO_OVERRIDE){ return _servoj(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eTargetMod); };
-        bool servol(float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime){ return _servol(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime); };
+        bool servoj(float fTargetPos[NUM_JOINT], float fLimitVel[NUM_JOINT], float fLimitAcc[NUM_JOINT], float fTargetTime, DR_SERVOJ_TYPE eTargetMod = DR_SERVO_OVERRIDE){ return _servoj(_rbtCtrl, fTargetPos, fLimitVel, fLimitAcc, fTargetTime, eTargetMod); };
+        bool servol(float fTargetPos[NUM_TASK], float fLimitVel[2], float fLimitAcc[2], float fTargetTime){ return _servol(_rbtCtrl, fTargetPos, fLimitVel, fLimitAcc, fTargetTime); };
 
         bool speedj(float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime){ return _speedj(_rbtCtrl, fTargetVel, fTargetAcc, fTargetTime); };
         bool speedl(float fTargetVel[NUM_TASK], float fTargetAcc[2], float fTargetTime){ return _speedl(_rbtCtrl, fTargetVel, fTargetAcc, fTargetTime); };
@@ -851,8 +872,8 @@ namespace DRAFramework
         ////////////////////////////////////////////////////////////////////////////
         //  Flange Serial Operations                                              //
         ////////////////////////////////////////////////////////////////////////////
-        bool flange_serial_open(int baudrate = 115200, BYTE_SIZE eByteSize = BYTE_SIZE_EIGHTBITS, PARITY_CHECK eParity = PARITY_CHECK_NONE, STOP_BITS eStopBits = STOPBITS_ONE){ return _flange_serial_open(_rbtCtrl, baudrate, eByteSize, eParity, eStopBits); };
-        bool flange_serial_close(){ return _flange_serial_close(_rbtCtrl); };
+        bool flange_serial_open(int nPort, int baudrate = 115200, BYTE_SIZE eByteSize = BYTE_SIZE_EIGHTBITS, PARITY_CHECK eParity = PARITY_CHECK_NONE, STOP_BITS eStopBits = STOPBITS_ONE){ return _flange_serial_open(_rbtCtrl, nPort, baudrate, eByteSize, eParity, eStopBits); };
+        bool flange_serial_close(int nPort){ return _flange_serial_close(_rbtCtrl, nPort); };
         bool flange_serial_write(int nSize, char* pSendData, int nPort = 1){ return _flange_serial_write(_rbtCtrl, nSize, pSendData, nPort); };
         LPFLANGE_SER_RXD_INFO_EX flange_serial_read(float fTimeout = -1, int nPort = 1){ return _flange_serial_read(_rbtCtrl, fTimeout, nPort); };      
 
@@ -968,11 +989,69 @@ namespace DRAFramework
         */
         bool setup_monitoring_version(int iVersion) { return _setup_monitoring_version(_rbtCtrl, iVersion); };
         bool system_shut_down() { return _system_shut_down(_rbtCtrl); };
-                ////////////////////////////////////////////////////////////////////////////
+        // LED
+        bool state_led_reset() {return _state_led_reset(_rbtCtrl);};
+        bool set_state_led_off() {return _set_state_led_off(_rbtCtrl);};
+        bool set_state_led_color(int red, int green, int blue) {return _set_state_led_color(_rbtCtrl, red, green, blue);};
+        unsigned char get_state_led_rule() {return _get_state_led_rule(_rbtCtrl);};
+
+        ////////////////////////////////////////////////////////////////////////////
         //  welding                                                //
         ////////////////////////////////////////////////////////////////////////////
 #if DRCF_VERSION == 2
+        bool app_weld_weave_cond_trapezoidal(CONFIG_TRAPEZOID_WEAVING_SETTING pConfigtrapezoidweavingsetting) { return _app_weld_weave_cond_trapezoidal(_rbtCtrl, pConfigtrapezoidweavingsetting); };
+        //brief(271) :app_weld_weave_cond_zigzag
+        bool app_weld_weave_cond_zigzag(float fOffsetY, float fOffsetZ, float fGradient, float fWeavingWidth, float fWeavingCycle) { return _app_weld_weave_cond_zigzag(_rbtCtrl, fOffsetY, fOffsetZ, fGradient, fWeavingWidth, fWeavingCycle); };
+        //brief(272) :app_weld_weave_cond_circular
+        bool app_weld_weave_cond_circular(float fOffsetY, float fOffsetZ, float fGradient, float fwWdt[2], float fwT[2]) { return _app_weld_weave_cond_circular(_rbtCtrl, fOffsetY, fOffsetZ, fGradient, fwWdt, fwT); };
+        //brief(273) :app_weld_weave_cond_sinusoidal
+        bool app_weld_weave_cond_sinusoidal(float fOffsetY, float fOffsetZ, float fGradient, float fWeavingWidth, float fWeavingCycle) { return _app_weld_weave_cond_sinusoidal(_rbtCtrl, fOffsetY, fOffsetZ, fGradient, fWeavingWidth, fWeavingCycle); };
+        //brief(274) :app_weld_enable_analog
+        bool app_weld_enable_analog(CONFIG_ANALOG_WELDING_INTERFACE pConfiganalogweldinginterface) { return _app_weld_enable_analog(_rbtCtrl, pConfiganalogweldinginterface); };
+        //brief(275) :app_weld_set_weld_cond_analog
+        bool app_weld_set_weld_cond_analog(CONFIG_ANALOG_WELDING_SETTING pConfigAnalogWeldingSetting) { return _app_weld_set_weld_cond_analog(_rbtCtrl, pConfigAnalogWeldingSetting); };
+        //brief(276) :app_weld_adj_welding_cond_analog
+        bool app_weld_adj_welding_cond_analog(unsigned char bRealTime, unsigned char bResetFlag, float fTargetVol, float fFeedingVel, float fTargetVel, float fOffsetY, float fOffsetZ, float fWidthRate) { return _app_weld_adj_welding_cond_analog(_rbtCtrl, bRealTime, bResetFlag, fTargetVol, fFeedingVel, fTargetVel, fOffsetY, fOffsetZ, fWidthRate); };
+        //brief(277) :app_weld_set_interface_eip_r2m_process
+        bool app_weld_set_interface_eip_r2m_process(CONFIG_DIGITAL_WELDING_INTERFACE_PROCESS pConfigdigitalweldinginterfaceprocess) { return _app_weld_set_interface_eip_r2m_process(_rbtCtrl, pConfigdigitalweldinginterfaceprocess); };
+        //brief(278) :app_weld_set_interface_eip_r2m_mode
+        bool app_weld_set_interface_eip_r2m_mode(CONFIG_DIGITAL_WELDING_INTERFACE_MODE pConfigdigitalweldinginterfacemode) { return _app_weld_set_interface_eip_r2m_mode(_rbtCtrl, pConfigdigitalweldinginterfacemode); };
+        //brief(279) :app_weld_set_interface_eip_r2m_test
+        bool app_weld_set_interface_eip_r2m_test(CONFIG_DIGITAL_WELDING_INTERFACE_TEST pConfigdigitalweldinginterfacetest) { return _app_weld_set_interface_eip_r2m_test(_rbtCtrl, pConfigdigitalweldinginterfacetest); };
         
+        //brief(280) :app_weld_set_interface_eip_r2m_condition
+        bool app_weld_set_interface_eip_r2m_condition(CONFIG_DIGITAL_WELDING_INTERFACE_CONDITION pConfigdigitalweldinginterfacecondition) { return _app_weld_set_interface_eip_r2m_condition(_rbtCtrl, pConfigdigitalweldinginterfacecondition); };
+        //brief(281) :app_weld_set_interface_eip_r2m_option
+        bool app_weld_set_interface_eip_r2m_option(CONFIG_DIGITAL_WELDING_INTERFACE_OPTION pConfigdigitalweldinginterfaceoption) { return _app_weld_set_interface_eip_r2m_option(_rbtCtrl, pConfigdigitalweldinginterfaceoption); };
+        //brief(282) :app_weld_set_interface_eip_m2r_process2
+        bool app_weld_set_interface_eip_m2r_process2(CONFIG_DIGITAL_WELDING_INTERFACE_PROCESS2 pConfigdigitalweldinginterfaceprocess2) { return _app_weld_set_interface_eip_m2r_process2(_rbtCtrl, pConfigdigitalweldinginterfaceprocess2); };
+        //brief(283) :app_weld_set_interface_eip_m2r_monitoring
+        bool app_weld_set_interface_eip_m2r_monitoring(CONFIG_DIGITAL_WELDING_INTERFACE_MONITORING pConfigdigitalweldinginterfacemonitoring) { return _app_weld_set_interface_eip_m2r_monitoring(_rbtCtrl, pConfigdigitalweldinginterfacemonitoring); };
+        //brief(284) :app_weld_set_interface_eip_m2r_other
+        bool app_weld_set_interface_eip_m2r_other(CONFIG_DIGITAL_WELDING_INTERFACE_OTHER pConfigdigitalweldinginterfacemonitoring) { return _app_weld_set_interface_eip_m2r_other(_rbtCtrl, pConfigdigitalweldinginterfacemonitoring); };
+        //brief(285) :app_weld_reset_interface
+        bool app_weld_reset_interface(unsigned char bReset) { return _app_weld_reset_interface(_rbtCtrl, bReset); };
+        //brief(286) :app_weld_enable_digital
+        bool app_weld_enable_digital(unsigned char bMode) { return _app_weld_enable_digital(_rbtCtrl, bMode); };
+        //brief(286) :app_weld_disable_digital
+        bool app_weld_disable_digital(unsigned char bMode) { return _app_weld_disable_digital(_rbtCtrl, bMode); };
+        //brief(287) :app_weld_set_weld_cond_digital
+        bool app_weld_set_weld_cond_digital(CONFIG_DIGITAL_WELDING_CONDITION pConfigdigitalweldingcondition) { return _app_weld_set_weld_cond_digital(_rbtCtrl, pConfigdigitalweldingcondition); };
+        //brief(288) :app_weld_adj_welding_cond_digital
+        bool app_weld_adj_welding_cond_digital(CONFIG_DIGITAL_WELDING_ADJUST pConfigdigitalweldingadjust) { return _app_weld_adj_welding_cond_digital(_rbtCtrl, pConfigdigitalweldingadjust); };
+        //brief(289) :measure_welding_tcp
+        LPMEASURE_TCP_RESPONSE measure_welding_tcp(unsigned char iMode, float fStickout, float fTargetPos[9][NUMBER_OF_JOINT]) { return _measure_welding_tcp(_rbtCtrl, iMode, fStickout, fTargetPos); };
+        //brief(290) :set_welding_cockpit_setting
+        bool set_welding_cockpit_setting(unsigned char bEnable, unsigned char bWeldingType) { return _set_welding_cockpit_setting(_rbtCtrl, bEnable, bWeldingType); };
+        //brief(291) :set_digital_welding_signal_output
+        bool set_digital_welding_signal_output(unsigned char cDataType, float fData) { return _set_digital_welding_signal_output(_rbtCtrl, cDataType, fData); };
+        //brief(292) :set_digital_welding_monitoring_mode
+        bool set_digital_welding_monitoring_mode(unsigned char bEnable) { return _set_digital_welding_monitoring_mode(_rbtCtrl, bEnable); };
+        //brief(293) :app_weld_adj_motion_offset
+        bool app_weld_adj_motion_offset(float fOffsetY, float fOffsetZ) { return _app_weld_adj_motion_offset(_rbtCtrl, fOffsetY, fOffsetZ); };
+        //brief(294) :set_welding_cockpit_setting_time_setting
+        void set_welding_cockpit_setting_time_setting(int time) { return _set_welding_cockpit_setting_time_setting(_rbtCtrl, time); };
+
 #endif
 
 protected:
