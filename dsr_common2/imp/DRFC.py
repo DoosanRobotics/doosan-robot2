@@ -120,7 +120,32 @@ ROBOT_SYSTEM_VIRTUAL                  = 1
 ROBOT_MODE_MANUAL                     = 0
 ROBOT_MODE_AUTONOMOUS                 = 1
 ROBOT_MODE_MEASURE                    = 2
-                                      
+
+#                                     
+# safety mode
+#                                     
+SAFETY_MODE_MANUAL                    = 0
+SAFETY_MODE_AUTONOMOUS                = 1
+SAFETY_MODE_RECOVERY                  = 2
+SAFETY_MODE_BACKDRIVE                 = 3
+SAFETY_MODE_MEASURE                   = 4
+SAFETY_MODE_INITIALIZE                = 5
+SAFETY_MODE_LAST                      = 6
+
+#                                     
+# safety event
+#                                     
+SAFETY_MODE_EVENT_ENTER               = 0
+SAFETY_MODE_EVENT_MOVE                = 1
+SAFETY_MODE_EVENT_STOP                = 2
+SAFETY_MODE_EVENT_LAST                = 3
+
+#
+# servoj type enumerated value
+#
+DR_SERVO_OVERRIDE = 0
+DR_SERVO_QUEUE = 1
+           
 #                                     
 # get robot space    
 #                                     

@@ -463,42 +463,41 @@ def _check_valid_vel_acc_task(vel, acc, time):
 
     return
 
+def _check_input_joint(data, name="parameter"):
+    if isinstance(data, (list, tuple)):
+        if len(data) == 6:
+            return list(data)
+        if _robot_model == "p3020" and len(data) == 5:
+            # Adjust element if user input is 5Dof for P3020
+            return list(data[:3]) + [0.0] + list(data[3:])
+        else:
+            raise DR_Error(DR_ERROR_TYPE, f"Invalid list length for {name}: expected 6, or 5 for p3020 model")
+    return data
+
+def _check_output_joint(data):
+    # Adjust element output when using 5Dof for P3020
+    if _robot_model == "p3020" and isinstance(data, list) and len(data) == 6:
+        del data[3]
+    return data
 
 def set_velj(vel):
     vel_list = None
-
-    # vel
-    if type(vel) == int or type(vel) == float:
+    if isinstance(vel, (int, float)):
         if vel <= 0:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
-
         vel_list = [vel] * DR_VELJ_DT_LEN
-    elif type(vel) == list:
-        if len(vel) == POINT_COUNT:
-            vel_list = vel
-        elif _robot_model == "p3020" and len(vel) == 5:
-            # For model p3020, add 0.0 for joint 4, which is a dummy joint running in DRCF.
-            vel_list = vel
-            vel_list.insert(3, 0.0)
-        else:
-            raise DR_Error(DR_ERROR_TYPE, "Invalid type or length for vel list")
-
-
+    elif isinstance(vel, list):
+        vel_list = _check_input_joint(vel, "vel")
         if is_number(vel_list) != True:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
-
-        for item in vel:
-            if item < 0: # Theo - to do : update this part
+        for item in vel_list:
+            if item < 0:
                 raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel list: items must be >= 0")
-
     else:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
 
-    # set global velj
     global _g_velj
-
     _g_velj = vel_list
-
     print_result("0 = set_velj(vel:{0})".format(dr_form(vel)))
     return 0
 
@@ -506,51 +505,14 @@ def set_accj(acc):
     acc_list = None
 
     # acc
-    if type(acc) == int or type(acc) == float:
-        acc_list = [acc] * DR_ACCJ_DT_LEN
-
-        if acc <= 0:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc")
-    elif type(acc) == list and len(acc) == POINT_COUNT:
-        acc_list = acc
-
-
-        if is_number(acc_list) != True:
-            raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
-
-        for item in acc:
-            if item <= 0:
-                raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc")
-    else:
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
-
-    # set global velj
-    global _g_accj
-
-    _g_accj = acc_list
-
-    print_result("0 = set_accj(acc:{0})".format(dr_form(acc)))
-    return 0
-
-def set_accj(acc):
-    acc_list = None
-
-    # acc
-    if type(acc) == int or type(acc) == float:
+    if isinstance(acc, (int, float)):
         if acc <= 0:
             raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc")
         acc_list = [acc] * DR_ACCJ_DT_LEN
-    elif type(acc) == list:
-        if len(acc) == POINT_COUNT:
-            acc_list = acc
-        elif _robot_model == "p3020" and len(acc) == 5:
-            # For model p3020, add 0.0 for joint 4, which is a dummy joint running in DRCF.
-            acc_list = acc
-            acc_list.insert(3, 0.0)
-        else:
-            raise DR_Error(DR_ERROR_TYPE, "Invalid type or length for acc list")
+    elif isinstance(acc, list):
+        acc_list = _check_input_joint(acc, "acc")
 
-        if is_number(acc_list) != True:
+        if is_number(acc_list) is not True:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
 
         for item in acc_list:
@@ -561,7 +523,6 @@ def set_accj(acc):
 
     # set global accj
     global _g_accj
-
     _g_accj = acc_list
 
     print_result("0 = set_accj(acc:{0})".format(dr_form(acc)))
@@ -1642,20 +1603,19 @@ def servol(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
         return 0
 
 def speedj(vel=None, acc=None, time=None, v=None, a=None, t=None):
-
     # _vel
     _vel_param = get_param(vel, v)
     if _vel_param is None:
         raise DR_Error(DR_ERROR_VALUE, "Missing required argument: vel or v")
 
-    if type(_vel_param) == int or type(_vel_param) == float:
+    if isinstance(_vel_param, (int, float)):
         _vel = [_vel_param] * DR_VELJ_DT_LEN
-    elif type(_vel_param) == list and len(_vel_param) == DR_VELJ_DT_LEN:
-        _vel = _vel_param
+    elif isinstance(_vel_param, list):
+        _vel = _check_input_joint(_vel_param, "vel/v")
     else:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel, v")
 
-    if is_number(_vel) != True:
+    if not is_number(_vel):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
 
     # _acc
@@ -1663,26 +1623,22 @@ def speedj(vel=None, acc=None, time=None, v=None, a=None, t=None):
     if _acc_param is None:
         raise DR_Error(DR_ERROR_VALUE, "Missing required argument: acc or a")
 
-    if type(_acc_param) == int or type(_acc_param) == float:
+    if isinstance(_acc_param, (int, float)):
         _acc = [_acc_param] * DR_ACCJ_DT_LEN
-    elif type(_acc_param) == list and len(_acc_param) == DR_ACCJ_DT_LEN:
-        _acc = _acc_param
+    elif isinstance(_acc_param, list):
+        _acc = _check_input_joint(_acc_param, "acc/a")
     else:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc, a")
 
-    if is_number(_acc) != True:
+    if not is_number(_acc):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
-
-    for item in _acc:
-        if item < 0:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
 
     # _time
     _time = get_param(time, t)
     if _time is None:
         _time = 0.0
 
-    if type(_time) != int and type(_time) != float:
+    if not isinstance(_time, (int, float)):
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : time, t")
 
     if _time < 0 and _time != DR_COND_NONE:
@@ -1890,37 +1846,23 @@ def servol_rt(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
         return 0
 
 def speedj_rt(vel, acc, time=None, t=None):
-
-    # Constants for speedj_rt
-    DR_VELJ_DT_LEN = 6
-    DR_ACCJ_DT_LEN = 6
-
     # _vel
-    if not isinstance(vel, list):
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel: Must be a list of 6 numbers.")
-    if len(vel) != DR_VELJ_DT_LEN:
-        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for vel: Must be {DR_VELJ_DT_LEN}.")
-    if not is_number(vel):
+    _vel = _check_input_joint(vel, "vel")
+    if not is_number(_vel):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel: All elements must be numbers.")
-    _vel = vel
 
     # _acc
-    if not isinstance(acc, list):
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc: Must be a list of 6 numbers.")
-    if len(acc) != DR_ACCJ_DT_LEN:
-        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for acc: Must be {DR_ACCJ_DT_LEN}.")
-    if not is_number(acc):
+    _acc = _check_input_joint(acc, "acc")
+    if not is_number(_acc):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc: All elements must be numbers.")
-    # For acceleration, it's conventional for them to be non-negative.
-    for item in acc:
+    for item in _acc:
         if item < 0:
             raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
-    _acc = acc
 
     # _time
     _time = get_param(time, t)
     if _time is None:
-        _time = 0.0  # Default sync time as per DRFL documentation style
+        _time = 0.0
 
     if not isinstance(_time, (int, float)):
         raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
@@ -1996,16 +1938,10 @@ def speedl_rt(vel, acc=None, time=None, t=None):
         return 0
 
 def torque_rt(tor, time=None, t=None):
-    DR_TORQUE_RT_DT_LEN = 6
-
     # _tor
-    if not isinstance(tor, list):
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type for tor: Must be a list of 6 numbers.")
-    if len(tor) != DR_TORQUE_RT_DT_LEN:
-        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for tor: Must be {DR_TORQUE_RT_DT_LEN}.")
-    if not is_number(tor):
+    _tor = _check_input_joint(tor, "tor")
+    if not is_number(_tor):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value in tor: All elements must be numbers.")
-    _tor = tor
 
     # _time
     _time = get_param(time, t)
@@ -2332,13 +2268,18 @@ def set_rt_control_output(version, period, loss):
     return ret
 
 def set_velj_rt(vel):
-    if type(vel) not in (list, tuple) or len(vel) != 6:
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel: expected list or tuple of 6 floats")
+    vel_list = None
+    if isinstance(vel, (int, float)):
+        vel_list = [float(vel)] * 6
+    elif isinstance(vel, (list, tuple)):
+        vel_list = _check_input_joint(vel, "vel")
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel: expected number, list, or tuple")
 
     ret = -1
     if __ROS2__:
         req = SetVeljRt.Request()
-        req.vel = vel
+        req.vel = vel_list
 
         while not _ros2_set_velj_rt.wait_for_service(timeout_sec=1.0):
             g_node.get_logger().info("Set Velj RT Service is not available, waiting...")
@@ -2356,13 +2297,18 @@ def set_velj_rt(vel):
     return ret
 
 def set_accj_rt(acc):
-    if type(acc) not in (list, tuple) or len(acc) != 6:
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc: expected list or tuple of 6 floats")
+    acc_list = None
+    if isinstance(acc, (int, float)):
+        acc_list = [float(acc)] * 6
+    elif isinstance(acc, (list, tuple)):
+        acc_list = _check_input_joint(acc, "acc")
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc: expected number, list, or tuple")
 
     ret = -1
     if __ROS2__:
         req = SetAccjRt.Request()
-        req.acc = acc
+        req.acc = acc_list
 
         while not _ros2_set_accj_rt.wait_for_service(timeout_sec=1.0):
             g_node.get_logger().info("Set Accj RT Service is not available, waiting...")
@@ -7046,10 +6992,8 @@ class CDsrRobot:
                 if result == None:
                     ret = -1    
                 else:     
-                    pos = list(result.pos)  # Convert tuple to list   
-                    # set posj
-                    cur_pos = posj(pos)
-                    ret = cur_pos           
+                    cur_pos = posj(list(result.pos))
+                    ret = _check_output_joint(cur_pos)      
         return ret
 
     def get_current_velj(self):
@@ -7067,7 +7011,8 @@ class CDsrRobot:
                 if result == None:
                     ret = -1    
                 else:        
-                    ret = list(result.joint_speed)  # Convert tuple to list            
+                    vel_list = list(result.joint_speed)
+                    ret = _check_output_joint(vel_list)
         return ret
 
     def get_desired_posj(self):

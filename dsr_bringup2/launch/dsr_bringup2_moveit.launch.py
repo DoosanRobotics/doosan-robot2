@@ -10,14 +10,14 @@ def include_launch_description(context):
     """런치 시점에서 model 값을 평가하고, 패키지 경로를 찾은 후 launch 파일 실행"""
     model_value = LaunchConfiguration('model').perform(context)
 
-    # 패키지 이름 생성
+    # Create package name
     package_name_str = f"dsr_moveit_config_{model_value}"
 
     # FindPackageShare 평가
     package_path_str = FindPackageShare(package_name_str).perform(context)
 
-    print("패키지 이름:", package_name_str)
-    print("패키지 경로:", package_path_str)
+    print("Package:", package_name_str)
+    print("Package Path:", package_path_str)
 
     # launch 파일 경로
     included_launch_file_path = os.path.join(package_path_str, 'launch', 'start.launch.py')

@@ -82,8 +82,8 @@ def rviz_node_function(context):
 
     package_path_str = FindPackageShare(package_name_str).perform(context)
 
-    print("패키지 이름:", package_name_str)
-    print("패키지 경로:", package_path_str)
+    print("Package:", package_name_str)
+    print("Package Path:", package_path_str)
 
     moveit_config = (
         MoveItConfigsBuilder(model_value_str, "robot_description", package_name_str)
