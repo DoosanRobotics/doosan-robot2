@@ -636,8 +636,9 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 
 DRHWInterface::~DRHWInterface()
 {
-    Drfl.close_connection();
+    Drfl.stop_rt_control();
     Drfl.disconnect_rt_control();
+    Drfl.close_connection();
 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    CONNECTION IS CLOSED");
