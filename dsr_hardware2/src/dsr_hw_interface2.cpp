@@ -1,10 +1,22 @@
-// /*
-//  *  Inferfaces for doosan robot controllor 
-//   * Author: Minsoo Song(minsoo.song@doosan.com)
-//  *
-//  * Copyright (c) 2024 Doosan Robotics
-//  * Use of this source code is governed by the BSD, see LICENSE
-// */
+/*********************************************************************
+ * 
+ * dsr_hardware2
+ * Copyright (c) 2025 Doosan Robotics
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *********************************************************************/
+
 
 #include "dsr_hardware2/dsr_hw_interface2.h"
 #include "dsr_hardware2/util.hpp"
@@ -162,7 +174,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 
     for (size_t i = 0; i < info_.joints.size(); ++i)
     {
-        const auto &j = info_.joints[i];
+        //const auto &j = info_.joints[i];
         // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
         //             "  - Joint[%zu]: name=%s, type=%s, state_interfaces=%zu, command_interfaces=%zu",
         //             i, j.name.c_str(), j.type.c_str(),
@@ -380,6 +392,11 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 
         if(m_nVersionDRCF >= 3000000 && m_nVersionDRCF < 3040000){
             rt_ip = m_rt_host;
+            // if (!m_rt_host.empty()) {
+            //     rt_ip = m_rt_host;
+            // } else {
+            //     rt_ip = m_host;
+            // }
         }
         if (!Drfl.connect_rt_control(m_host)) {
             RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
@@ -636,8 +653,10 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 
 DRHWInterface::~DRHWInterface()
 {
-    Drfl.close_connection();
+
+    Drfl.stop_rt_control(); //modified
     Drfl.disconnect_rt_control();
+    Drfl.close_connection();
 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    CONNECTION IS CLOSED");
@@ -645,7 +664,6 @@ DRHWInterface::~DRHWInterface()
 }
 
 }
-
 
 const char* GetRobotStateString(int nState)
 {

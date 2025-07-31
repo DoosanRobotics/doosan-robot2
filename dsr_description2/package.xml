@@ -10,6 +10,7 @@
 
   <maintainer email="minsoo.song@doosan.com">Minsoo Song</maintainer>
   <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
+  
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

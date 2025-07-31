@@ -1,3 +1,21 @@
+# 
+#  dsr_bringup2
+#  Author: Minsoo Song (minsoo.song@doosan.com)
+#  
+#  Copyright (c) 2025 Doosan Robotics
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+# 
+
 # pose_subscriber.py
 import rclpy
 from rclpy.node import Node
@@ -44,17 +62,13 @@ class Moveit2Follower(Node):
         self.subscription  # prevent unused variable warning
 
     def round_positions(self, positions):
-        # 소수점 5자리로 반올림
         return [round(pos, 5) for pos in positions]
 
     def joint_state_callback(self, msg):
-        # 관절 위치 값을 소수점 5자리로 반올림
         current_positions = self.round_positions(msg.position)
         # print(current_positions)
 
-        # # 이전 위치 값이 없거나 이전 값과 현재 값이 다를 경우에만 퍼블리시
         # if self.previous_positions is None or current_positions != self.previous_positions:
-        #     # 새로운 메시지를 생성하여 퍼블리시
         #     new_msg = JointState()
         #     # new_msg.header = msg.header
         #     new_msg.name = msg.name

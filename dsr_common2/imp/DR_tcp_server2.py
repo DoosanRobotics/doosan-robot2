@@ -1,28 +1,21 @@
-#-*- coding: utf-8 -*-
+#
+#  dsr_common2
+#  Author: Minsoo Song (minsoo.song@doosan.com)
+#
+#  Copyright (c) 2025 Doosan Robotics
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 
-# ##
-# @file     DL_tcp_server.py
-# @brief    Implementation for DRL TCP communication
-#           Server는 1:N이 아닌 1:1 방식으로 구현. (DRA 요청사항)
-# @author   htjeong
-# @version  0.01
-# @Last update date     2018-03-19
-# @details
-#
-# history
-#
-# 0.01      : 2017-06-08, htjeong
-#           : first release
-#
-# <functions>
-#  server_socket_open(port)
-#  server_socket_close(sock)
-#  server_socket_state(sock)
-#  server_socket_end_data(sock, end_data)
-#  server_socket_write(sock, tx_data)
-#  server_socket_read(sock, length=-1, timeout=-1)
-#  server_socket_flush(sock)
-#
 import socket
 import select
 import time
