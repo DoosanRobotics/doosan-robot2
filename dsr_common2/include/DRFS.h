@@ -2258,7 +2258,7 @@ typedef struct _CONFIG_ANALOG_WELDING_INTERFACE
     CONFIG_WELDING_DETAIL_INFO  _tTargetVoltage;
     CONFIG_WELDING_DETAIL_INFO  _tFeedingSpeed;
     CONFIG_WELDING_DETAIL_INFO  _tWeldingVoltage;
-    CONFIG_WELDING_DETAIL_INFO  _tWeldingCurrent;;
+    CONFIG_WELDING_DETAIL_INFO  _tWeldingCurrent;
 
     /* arc on minus: 0~16 */
     unsigned char               _iArcOnDO;
