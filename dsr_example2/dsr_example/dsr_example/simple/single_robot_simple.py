@@ -23,7 +23,7 @@ import sys
 from rclpy.logging import get_logger
 
 # for single robot
-ROBOT_ID   = "dsr01"
+ROBOT_ID   = ""
 ROBOT_MODEL= "m1013"
 
 import DR_init
@@ -42,7 +42,7 @@ def main(args=None):
         try:
                 from DSR_ROBOT2 import print_ext_result, movej, movejx, movesj, movesx, movel, movec, move_periodic, move_spiral, moveb, set_velx, set_accx, set_robot_mode
                 from DSR_ROBOT2 import posj, posx, posb
-                from DSR_ROBOT2 import DR_LINE, DR_CIRCLE, DR_BASE, DR_TOOL, DR_AXIS_X, DR_AXIS_Z, DR_MV_MOD_ABS, ROBOT_MODE_AUTONOMOUS
+                from DSR_ROBOT2 import DR_LINE, DR_CIRCLE, DR_BASE, DR_TOOL, DR_AXIS_X, DR_AXIS_Z, DR_MV_MOD_ABS, ROBOT_MODE_AUTONOMOUS, DR_WORLD, get_tool_force
                 # print_result("Import DSR_ROBOT2 Success!")
         except ImportError as e:
                 print(f"Error importing DSR_ROBOT2 : {e}")
@@ -59,6 +59,8 @@ def main(args=None):
         p1= posj(0,0,0,0,0,0)                    #joint
         print(p1)
         p2= posj(0.0, 0.0, 90.0, 0.0, 90.0, 0.0) #joint
+        p3= posj(0.0, 0.0, 90.0, 0.0, -90.0, 0.0) #joint
+
 
         x1= posx(400, 500, 800.0, 0.0, 180.0, 0.0) #task
         x2= posx(400, 500, 500.0, 0.0, 180.0, 0.0) #task
@@ -102,8 +104,26 @@ def main(args=None):
         seg16 = posb(DR_CIRCLE, X1d, X1d2, radius=23)
         b_list1 = [seg11, seg12, seg14, seg15, seg16]
 
+
+        timer_rate = node.create_rate(1.0)  # 1Hz 출력
+
         while rclpy.ok():
-                movej(p2, vel=100, acc=100)
+
+                try:
+                        f_base = get_tool_force(DR_BASE)
+                        f_tool = get_tool_force(DR_TOOL)
+                        f_world = get_tool_force(DR_WORLD)
+
+                        print("\n[Tool Force]")
+                        print(f"BASE : {['%.3f' % x for x in f_base]}")
+                        print(f"TOOL : {['%.3f' % x for x in f_tool]}")
+                        print(f"WORLD: {['%.3f' % x for x in f_world]}")
+                except Exception as e:
+                        print(f"Failed to get tool force: {e}")
+
+                movej(p2, vel=10, acc=10)
+                timer_rate.sleep()  # 1초 대기
+
 
                 # movejx(x1, vel=30, acc=60, sol=0)
 
@@ -121,7 +141,40 @@ def main(args=None):
                 
                 # moveb(b_list1, vel=150, acc=250, ref=DR_BASE, mod=DR_MV_MOD_ABS)
 
-                movej(p1, vel=100, acc=100)
+                # 각 좌표계 기준 힘/토크 출력
+                try:
+                        f_base = get_tool_force(DR_BASE)
+                        f_tool = get_tool_force(DR_TOOL)
+                        f_world = get_tool_force(DR_WORLD)
+
+                        print("\n[Tool Force]")
+                        print(f"BASE : {['%.3f' % x for x in f_base]}")
+                        print(f"TOOL : {['%.3f' % x for x in f_tool]}")
+                        print(f"WORLD: {['%.3f' % x for x in f_world]}")
+                except Exception as e:
+                        print(f"Failed to get tool force: {e}")
+                        
+                movej(p2, vel=100, acc=100)
+
+                movej(p3, vel=10, acc=10)
+                timer_rate.sleep()  # 1초 대기
+
+                try:
+                        f_base = get_tool_force(DR_BASE)
+                        f_tool = get_tool_force(DR_TOOL)
+                        f_world = get_tool_force(DR_WORLD)
+
+                        print("\n[Tool Force]")
+                        print(f"BASE : {['%.3f' % x for x in f_base]}")
+                        print(f"TOOL : {['%.3f' % x for x in f_tool]}")
+                        print(f"WORLD: {['%.3f' % x for x in f_world]}")
+                except Exception as e:
+                        print(f"Failed to get tool force: {e}")
+
+
+                movej(p1, vel=10, acc=10)
+                timer_rate.sleep()  # 1초 대기
+
 
         print('good bye!')
         rclpy.shutdown()
