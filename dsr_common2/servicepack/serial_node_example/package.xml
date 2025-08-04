@@ -10,7 +10,7 @@
 
   <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
 
-  <license>BSD</license>
+  <license>Apache License 2.0</license>
   <url type="website">http://wiki.ros.org/doosan_robotics</url>
 
   <buildtool_depend>catkin</buildtool_depend>

@@ -19,7 +19,7 @@ setup(
     maintainer='Minsoo Song',
     maintainer_email='minsoo.song@doosan.com',
     description='dsr_bringup2',
-    license='BSD',
+    license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

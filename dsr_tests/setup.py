@@ -18,8 +18,8 @@ setup(
     zip_safe=True,
     maintainer='doosan-robotics',
     maintainer_email='minju3.lee@doosan.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='dsr_tests code',
+    license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

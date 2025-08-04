@@ -10,22 +10,19 @@
   <maintainer email="minsoo.song@doosan.com">Minsoo Song</maintainer>
   <maintainer email="ros.robotics@doosan.com">Doosan Robotics</maintainer>
 
-  <license>BSD</license>
+  <license>Apache License 2.0</license>
+  
   <url type="website">http://wiki.ros.org/doosan_robotics</url>
 
-
-  <!--build_depend>roslaunch</build_depend-->
   <build_depend>gazebo_ros</build_depend>
-  <!--???
-  exec_depend>gazebo_ros</run_depend-->
-  <!--???
-  exec_depend>rviz</run_depend-->
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>dsr_msgs2</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>rviz2</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>
