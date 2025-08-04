@@ -21,6 +21,7 @@
  *
  *********************************************************************/
 
+
 #pragma once
 
 #ifndef TRUE
@@ -305,6 +306,12 @@ typedef enum {
 } ROT_DIR;
 
 //
+// application option : DR_MV_APP_NONE / DR_MV_APP_WELD
+//
+typedef enum {
+    DR_MV_APP_NONE,
+    DR_MV_APP_WELD
+} DR_MV_APP;
 
 //
 // alter motion path mode enumerated value
@@ -660,6 +667,14 @@ typedef enum {
 
 } SAFETY_MODE;
 
+typedef enum    
+{
+	SMODE_SERVO_OFF=0,
+	SMODE_SERVO_ON,
+	SMODE_HOLD, 
+	SMODE_POSITION_MODE,
+	SMODE_TORQUE_MODE,
+}SERVO_MODE;
 //
 // safety state enumerated value
 //
@@ -1327,4 +1342,3 @@ enum {
     OPERATION_DETECT_CPU_RESERVED8                        = 7247,
     OPERATION_DETECT_CPU_RESERVED9                        = 7248,
 };
-

@@ -653,7 +653,6 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 
 DRHWInterface::~DRHWInterface()
 {
-
     Drfl.stop_rt_control();
     Drfl.disconnect_rt_control();
     Drfl.close_connection();

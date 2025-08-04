@@ -151,6 +151,7 @@ def generate_launch_description():
         parameters=[{
         'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
     }])
+    
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",

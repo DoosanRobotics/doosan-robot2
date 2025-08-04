@@ -816,11 +816,14 @@ typedef struct _RT_OUTPUT_DATA_LIST
     float                       goal_joint_position[NUMBER_OF_JOINT];
     /* final goal tcp position (reserved) */
     float                       goal_tcp_position[NUMBER_OF_TASK];
-    /* ROBOT_MODE_MANUAL(0), ROBOT_MODE_AUTONOMOUS(1), ROBOT_MODE_MEASURE(2) */
+    /* ROBOT_MODE_MANUAL(0), ROBOT_MODE_AUTONOMOUS(1), SAFETY_MODE_RECOVERY(2)*/
+    /* Refer to 'SAFETY_MODE' struct*/
     unsigned char               robot_mode;
     /* STATE_INITIALIZING(0), STATE_STANDBY(1), STATE_MOVING(2), STATE_SAFE_OFF(3), STATE_TEACHING(4), STATE_SAFE_STOP(5), STATE_EMERGENCY_STOP, STATE_HOMMING, STATE_RECOVERY, STATE_SAFE_STOP2, STATE_SAFE_OFF2, */
+    /* Refer to 'OPERATION_STATE' struct in DRCF 'ROBOT_STATE' struct in DRFL.*/
     unsigned char               robot_state;
     /* position control mode, torque mode */
+    /* Refer to 'SERVO_MODE' struct*/
     unsigned short              control_mode;
     /* Reserved */
     unsigned char               reserved[256];
@@ -1225,8 +1228,7 @@ typedef struct _MODBUS_DATA_LIST
 
 typedef struct _CONFIG_WORLD_COORDINATE
 {
-    /* ����Ÿ��: world2base: 0, base2ref: 1, world2ref: 2 */
-    /* ��������: �̼���: 0, ����: 1*/
+    /* world2base: 0, base2ref: 1, world2ref: 2 */
     unsigned char               _iType;
     /* target pose */
     float                       _fPosition[NUMBER_OF_JOINT];
@@ -1922,7 +1924,7 @@ typedef struct _CONVEYOR_COORD_EX
     int                _iDistance2Count;
     /* converyor coordination */
     POSITION            _tPosConCoord;
-    /*Base ��ǥ: 0, World ��ǥ: 2 */
+    /*Base : 0, World: 2 */
     unsigned char       _iTargetRef;
 } CONVEYOR_COORD_EX, *LPCONVEYOR_COORD_EX;
 
@@ -2077,17 +2079,12 @@ typedef struct _CONFIG_WELD_SETTING
     struct {
         /* ratio start */
         float                   _fRs;
-        /* ��ȣ��������ð� */
         float                   _fTss;
-        /* ���������ð� */
         float                   _fTas;
-        /* �������Ǻ���ð� */
         float                   _fTwc;
         /* ratio finish */
         float                   _fRf;
-        /* ���������ð� */
         float                   _fTaf;
-        /* ���Ẹȣ��������ð� */
         float                   _fTsf;
     } _tDetail;
 } CONFIG_WELD_SETTING, *LPCONFIG_WELD_SETTING;
@@ -2414,6 +2411,13 @@ typedef struct _CONFIG_DIGITAL_WELDING_INTERFACE_OTHER
 
 }CONFIG_DIGITAL_WELDING_INTERFACE_OTHER, *LPCONFIG_DIGITAL_WELDING_INTERFACE_OTHER;
 
+typedef struct _ROBOT_LED_CONFIG
+{
+    unsigned char _szLedRule;
+    unsigned char _szStateColor[SAFETY_STATE_LAST][2]; // [][0]: color 1, [][1]: color 2
+    unsigned char _szCommandColor;
+
+} ROBOT_LED_CONFIG, *LPROBOT_LED_CONFIG;
 
 typedef struct _DIGITAL_WELDING_RESET
 {
@@ -2808,7 +2812,7 @@ typedef struct _USER_COORD_EXTERNAL_FORCE_INFO
 
 typedef struct _MEASURE_FRICTION_RESPONSE
 {
-    /* measure result : 0(����), 1(����) */
+    /* measure result : 0(), 1() */
     unsigned char               _iResult[NUMBER_OF_JOINT];
     /* measrue error (N/m) */
     float                       _fError[NUMBER_OF_JOINT];
@@ -2852,7 +2856,7 @@ typedef struct _POSITION_ADDTO
 
 typedef struct _MEASURE_FRICTION
 {
-    /* measure type : 0(üũ���), 1(�������) */
+    /* measure type : */
     unsigned char               _iType;
     /* select joint */
     unsigned char               _iSelect[NUMBER_OF_JOINT];
@@ -3479,6 +3483,7 @@ typedef struct _SAFETY_CONFIGURATION_EX2_V3
 	CONFIG_CONFIGURABLE_IO_EX _tConfigurableIO;
 
 } SAFETY_CONFIGURATION_EX2_V3, *LPSAFETY_CONFIGURATION_EX2_V3;
+
 
 
 #pragma pack()
