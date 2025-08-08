@@ -230,6 +230,12 @@ def generate_launch_description():
         arguments=["dsr_controller2", "-c", "controller_manager"],
     )
 
+    robotiq_gripper_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        namespace=LaunchConfiguration('name'),
+        arguments=["robotiq_gripper_controller", "-c", "controller_manager"],
+    )
     dsr_moveit_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
