@@ -22,6 +22,7 @@
 
       <hardware>
         <plugin>dsr_hardware2/DRHWInterface</plugin>
+        <param name="use_mock_hardware">true</param>
         <param name="name">${name}</param>
         <param name="rate">${rate}</param>
         <param name="standby">${standby}</param>

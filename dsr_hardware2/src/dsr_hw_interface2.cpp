@@ -145,7 +145,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     }
 
     // Initialize joint-related vectors based on the number of joints (DOF).
-    int dof = info_.joints.size(); // number of joints from hardware_info
+    int dof = 6; // number of joints from hardware_info
     joint_position_.assign(dof, 0);
     joint_velocities_.assign(dof, 0);
     joint_position_command_.assign(dof, 0);
@@ -160,19 +160,28 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     // Maps "joint_X" names to zero-based indices (e.g., joint_1 → 0).
     // This ensures correct indexing when reading/writing hardware states
     hw_mapping_.clear();
-    for (size_t i = 0; i < info.joints.size(); ++i)
+    for (const auto & joint : info.joints)
     {
-        const std::string & name = info.joints[i].name;
-        if (name.rfind("joint_", 0) == 0) {
-            int hw_index = std::stoi(name.substr(6)) - 1;
+        // Check if the joint name starts with "joint_"
+        if (joint.name.rfind("joint_", 0) == 0) {
+            // Extract the number from the joint name and map it
+            int hw_index = std::stoi(joint.name.substr(6)) - 1;
             hw_mapping_.push_back(hw_index);
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
-                        "[on_init] Mapping active joint '%s' to hw_index %d",
-                        name.c_str(), hw_index);
+                        "[on_init] Claiming and mapping active joint '%s' to hw_index %d",
+                        joint.name.c_str(), hw_index);
         }
     }
 
-    for (size_t i = 0; i < info_.joints.size(); ++i)
+        // After iterating through all joints, check if we found exactly 6.
+    if (hw_mapping_.size() != 6) {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                     "Expected 6 arm joints (joint_1 to joint_6), but found %zu. Halting.",
+                     hw_mapping_.size());
+        return CallbackReturn::ERROR;
+    }
+    
+    for (size_t i = 0; i < 6; ++i)
     {
         //const auto &j = info_.joints[i];
         // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
@@ -483,7 +492,7 @@ std::vector<hardware_interface::CommandInterface> DRHWInterface::export_command_
 return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
 
-    size_t dof = joint_position_.size(); // Get current DOF size dynamically from joint_position_ vector
+    size_t dof = 6; // Get current DOF size dynamically from joint_position_ vector
 
     if(m_mode == "real") 
     {
@@ -577,7 +586,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     //         ,joint_velocities_command_[5]);
 
     static bool idle = false;
-    size_t dof = joint_position_command_.size(); // [modified] Get current DOF dynamically
+    size_t dof = 6; // [modified] Get current DOF dynamically
 
     // TODO: this seems to be a workaround. refer to hardware design of 'prepare_command_mode_switch'
     // [note] Check if joint position command has changed significantly
