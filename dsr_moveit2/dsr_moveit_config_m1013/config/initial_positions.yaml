@@ -7,3 +7,4 @@ initial_positions:
   joint_4: 0
   joint_5: 0
   joint_6: 0
+  robotiq_85_left_knuckle_joint: 0.0

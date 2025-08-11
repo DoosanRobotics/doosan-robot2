@@ -18,9 +18,10 @@
         name="RobotiqGripper"
         prefix=""
         parent="link_6"
-        use_fake_hardware="false"
-        include_ros2_control="false">
+        use_fake_hardware="true"
+        include_ros2_control="true">
         <origin xyz="0 0 0" rpy="0 0 0" />
     </xacro:robotiq_gripper>
+
 
 </robot>
