@@ -51,7 +51,8 @@
         <command_interface name="position">
           <param name="min">${neg_double_pi}</param>
           <param name="max">${double_pi}</param>
-        </command_interface>
+        </command_interface
+        >
         <command_interface name="velocity">
           <param name="min">-3.15</param>
           <param name="max">3.15</param>
