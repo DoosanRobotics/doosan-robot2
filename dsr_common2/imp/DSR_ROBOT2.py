@@ -1190,16 +1190,15 @@ def get_external_torque():
 
 def get_tool_force(ref=None):
 
-    # ref
-    if ref == None:
-        _ref = DR_BASE
-    else:
-        _ref = ref
-        if _ref != DR_BASE and _ref != DR_WORLD:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value : ref({0})".format(_ref))
+    _ref = DR_BASE if ref is None else ref
+
+    if _ref not in [DR_BASE, DR_TOOL, DR_WORLD]:
+        raise DR_Error(DR_ERROR_VALUE, f"Invalid value : ref({_ref})")
+
+    ret = -1
 
     if __ROS2__:
-        req =  GetToolForce.Request()  
+        req = GetToolForce.Request()
         req.ref = _ref
 
         future = _ros2_get_tool_force.call_async(req)
@@ -1207,13 +1206,13 @@ def get_tool_force(ref=None):
 
         try:
             result = future.result()
+            if result and result.success:
+                ret = list(result.tool_force)
+            else:
+                g_node.get_logger().warn("get_tool_force: service call returned unsuccessful or empty result")
         except Exception as e:
-            g_node.get_logger().info('get_tool_force Service call failed %r' % (e,))
-        else:
-            if result == None:
-                ret = -1    
-            else:        
-                ret = list(result.tool_force)  # Convert tuple to list  
+            g_node.get_logger().error(f"get_tool_force: service call failed - {e}")
+
     return ret
 
 def get_solution_space(pos):
