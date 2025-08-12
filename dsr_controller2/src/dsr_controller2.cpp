@@ -846,16 +846,63 @@ auto get_external_torque_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetEx
     res->success = true;        
 };
 
-auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolForce::Request> /*req*/, std::shared_ptr<dsr_msgs2::srv::GetToolForce::Response> res)                          
+auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolForce::Request> req,
+                                std::shared_ptr<dsr_msgs2::srv::GetToolForce::Response> res)
 {
 #if (_DEBUG_DSR_CTL)
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"< get_tool_force_cb >");
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"), "< get_tool_force_cb > ref: %d", req->ref);
 #endif
-    //NO API , get mon_data
-    for(int i = 0; i < NUM_TASK; i++){
-        res->tool_force[i] = g_stDrState.fActualETT[i];
+
+    // Load rotation matrix from base to tool (3x3)
+    float R[3][3];
+    for (int r = 0; r < 3; r++)
+        for (int c = 0; c < 3; c++)
+            R[r][c] = g_stDrState.fRotationMatrix[r][c];
+
+    switch (req->ref) {
+        case 0:  // BASE frame (default): use raw ETT values directly
+            for (int i = 0; i < NUM_TASK; i++)
+                res->tool_force[i] = g_stDrState.fActualETT[i];
+            break;
+
+        case 1: {  // TOOL frame: apply coordinate transformation
+            double force_base[3] = {
+                g_stDrState.fActualETT[0],
+                g_stDrState.fActualETT[1],
+                g_stDrState.fActualETT[2]
+            };
+            
+            double torque_tool[3] = {
+                g_stDrState.fActualETT[3],
+                g_stDrState.fActualETT[4],
+                g_stDrState.fActualETT[5]
+            };
+
+            // Convert force to tool frame:
+            for (int i = 0; i < 3; i++) {
+                res->tool_force[i] = 0.0;
+                for (int j = 0; j < 3; j++)
+                    res->tool_force[i] += R[j][i] * force_base[j];
+            }
+            res->tool_force[3] = torque_tool[0];
+            res->tool_force[4] = torque_tool[1];
+            res->tool_force[5] = torque_tool[2];
+            break;
+        }
+
+        case 2:  // WORLD frame: directly use precomputed values from monitoring
+            for (int i = 0; i < NUM_TASK; i++)
+                res->tool_force[i] = g_stDrState.fWorldETT[i];
+            break;
+
+        default: 
+            RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
+                        "[get_tool_force_cb] Invalid ref: %d. Defaulting to BASE frame.", req->ref);
+            for (int i = 0; i < NUM_TASK; i++)
+                res->tool_force[i] = g_stDrState.fActualETT[i];
+            break;
     }
-    res->success = true;        
+    res->success = true;
 };
 
 auto get_solution_space_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetSolutionSpace::Request> req, std::shared_ptr<dsr_msgs2::srv::GetSolutionSpace::Response> res)-> void
