@@ -4,18 +4,33 @@
 mkdir -p /workspaces/doosan_ws/src
 cd /workspaces/doosan_ws
 
+# Fix GUI permissions and setup
+mkdir -p /tmp/runtime-root
+chmod 700 /tmp/runtime-root
+export XDG_RUNTIME_DIR=/tmp/runtime-root
+
+# Fix X11 permissions
+xhost +local:root 2>/dev/null || true
+
 # Update package lists
 apt-get update
 
 # Install Docker CLI for emulator support
 apt-get install -y docker.io
 
-# Install basic dependencies
+# Install GUI and system dependencies
 apt-get install -y \
     libpoco-dev \
     libyaml-cpp-dev \
     dbus-x11 \
     wget \
+    x11-apps \
+    mesa-utils \
+    libgl1-mesa-glx \
+    libgl1-mesa-dri
+
+# Install ROS2 packages
+apt-get install -y \
     ros-jazzy-control-msgs \
     ros-jazzy-realtime-tools \
     ros-jazzy-xacro \
@@ -38,6 +53,20 @@ fi
 # Setup ROS environment
 echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
 echo "if [ -f /workspaces/doosan_ws/install/setup.bash ]; then source /workspaces/doosan_ws/install/setup.bash; fi" >> ~/.bashrc
+echo "export XDG_RUNTIME_DIR=/tmp/runtime-root" >> ~/.bashrc
+echo "export QT_X11_NO_MITSHM=1" >> ~/.bashrc
 
-echo "Devcontainer setup completed with Docker support!"
-echo "You can now use Docker commands and run the Doosan emulator."
+# Create a script to fix X11 permissions on startup
+cat > /usr/local/bin/fix-x11 << 'EOF'
+#!/bin/bash
+xhost +local:root 2>/dev/null || true
+mkdir -p /tmp/runtime-root
+chmod 700 /tmp/runtime-root
+export XDG_RUNTIME_DIR=/tmp/runtime-root
+EOF
+
+chmod +x /usr/local/bin/fix-x11
+
+echo "Devcontainer setup completed with Docker and GUI support!"
+echo "Run 'fix-x11' before launching GUI applications if needed."
+echo "You can now use Docker commands and run the Doosan emulator with RViz2."

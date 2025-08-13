@@ -7,14 +7,15 @@
 	"runArgs": [
 		"--network=host",
 		"--volume=/var/run/docker.sock:/var/run/docker.sock",
-		"--volume=/run/user:/run/user",
-		"--volume=/tmp/.X11-unix:/tmp/.X11-unix"
+		"--volume=/tmp/.X11-unix:/tmp/.X11-unix",
+		"--ipc=host",
+		"--privileged"
 	],
 	"containerEnv": {
 		"DISPLAY": "${localEnv:DISPLAY}",
-		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
-		"XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
-		"LIBGL_ALWAYS_SOFTWARE": "1"
+		"LIBGL_ALWAYS_SOFTWARE": "1",
+		"QT_X11_NO_MITSHM": "1",
+		"XDG_RUNTIME_DIR": "/tmp/runtime-root"
 	},
 	"customizations": {
 		"vscode": {
