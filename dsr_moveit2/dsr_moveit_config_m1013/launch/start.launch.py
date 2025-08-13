@@ -37,7 +37,7 @@ from moveit_configs_utils import MoveItConfigsBuilder
 import yaml
 import subprocess
 from urdf_parser_py.urdf import URDF
-from dsr_bringup2.utils.controller_config import adjust_dsr_controller_yaml, parse_joints_from_urdf
+from dsr_bringup2.controller_config import adjust_dsr_controller_yaml, parse_joints_from_urdf
 
 # Generate robot_description and select controller YAML based on the URDF model.
 def generate_robot_description_action(context, *args, **kwargs):

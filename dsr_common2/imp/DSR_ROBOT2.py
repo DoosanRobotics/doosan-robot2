@@ -1213,54 +1213,10 @@ def get_external_torque():
                 ret = list(result.ext_torque)  # Convert tuple to list  
     return ret
 
-# def get_tool_force(ref=None):
-
-#     # ref
-#     if ref == None:
-#         _ref = DR_BASE
-#     else:
-#         _ref = ref
-#         if _ref != DR_BASE and _ref != DR_WORLD:
-#             raise DR_Error(DR_ERROR_VALUE, "Invalid value : ref({0})".format(_ref))
-
-#     if __ROS2__:
-#         req =  GetToolForce.Request()  
-#         req.ref = _ref
-
-#         future = _ros2_get_tool_force.call_async(req)
-#         rclpy.spin_until_future_complete(g_node, future)
-
-#         try:
-#             result = future.result()
-#         except Exception as e:
-#             g_node.get_logger().info('get_tool_force Service call failed %r' % (e,))
-#         else:
-#             if result == None:
-#                 ret = -1    
-#             else:        
-#                 ret = list(result.tool_force)  # Convert tuple to list  
-#     return ret
-
 def get_tool_force(ref=None):
-    """
-    Calls the /get_tool_force ROS2 service to retrieve external force/torque on the tool.
 
-    Args:
-        ref (int): Reference frame. 
-                   0 = DR_BASE, 
-                   1 = DR_TOOL, 
-                   2 = DR_WORLD
-
-    Returns:
-        list or int: [Fx, Fy, Fz, Tx, Ty, Tz] on success, -1 on failure
-
-    Raises:
-        DR_Error: if ref is invalid
-    """
-    # Set default reference
     _ref = DR_BASE if ref is None else ref
 
-    # Validate reference
     if _ref not in [DR_BASE, DR_TOOL, DR_WORLD]:
         raise DR_Error(DR_ERROR_VALUE, f"Invalid value : ref({_ref})")
 
@@ -1283,8 +1239,6 @@ def get_tool_force(ref=None):
             g_node.get_logger().error(f"get_tool_force: service call failed - {e}")
 
     return ret
-
-
 
 def get_solution_space(pos):
     _pos = get_posj(pos)

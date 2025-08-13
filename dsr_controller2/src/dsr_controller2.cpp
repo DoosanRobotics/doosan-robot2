@@ -842,77 +842,6 @@ auto get_external_torque_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetEx
     res->success = true;        
 };
 
-// auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolForce::Request> /*req*/, std::shared_ptr<dsr_msgs2::srv::GetToolForce::Response> res)                          
-// {
-// #if (_DEBUG_DSR_CTL)
-//     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"< get_tool_force_cb >");
-// #endif
-//     //NO API , get mon_data
-//     for(int i = 0; i < NUM_TASK; i++){
-//         res->tool_force[i] = g_stDrState.fActualETT[i];
-//     }
-//     res->success = true;        
-// };
-
-// auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolForce::Request> req,
-//                                 std::shared_ptr<dsr_msgs2::srv::GetToolForce::Response> res)
-// {
-// #if (_DEBUG_DSR_CTL)
-//     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"), "< get_tool_force_cb > ref: %d", req->ref);
-// #endif
-
-//     if (req->ref == 0) {
-//         // BASE 좌표계 기준
-//         for (int i = 0; i < NUM_TASK; i++)
-//             res->tool_force[i] = g_stDrState.fActualETT[i];
-
-//     } else if (req->ref == 2) {
-//         // WORLD 좌표계 기준
-//         for (int i = 0; i < NUM_TASK; i++)
-//             res->tool_force[i] = g_stDrState.fWorldETT[i];
-
-//     } else if (req->ref == 1) {
-//         // TOOL 좌표계 기준: rotation 변환 적용
-//         // fActualETT[0~2]: Force (Base 기준)
-//         // fRotationMatrix: Base->Tool 회전 행렬 → Transpose해서 Tool->Base
-//         double force_base[3] = {
-//             g_stDrState.fActualETT[0],
-//             g_stDrState.fActualETT[1],
-//             g_stDrState.fActualETT[2]
-//         };
-//         float R[3][3];
-//         for (int r = 0; r < 3; r++)
-//             for (int c = 0; c < 3; c++)
-//                 R[r][c] = g_stDrState.fRotationMatrix[r][c];
-
-//         // Transpose(R) * force_base → tool 기준 force
-//         for (int i = 0; i < 3; i++) {
-//             res->tool_force[i] = 0.0;
-//             for (int j = 0; j < 3; j++)
-//                 res->tool_force[i] += R[j][i] * force_base[j];  // transpose 적용
-//         }
-
-//         // Moment는 이미 TOOL 기준이므로 그대로 사용
-//         for (int i = 3; i < 6; i++)
-//             res->tool_force[i] = g_stDrState.fActualETT[i];
-
-//     } else {
-//         // 유효하지 않은 ref
-//         RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
-//                     "[get_tool_force_cb] Invalid ref: %d. Defaulting to BASE frame.", req->ref);
-//         for (int i = 0; i < NUM_TASK; i++)
-//             res->tool_force[i] = g_stDrState.fActualETT[i];
-//     }
-
-//     res->success = true;
-// };
-
-// NOTE:
-//  - g_stDrState.fActualETT: Base frame [Fx, Fy, Fz, Tx, Ty, Tz]
-//  - g_stDrState.fWorldETT:  World frame [Fx, Fy, Fz, Tx, Ty, Tz]
-//  - g_stDrState.fRotationMatrix: 3x3 rotation matrix (Base to Tool)
-//
-// Transformation: F_tool = Rᵀ * F_base, T_tool = Rᵀ * T_base
 auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolForce::Request> req,
                                 std::shared_ptr<dsr_msgs2::srv::GetToolForce::Response> res)
 {
@@ -933,32 +862,27 @@ auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolFor
             break;
 
         case 1: {  // TOOL frame: apply coordinate transformation
-            // Extract base-frame force and torque vectors
             double force_base[3] = {
                 g_stDrState.fActualETT[0],
                 g_stDrState.fActualETT[1],
                 g_stDrState.fActualETT[2]
             };
-            double torque_base[3] = {
+            
+            double torque_tool[3] = {
                 g_stDrState.fActualETT[3],
                 g_stDrState.fActualETT[4],
                 g_stDrState.fActualETT[5]
             };
 
-            // Convert force to tool frame: F_tool = Rᵀ * F_base
+            // Convert force to tool frame:
             for (int i = 0; i < 3; i++) {
                 res->tool_force[i] = 0.0;
                 for (int j = 0; j < 3; j++)
-                    res->tool_force[i] += R[j][i] * force_base[j];  // Transpose(R) * F
+                    res->tool_force[i] += R[j][i] * force_base[j];
             }
-
-            // Convert torque to tool frame: T_tool = Rᵀ * T_base
-            for (int i = 0; i < 3; i++) {
-                res->tool_force[i + 3] = 0.0;
-                for (int j = 0; j < 3; j++)
-                    res->tool_force[i + 3] += R[j][i] * torque_base[j];  // Transpose(R) * T
-            }
-
+            res->tool_force[3] = torque_tool[0];
+            res->tool_force[4] = torque_tool[1];
+            res->tool_force[5] = torque_tool[2];
             break;
         }
 
@@ -967,17 +891,15 @@ auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolFor
                 res->tool_force[i] = g_stDrState.fWorldETT[i];
             break;
 
-        default:  // Invalid ref: fallback to BASE frame
+        default: 
             RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
                         "[get_tool_force_cb] Invalid ref: %d. Defaulting to BASE frame.", req->ref);
             for (int i = 0; i < NUM_TASK; i++)
                 res->tool_force[i] = g_stDrState.fActualETT[i];
             break;
     }
-
     res->success = true;
 };
-
 
 auto get_solution_space_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetSolutionSpace::Request> req, std::shared_ptr<dsr_msgs2::srv::GetSolutionSpace::Response> res)-> void
 {    
