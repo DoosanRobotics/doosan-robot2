@@ -492,6 +492,7 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 
 namespace dsr_hardware2{
 
+    
 class DRHWInterface : public hardware_interface::SystemInterface
 {
 public:
@@ -527,6 +528,10 @@ protected:
         {"position", {}}, {"velocity", {}}, {"effort", {}}};
 
     std::vector<int> hw_mapping_;   // URDF joints -> hardware joints mapping
+    
+    // Add these missing member variables for joint indices separation
+    std::vector<size_t> arm_joint_indices_;
+    std::vector<size_t> gripper_joint_indices_;
 };
 
 }
@@ -558,12 +563,22 @@ protected:
         std::string GetRobotModel();
 
     private:
-        
+
         // rclcpp::Node::SharedPtr private_nh_;	
 
         std::string m_strRobotName;
         std::string m_strRobotModel;
         std::string m_strRobotGripper;
+   
+   
+        // Indices to separate arm joints from gripper joints
+        std::vector<size_t> arm_joint_indices_;
+        std::vector<size_t> gripper_joint_indices_;
+        
+        // Gripper state storage
+        std::vector<double> gripper_position_;
+        std::vector<double> gripper_position_command_;
+        std::vector<double> gripper_velocity_;
 
         //----- Service ---------------------------------------------------------------
         //----- System

@@ -265,23 +265,6 @@
   <xacro:unless value="${gz}">
     <xacro:include filename="$(find dsr_description2)/ros2_control/m1013.ros2_control.xacro" />
     <xacro:m1013_ros2_control name="m1013"/>
- 
-    <!-- Add a separate ros2_control for the gripper -->
-    <ros2_control name="RobotiqGripper" type="system">
-        <hardware>
-            <plugin>mock_components/GenericSystem</plugin>
-            <param name="mock_sensor_commands">true</param>
-            <param name="state_following_offset">0.0</param>
-        </hardware>
-        <joint name="robotiq_85_left_knuckle_joint">
-            <command_interface name="position">
-                <param name="min">0.0</param>
-                <param name="max">0.8</param>
-            </command_interface>
-            <state_interface name="position"/>
-            <state_interface name="velocity"/>
-        </joint>
-    </ros2_control>
 
   </xacro:unless>
 

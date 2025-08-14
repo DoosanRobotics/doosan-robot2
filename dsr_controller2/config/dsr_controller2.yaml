@@ -12,117 +12,51 @@
       dsr_controller2:
         type: dsr_controller2/RobotController
 
-      dsr_joint_trajectory:
-        type: dsr_joint_trajectory/RobotController
-
-      dsr_joint_publisher:
-        type: joint_state_controller/JointStateController
-
       dsr_position_controller:
         type: forward_command_controller/ForwardCommandController
 
       robotiq_gripper_controller:
         type: forward_command_controller/ForwardCommandController
-        joints:
-          - robotiq_85_left_knuckle_joint
-        interface_name: position
 
+  # Controller parameters at the same level as controller_manager
+  robotiq_gripper_controller:
+    ros__parameters:
+      joints: ["robotiq_85_left_knuckle_joint"]
+      interface_name: "position"
 
-      # robotiq_gripper_controller:
-      #   type: forward_command_controller/ForwardCommandController
-      #   ros__parameters:
-      #     joints:
-      #       - robotiq_85_left_knuckle_joint
-      #     interface_name: position
-      # robotiq_gripper_controller:
-      #   type: position_controllers/GripperActionController
-      # robotiq_activation_controller:
-      #   type: robotiq_controllers/RobotiqActivationController
+  dsr_controller2:
+    ros__parameters:
+      joints:
+        - joint_1
+        - joint_2
+        - joint_3
+        - joint_4
+        - joint_5
+        - joint_6
 
-dsr_controller2:
-  ros__parameters:
-    joints:
-      - joint_1
-      - joint_2
-      - joint_3
-      - joint_4
-      - joint_5
-      - joint_6
-      
+  dsr_position_controller:
+    ros__parameters:
+      joints:
+        - joint_1
+        - joint_2
+        - joint_3
+        - joint_4
+        - joint_5
+        - joint_6
+      interface_name: position
 
-# robotiq_gripper_controller:
-#   ros__parameters:
-#     joints:
-#       - robotiq_85_left_knuckle_joint
-#     interface_name: position
-      
-
-dsr_position_controller:
-  ros__parameters:
-    joints:
-      - joint_1
-      - joint_2
-      - joint_3
-      - joint_4
-      - joint_5
-      - joint_6
-    interface_name: position
-
-    # command_interfaces:
-    #   - position
-    #   - velocity
-
-    # state_interfaces:
-    #   - position
-    #   - velocity
-
-dsr_joint_trajectory:
-  ros__parameters:
-    joints:
-      - joint_1
-      - joint_2
-      - joint_3
-      - joint_4
-      - joint_5
-      - joint_6
-
-    command_interfaces:
-      - position
-      - velocity
-
-    state_interfaces:
-      - position
-      - velocity
-
-dsr_moveit_controller:
-  ros__parameters:
-    command_interfaces:
-      - position
-      - velocity
-    state_interfaces:
-      - position
-      - velocity
-    joints:
-      - joint_1
-      - joint_2
-      - joint_3
-      - joint_4
-      - joint_5
-      - joint_6
-
-# robotiq_gripper_controller:
-#   ros__parameters:
-#     joints:
-#       - robotiq_85_left_knuckle_joint
-#     interface_name: position
-
-# robotiq_gripper_controller:
-#   ros__parameters:
-#     default: true
-#     joint: robotiq_85_left_knuckle_joint
-#     use_effort_interface: true
-#     use_speed_interface: true
-
-robotiq_activation_controller:
-  ros__parameters:
-    default: true
+  dsr_moveit_controller:
+    ros__parameters:
+      command_interfaces:
+        - position
+        - velocity
+      state_interfaces:
+        - position
+        - velocity
+      joints:
+        - joint_1
+        - joint_2
+        - joint_3
+        - joint_4
+        - joint_5
+        - joint_6
