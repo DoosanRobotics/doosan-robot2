@@ -12,8 +12,27 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 
-ament_package()
+# Use ROS 2's built-in Python site-packages detection
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_path('purelib'))"
+  OUTPUT_VARIABLE PYTHON_INSTALL_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
+# Install Python modules to the detected site-packages directory
+install(DIRECTORY imp/ 
+  DESTINATION lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/
+  FILES_MATCHING PATTERN "*.py"
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+)
+
+install(DIRECTORY bin DESTINATION share/${PROJECT_NAME}
+  PATTERN "bin/*"
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+)
+
+ament_package()
 #install(PROGRAMS 
 #    bin/DRCF/DRCF64 bin/DRCF/run_drcf.sh
 #    #ROS2 DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -31,7 +50,7 @@ install(DIRECTORY bin DESTINATION share/${PROJECT_NAME}
   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
 )
 
-install(DIRECTORY imp DESTINATION lib/${PROJECT_NAME}
-  FILES_MATCHING PATTERN "*.py"
-  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
-)
+# install(DIRECTORY imp/ DESTINATION lib/${PROJECT_NAME}
+#   FILES_MATCHING PATTERN "*.py"
+#   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+# )
