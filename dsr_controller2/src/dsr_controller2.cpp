@@ -1,10 +1,23 @@
-/*
+/*********************************************************************
+ * 
  * dsr_controller2
  * Author: Minsoo Song (minsoo.song@doosan.com)
+ * 
+ * Copyright (c) 2025 Doosan Robotics
  *
- * Copyright (c) 2024 Doosan Robotics
- * Use of this source code is governed by the BSD, see LICENSE
-*/
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *********************************************************************/
 
 
 #include "dsr_controller2/dsr_controller2.hpp"
@@ -372,7 +385,9 @@ auto movesx_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSplineTask::Re
 auto moveb_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveBlending::Request> req, std::shared_ptr<dsr_msgs2::srv::MoveBlending::Response> res)-> void    
 {
     res->success = false;
-    MOVE_POSB posb[req->pos_cnt];
+
+    std::vector<MOVE_POSB> posb(req->pos_cnt); // Use std::vector instead of VLA for safe dynamic allocation (C++ standard-compliant)
+
     for(int i=0; i<req->pos_cnt; i++){
         std_msgs::msg::Float64MultiArray segment = req->segment.at(i);
         for(int j=0; j<NUM_TASK; j++){
@@ -404,11 +419,13 @@ auto moveb_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveBlending::Reque
 
     if(req->sync_type == 0){
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveb_cb() called and calling Drfl->moveb");
-        res->success = Drfl->moveb(posb, req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
+        //Convert std::vector<MOVE_POSB> to MOVE_POSB* using .data()
+        res->success = Drfl->moveb(posb.data(), req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
     }
     else{
         //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveb_cb() called and calling Drfl->amoveb");
-        res->success = Drfl->amoveb(posb, req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
+        //Convert std::vector<MOVE_POSB> to MOVE_POSB* using .data()
+        res->success = Drfl->amoveb(posb.data(), req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
     }
 };
 
@@ -825,16 +842,63 @@ auto get_external_torque_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetEx
     res->success = true;        
 };
 
-auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolForce::Request> /*req*/, std::shared_ptr<dsr_msgs2::srv::GetToolForce::Response> res)                          
+auto get_tool_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetToolForce::Request> req,
+                                std::shared_ptr<dsr_msgs2::srv::GetToolForce::Response> res)
 {
 #if (_DEBUG_DSR_CTL)
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"< get_tool_force_cb >");
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"), "< get_tool_force_cb > ref: %d", req->ref);
 #endif
-    //NO API , get mon_data
-    for(int i = 0; i < NUM_TASK; i++){
-        res->tool_force[i] = g_stDrState.fActualETT[i];
+
+    // Load rotation matrix from base to tool (3x3)
+    float R[3][3];
+    for (int r = 0; r < 3; r++)
+        for (int c = 0; c < 3; c++)
+            R[r][c] = g_stDrState.fRotationMatrix[r][c];
+
+    switch (req->ref) {
+        case 0:  // BASE frame (default): use raw ETT values directly
+            for (int i = 0; i < NUM_TASK; i++)
+                res->tool_force[i] = g_stDrState.fActualETT[i];
+            break;
+
+        case 1: {  // TOOL frame: apply coordinate transformation
+            double force_base[3] = {
+                g_stDrState.fActualETT[0],
+                g_stDrState.fActualETT[1],
+                g_stDrState.fActualETT[2]
+            };
+            
+            double torque_tool[3] = {
+                g_stDrState.fActualETT[3],
+                g_stDrState.fActualETT[4],
+                g_stDrState.fActualETT[5]
+            };
+
+            // Convert force to tool frame:
+            for (int i = 0; i < 3; i++) {
+                res->tool_force[i] = 0.0;
+                for (int j = 0; j < 3; j++)
+                    res->tool_force[i] += R[j][i] * force_base[j];
+            }
+            res->tool_force[3] = torque_tool[0];
+            res->tool_force[4] = torque_tool[1];
+            res->tool_force[5] = torque_tool[2];
+            break;
+        }
+
+        case 2:  // WORLD frame: directly use precomputed values from monitoring
+            for (int i = 0; i < NUM_TASK; i++)
+                res->tool_force[i] = g_stDrState.fWorldETT[i];
+            break;
+
+        default: 
+            RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
+                        "[get_tool_force_cb] Invalid ref: %d. Defaulting to BASE frame.", req->ref);
+            for (int i = 0; i < NUM_TASK; i++)
+                res->tool_force[i] = g_stDrState.fActualETT[i];
+            break;
     }
-    res->success = true;        
+    res->success = true;
 };
 
 auto get_solution_space_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetSolutionSpace::Request> req, std::shared_ptr<dsr_msgs2::srv::GetSolutionSpace::Response> res)-> void
@@ -1824,14 +1888,6 @@ auto write_data_rt_cb = [this](const std::shared_ptr<dsr_msgs2::srv::WriteDataRt
 };
 
 
-  // Callback for jog_multi
-auto jog_multi_axis_cb = [this](const std::shared_ptr<dsr_msgs2::msg::JogMultiAxis> msg) -> void
-{
-    std::array<float, NUM_JOINT> target_pos;
-    std::copy(msg->jog_axis.cbegin(), msg->jog_axis.cend(), target_pos.begin());
-    Drfl->multi_jog(target_pos.data(), static_cast<MOVE_REFERENCE>(msg->move_reference), msg->speed);
-};
-
 // Callback for alter_motion_stream
 auto alter_cb = [this](const std::shared_ptr<dsr_msgs2::msg::AlterMotionStream> msg) -> void
 {
@@ -1850,8 +1906,10 @@ auto servoj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojStream> msg)
     std::array<float, NUM_JOINT> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
+    DR_SERVOJ_TYPE mode = (DR_SERVOJ_TYPE)msg->mode;
     check_dsr_model(target_pos);
-    Drfl->servoj(target_pos.data(), target_vel.data(), target_acc.data(), time);
+
+    Drfl->servoj(target_pos.data(), target_vel.data(), target_acc.data(), time, mode);
 };
 
 // Callback for servol_stream
@@ -1885,7 +1943,7 @@ auto speedj_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedjStream> msg)
 // Callback for speedl_stream
 auto speedl_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedlStream> msg) -> void
 {
-    std::array<float, NUM_JOINT> target_vel;
+    std::array<float, NUM_TASK> target_vel;
     std::copy(msg->vel.cbegin(), msg->vel.cend(), target_vel.begin());
     std::array<float, 2> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
@@ -1961,7 +2019,6 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
   // Subscription declarations
-  m_sub_jog_multi_axis                = get_node()->create_subscription<dsr_msgs2::msg::JogMultiAxis>("jog_multi", 10, jog_multi_axis_cb);
   m_sub_alter_motion_stream           = get_node()->create_subscription<dsr_msgs2::msg::AlterMotionStream>("alter_motion_stream", 20, alter_cb);
   m_sub_servoj_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServojStream>("servoj_stream", 20, servoj_cb);
   m_sub_servol_stream                 = get_node()->create_subscription<dsr_msgs2::msg::ServolStream>("servol_stream", 20, servol_cb);
@@ -2005,7 +2062,11 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_srv_jog                        = get_node()->create_service<dsr_msgs2::srv::Jog>("motion/jog", jog_cb);              
   m_nh_srv_jog_multi                  = get_node()->create_service<dsr_msgs2::srv::JogMulti>("motion/jog_multi", jog_multi_cb);                      
   m_nh_srv_move_pause                 = get_node()->create_service<dsr_msgs2::srv::MovePause>("motion/move_pause", move_pause_cb);                      
-  m_nh_srv_move_stop                  = get_node()->create_service<dsr_msgs2::srv::MoveStop>("motion/move_stop", move_stop_cb, rmw_qos_profile_services_default, cb_group_);
+  // m_nh_srv_move_stop                  = get_node()->create_service<dsr_msgs2::srv::MoveStop>("motion/move_stop", move_stop_cb, rmw_qos_profile_services_default, cb_group_);
+  
+  rclcpp::QoS qos_profile(10); //`rmw_qos_profile_services_default` has been deprecated using qos(depth) instead
+  m_nh_srv_move_stop = get_node()->create_service<dsr_msgs2::srv::MoveStop>("motion/move_stop", move_stop_cb, qos_profile, cb_group_);  m_nh_srv_move_resume                = get_node()->create_service<dsr_msgs2::srv::MoveResume>("motion/move_resume", move_resume_cb);                  
+  
   m_nh_srv_move_resume                = get_node()->create_service<dsr_msgs2::srv::MoveResume>("motion/move_resume", move_resume_cb);                  
   m_nh_srv_trans                      = get_node()->create_service<dsr_msgs2::srv::Trans>("motion/trans", trans_cb);                  
   m_nh_srv_fkin                       = get_node()->create_service<dsr_msgs2::srv::Fkin>("motion/fkin", fkin_cb);              
@@ -2120,7 +2181,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_read_data_rt = get_node()->create_service<dsr_msgs2::srv::ReadDataRt>("realtime/read_data_rt", read_data_rt_cb);
   m_nh_write_data_rt = get_node()->create_service<dsr_msgs2::srv::WriteDataRt>("realtime/write_data_rt", write_data_rt_cb);
 
-  memset(&g_stDrState, 0x00, sizeof(DR_STATE)); 
+  g_stDrState = DR_STATE{}; // Using value-initialization instead of memset()
 
   // // create threads     
 

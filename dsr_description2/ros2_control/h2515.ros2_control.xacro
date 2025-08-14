@@ -4,15 +4,18 @@
   <xacro:macro name="h2515_ros2_control" params="
   name
   rate:=100
-  standby:=ture
+  standby:=true
   command:=none
   host:=0.0.0.0
   port:=12345
   mode:=real
-  model:=h2515
+  model:=h2017
   gripper:=none
   mobile:=none
   ">
+    <xacro:property name="double_pi" value="${2.0 * pi}"/>
+    <xacro:property name="neg_double_pi" value="${-2.0 * pi}"/>
+    <xacro:property name="neg_pi" value="${-1.0 * pi}"/>
 
     <ros2_control name="${name}" type="system">
 
@@ -32,8 +35,8 @@
 
       <joint name="joint_1">
         <command_interface name="position">
-          <param name="min">{-2*pi}</param>
-          <param name="max">{2*pi}</param>
+          <param name="min">${neg_double_pi}</param>
+          <param name="max">${double_pi}</param>
         </command_interface>
         <command_interface name="velocity">
           <param name="min">-3.15</param>
@@ -47,8 +50,8 @@
 
       <joint name="joint_2">
         <command_interface name="position">
-          <param name="min">{-2*pi}</param>
-          <param name="max">{2*pi}</param>
+          <param name="min">${neg_double_pi}</param>
+          <param name="max">${double_pi}</param>
         </command_interface>
         <command_interface name="velocity">
           <param name="min">-3.15</param>
@@ -62,8 +65,8 @@
 
       <joint name="joint_3">
         <command_interface name="position">
-          <param name="min">{-pi}</param>
-          <param name="max">{pi}</param>
+          <param name="min">${neg_pi}</param>
+          <param name="max">${pi}</param>
         </command_interface>
         <command_interface name="velocity">
           <param name="min">-3.15</param>
@@ -71,14 +74,14 @@
         </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
-        </state_interface>
+        </state_interface> 
         <state_interface name="velocity"/>
       </joint>
 
       <joint name="joint_4">
         <command_interface name="position">
-          <param name="min">{-2*pi}</param>
-          <param name="max">{2*pi}</param>
+          <param name="min">${neg_double_pi}</param>
+          <param name="max">${double_pi}</param>
         </command_interface>
         <command_interface name="velocity">
           <param name="min">-3.2</param>
@@ -92,8 +95,8 @@
 
       <joint name="joint_5">
         <command_interface name="position">
-          <param name="min">{-2*pi}</param>
-          <param name="max">{2*pi}</param>
+          <param name="min">${neg_double_pi}</param>
+          <param name="max">${double_pi}</param>
         </command_interface>
         <command_interface name="velocity">
           <param name="min">-3.2</param>
@@ -107,8 +110,8 @@
 
       <joint name="joint_6">
         <command_interface name="position">
-          <param name="min">{-2*pi}</param>
-          <param name="max">{2*pi}</param>
+          <param name="min">${neg_double_pi}</param>
+          <param name="max">${double_pi}</param>
         </command_interface>
         <command_interface name="velocity">
           <param name="min">-3.2</param>

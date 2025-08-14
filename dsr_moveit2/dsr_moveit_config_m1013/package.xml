@@ -8,8 +8,8 @@
   </description>
   <maintainer email="minju3.lee@doosan.com">Minju Lee</maintainer>
 
-  <license>BSD-3-Clause</license>
-
+  <license>Apache License 2.0</license>
+  
   <url type="website">http://moveit.ros.org/</url>
   <url type="bugtracker">https://github.com/moveit/moveit2/issues</url>
   <url type="repository">https://github.com/moveit/moveit2</url>

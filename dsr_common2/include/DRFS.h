@@ -1,46 +1,24 @@
-/*    ========================================================================
-    =                   Doosan Robot Framework Structure                      =
-    =                   Copyright (c) Doosan Robotics.                        =   
-    =_______________________________________________________________________  =
-    = Title             : Doosan Robot Framwork Structure                     =
-    = Author            : Lee Jeong-Woo<jeongwoo1.lee@doosan.com>             =
-    = Maintainer        : Minsoo Song<minsoo.song@doosan.com>                 =
-    =                     Minju Lee<minju3.lee@doosan.com>                    =
-    = Description       : -                                                   =
-    ======================================================================== */
-
 /*********************************************************************
- * Software License Agreement (BSD License)
+ * 
+ * dsr_common2
+ * Author: Lee Jeong-Woo<jeongwoo1.lee@doosan.com>
+ * Maintainer: Minsoo Song<minsoo.song@doosan.com>
+ *             Minju Lee<minju3.lee@doosan.com> 
+ * 
+ * Copyright (c) 2025 Doosan Robotics
  *
- *  Copyright (c) 2024, Doosan Robotics
- *  All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of the Georgia Institute of Technology nor the names of
- *     its contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
 #pragma once
@@ -838,11 +816,14 @@ typedef struct _RT_OUTPUT_DATA_LIST
     float                       goal_joint_position[NUMBER_OF_JOINT];
     /* final goal tcp position (reserved) */
     float                       goal_tcp_position[NUMBER_OF_TASK];
-    /* ROBOT_MODE_MANUAL(0), ROBOT_MODE_AUTONOMOUS(1), ROBOT_MODE_MEASURE(2) */
+    /* ROBOT_MODE_MANUAL(0), ROBOT_MODE_AUTONOMOUS(1), SAFETY_MODE_RECOVERY(2)*/
+    /* Refer to 'SAFETY_MODE' struct*/
     unsigned char               robot_mode;
     /* STATE_INITIALIZING(0), STATE_STANDBY(1), STATE_MOVING(2), STATE_SAFE_OFF(3), STATE_TEACHING(4), STATE_SAFE_STOP(5), STATE_EMERGENCY_STOP, STATE_HOMMING, STATE_RECOVERY, STATE_SAFE_STOP2, STATE_SAFE_OFF2, */
+    /* Refer to 'OPERATION_STATE' struct in DRCF 'ROBOT_STATE' struct in DRFL.*/
     unsigned char               robot_state;
     /* position control mode, torque mode */
+    /* Refer to 'SERVO_MODE' struct*/
     unsigned short              control_mode;
     /* Reserved */
     unsigned char               reserved[256];
@@ -1247,8 +1228,7 @@ typedef struct _MODBUS_DATA_LIST
 
 typedef struct _CONFIG_WORLD_COORDINATE
 {
-    /* ����Ÿ��: world2base: 0, base2ref: 1, world2ref: 2 */
-    /* ��������: �̼���: 0, ����: 1*/
+    /* world2base: 0, base2ref: 1, world2ref: 2 */
     unsigned char               _iType;
     /* target pose */
     float                       _fPosition[NUMBER_OF_JOINT];
@@ -1944,7 +1924,7 @@ typedef struct _CONVEYOR_COORD_EX
     int                _iDistance2Count;
     /* converyor coordination */
     POSITION            _tPosConCoord;
-    /*Base ��ǥ: 0, World ��ǥ: 2 */
+    /*Base : 0, World: 2 */
     unsigned char       _iTargetRef;
 } CONVEYOR_COORD_EX, *LPCONVEYOR_COORD_EX;
 
@@ -2099,17 +2079,12 @@ typedef struct _CONFIG_WELD_SETTING
     struct {
         /* ratio start */
         float                   _fRs;
-        /* ��ȣ��������ð� */
         float                   _fTss;
-        /* ���������ð� */
         float                   _fTas;
-        /* �������Ǻ���ð� */
         float                   _fTwc;
         /* ratio finish */
         float                   _fRf;
-        /* ���������ð� */
         float                   _fTaf;
-        /* ���Ẹȣ��������ð� */
         float                   _fTsf;
     } _tDetail;
 } CONFIG_WELD_SETTING, *LPCONFIG_WELD_SETTING;
@@ -2436,6 +2411,13 @@ typedef struct _CONFIG_DIGITAL_WELDING_INTERFACE_OTHER
 
 }CONFIG_DIGITAL_WELDING_INTERFACE_OTHER, *LPCONFIG_DIGITAL_WELDING_INTERFACE_OTHER;
 
+typedef struct _ROBOT_LED_CONFIG
+{
+    unsigned char _szLedRule;
+    unsigned char _szStateColor[SAFETY_STATE_LAST][2]; // [][0]: color 1, [][1]: color 2
+    unsigned char _szCommandColor;
+
+} ROBOT_LED_CONFIG, *LPROBOT_LED_CONFIG;
 
 typedef struct _DIGITAL_WELDING_RESET
 {
@@ -2830,7 +2812,7 @@ typedef struct _USER_COORD_EXTERNAL_FORCE_INFO
 
 typedef struct _MEASURE_FRICTION_RESPONSE
 {
-    /* measure result : 0(����), 1(����) */
+    /* measure result : 0(), 1() */
     unsigned char               _iResult[NUMBER_OF_JOINT];
     /* measrue error (N/m) */
     float                       _fError[NUMBER_OF_JOINT];
@@ -2874,7 +2856,7 @@ typedef struct _POSITION_ADDTO
 
 typedef struct _MEASURE_FRICTION
 {
-    /* measure type : 0(üũ���), 1(�������) */
+    /* measure type : */
     unsigned char               _iType;
     /* select joint */
     unsigned char               _iSelect[NUMBER_OF_JOINT];
@@ -3501,6 +3483,7 @@ typedef struct _SAFETY_CONFIGURATION_EX2_V3
 	CONFIG_CONFIGURABLE_IO_EX _tConfigurableIO;
 
 } SAFETY_CONFIGURATION_EX2_V3, *LPSAFETY_CONFIGURATION_EX2_V3;
+
 
 
 #pragma pack()

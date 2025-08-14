@@ -1,17 +1,21 @@
-#-*- coding: utf-8 -*-
+#
+#  dsr_common2
+#  Author: Minsoo Song (minsoo.song@doosan.com)
+#
+#  Copyright (c) 2025 Doosan Robotics
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 
-# ##
-# @mainpage
-# @file     DSR_ROBOT2.py
-# @brief    Doosan Robotics ROS2 service I/F module
-# @author   kabdol2<kabkyoum.kim@doosan.com>   
-# @version  0.10
-# @Last update date     2021-02-05
-# @details
-#
-# history
-#  -   
-#
 __ROS2__ = True
 
 import rclpy
@@ -61,6 +65,18 @@ _ros2_get_last_alarm             = g_node.create_client(GetLastAlarm,           
 _ros2_get_current_pose           = g_node.create_client(GetCurrentPose,         _srv_name_prefix +"system/get_current_pose")
 
 #  motion Operations
+_ros2_servoj_stream_pub          = g_node.create_publisher(ServojStream,        _topic_name_prefix + "servoj_stream", 10)
+_ros2_servol_stream_pub          = g_node.create_publisher(ServolStream,        _topic_name_prefix + "servol_stream", 10)
+_ros2_speedj_stream_pub          = g_node.create_publisher(SpeedjStream,        _topic_name_prefix + "speedj_stream", 10)
+_ros2_speedl_stream_pub          = g_node.create_publisher(SpeedlStream,        _topic_name_prefix + "speedl_stream", 10)
+_ros2_servoj_rt_stream_pub       = g_node.create_publisher(ServojRtStream,      _topic_name_prefix + "servoj_rt_stream", 10)
+_ros2_servol_rt_stream_pub       = g_node.create_publisher(ServolRtStream,      _topic_name_prefix + "servol_rt_stream", 10)
+_ros2_speedj_rt_stream_pub       = g_node.create_publisher(SpeedjRtStream,      _topic_name_prefix + "speedj_rt_stream", 10)
+_ros2_speedl_rt_stream_pub       = g_node.create_publisher(SpeedlRtStream,      _topic_name_prefix + "speedl_rt_stream", 10)
+_ros2_torque_rt_stream_pub       = g_node.create_publisher(TorqueRtStream,      _topic_name_prefix + "torque_rt_stream", 10)
+_ros2_alter_motion_stream_pub    = g_node.create_publisher(AlterMotionStream,   _topic_name_prefix + "alter_motion_stream", 10)
+_ros2_set_safety_mode            = g_node.create_client(SetSafetyMode,          _srv_name_prefix +"system/set_safety_mode")
+
 _ros2_movej                      = g_node.create_client(MoveJoint,              _srv_name_prefix + "motion/move_joint")
 _ros2_movel                      = g_node.create_client(MoveLine,               _srv_name_prefix +"motion/move_line")
 _ros2_movejx                     = g_node.create_client(MoveJointx,             _srv_name_prefix +"motion/move_jointx")
@@ -174,6 +190,23 @@ _ros2_drl_start                  = g_node.create_client(DrlStart,               
 _ros2_drl_stop                   = g_node.create_client(DrlStop,                        _srv_name_prefix +"drl/drl_stop")
 _ros2_get_drl_state              = g_node.create_client(GetDrlState,                    _srv_name_prefix +"drl/get_drl_state")
 
+# RT
+_ros2_connect_rt_control         = g_node.create_client(ConnectRtControl,       _srv_name_prefix + "realtime/connect_rt_control")
+_ros2_disconnect_rt_control      = g_node.create_client(DisconnectRtControl,    _srv_name_prefix + "realtime/disconnect_rt_control")
+_ros2_get_rt_control_output_version_list = g_node.create_client(GetRtControlOutputVersionList, _srv_name_prefix + "realtime/get_rt_control_output_version_list")
+_ros2_get_rt_control_input_version_list = g_node.create_client(GetRtControlInputVersionList, _srv_name_prefix + "realtime/get_rt_control_input_version_list")
+_ros2_get_rt_control_input_data_list = g_node.create_client(GetRtControlInputDataList, _srv_name_prefix + "realtime/get_rt_control_input_data_list")
+_ros2_get_rt_control_output_data_list = g_node.create_client(GetRtControlOutputDataList, _srv_name_prefix + "realtime/get_rt_control_output_data_list")
+_ros2_start_rt_control = g_node.create_client(StartRtControl, _srv_name_prefix + "realtime/start_rt_control")
+_ros2_stop_rt_control  = g_node.create_client(StopRtControl,  _srv_name_prefix + "realtime/stop_rt_control")
+_ros2_set_rt_control_input  = g_node.create_client(SetRtControlInput,  _srv_name_prefix + "realtime/set_rt_control_input")
+_ros2_set_rt_control_output = g_node.create_client(SetRtControlOutput, _srv_name_prefix + "realtime/set_rt_control_output")
+_ros2_set_velj_rt = g_node.create_client(SetVeljRt, _srv_name_prefix + "realtime/set_velj_rt")
+_ros2_set_accj_rt = g_node.create_client(SetAccjRt, _srv_name_prefix + "realtime/set_accj_rt")
+_ros2_set_velx_rt = g_node.create_client(SetVelxRt, _srv_name_prefix + "realtime/set_velx_rt")
+_ros2_set_accx_rt = g_node.create_client(SetAccxRt, _srv_name_prefix + "realtime/set_accx_rt")
+_ros2_read_data_rt  = g_node.create_client(ReadDataRt,  _srv_name_prefix + "realtime/read_data_rt")
+_ros2_write_data_rt = g_node.create_client(WriteDataRt, _srv_name_prefix + "realtime/write_data_rt")
 
 ########################################################################################################################################
 
@@ -434,33 +467,41 @@ def _check_valid_vel_acc_task(vel, acc, time):
 
     return
 
+def _check_input_joint(data, name="parameter"):
+    if isinstance(data, (list, tuple)):
+        if len(data) == 6:
+            return list(data)
+        if _robot_model == "p3020" and len(data) == 5:
+            # Adjust element if user input is 5Dof for P3020
+            return list(data[:3]) + [0.0] + list(data[3:])
+        else:
+            raise DR_Error(DR_ERROR_TYPE, f"Invalid list length for {name}: expected 6, or 5 for p3020 model")
+    return data
+
+def _check_output_joint(data):
+    # Adjust element output when using 5Dof for P3020
+    if _robot_model == "p3020" and isinstance(data, list) and len(data) == 6:
+        del data[3]
+    return data
 
 def set_velj(vel):
     vel_list = None
-
-    # vel
-    if type(vel) == int or type(vel) == float:
+    if isinstance(vel, (int, float)):
         if vel <= 0:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
-
         vel_list = [vel] * DR_VELJ_DT_LEN
-    elif type(vel) == list and len(vel) == POINT_COUNT:
-        vel_list = vel
-
+    elif isinstance(vel, list):
+        vel_list = _check_input_joint(vel, "vel")
         if is_number(vel_list) != True:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
-
-        for item in vel:
-            if item <= 0:
-                raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel")
+        for item in vel_list:
+            if item < 0:
+                raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel list: items must be >= 0")
     else:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel")
 
-    # set global velj
     global _g_velj
-
     _g_velj = vel_list
-
     print_result("0 = set_velj(vel:{0})".format(dr_form(vel)))
     return 0
 
@@ -468,26 +509,24 @@ def set_accj(acc):
     acc_list = None
 
     # acc
-    if type(acc) == int or type(acc) == float:
-        acc_list = [acc] * DR_ACCJ_DT_LEN
-
+    if isinstance(acc, (int, float)):
         if acc <= 0:
             raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc")
-    elif type(acc) == list and len(acc) == POINT_COUNT:
-        acc_list = acc
+        acc_list = [acc] * DR_ACCJ_DT_LEN
+    elif isinstance(acc, list):
+        acc_list = _check_input_joint(acc, "acc")
 
-        if is_number(acc_list) != True:
+        if is_number(acc_list) is not True:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
 
-        for item in acc:
-            if item <= 0:
+        for item in acc_list:
+            if item < 0:
                 raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc")
     else:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc")
 
-    # set global velj
+    # set global accj
     global _g_accj
-
     _g_accj = acc_list
 
     print_result("0 = set_accj(acc:{0})".format(dr_form(acc)))
@@ -855,14 +894,18 @@ def get_current_posj():
             result = future.result()
         except Exception as e:
             g_node.get_logger().info('get_current_posj Service call failed %r' % (e,))
+            ret = -1
         else:
-            if result == None:
+            if result is None:
                 ret = -1    
             else:     
-                pos = list(result.pos)  # Convert tuple to list   
-                # set posj
-                cur_pos = posj(pos)
-                ret = cur_pos           
+                cur_pos = posj(list(result.pos))
+                
+                # For p3020, remove the 4th joint value.
+                if _robot_model == "p3020":
+                    del cur_pos[3]
+                
+                ret = cur_pos
     return ret
 
 def get_current_velj():
@@ -876,11 +919,18 @@ def get_current_velj():
             result = future.result()
         except Exception as e:
             g_node.get_logger().info('get_current_velj Service call failed %r' % (e,))
+            ret = -1
         else:
-            if result == None:
+            if result is None:
                 ret = -1    
             else:        
-                ret = list(result.joint_speed)  # Convert tuple to list            
+                vel_list = list(result.joint_speed)  # Convert tuple to list
+
+                # For p3020, remove the 4th joint velocity
+                if _robot_model == "p3020":
+                    del vel_list[3]
+                
+                ret = vel_list
     return ret
 
 def get_desired_posj():
@@ -1165,16 +1215,15 @@ def get_external_torque():
 
 def get_tool_force(ref=None):
 
-    # ref
-    if ref == None:
-        _ref = DR_BASE
-    else:
-        _ref = ref
-        if _ref != DR_BASE and _ref != DR_WORLD:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value : ref({0})".format(_ref))
+    _ref = DR_BASE if ref is None else ref
+
+    if _ref not in [DR_BASE, DR_TOOL, DR_WORLD]:
+        raise DR_Error(DR_ERROR_VALUE, f"Invalid value : ref({_ref})")
+
+    ret = -1
 
     if __ROS2__:
-        req =  GetToolForce.Request()  
+        req = GetToolForce.Request()
         req.ref = _ref
 
         future = _ros2_get_tool_force.call_async(req)
@@ -1182,13 +1231,13 @@ def get_tool_force(ref=None):
 
         try:
             result = future.result()
+            if result and result.success:
+                ret = list(result.tool_force)
+            else:
+                g_node.get_logger().warn("get_tool_force: service call returned unsuccessful or empty result")
         except Exception as e:
-            g_node.get_logger().info('get_tool_force Service call failed %r' % (e,))
-        else:
-            if result == None:
-                ret = -1    
-            else:        
-                ret = list(result.tool_force)  # Convert tuple to list  
+            g_node.get_logger().error(f"get_tool_force: service call failed - {e}")
+
     return ret
 
 def get_solution_space(pos):
@@ -1391,6 +1440,1008 @@ def set_ref_coord(coord):
     _g_coord = coord
 
     #print_result("{0} = set_ref_coord(coord:{1})".format(ret, coord))
+    return ret
+
+def alter_motion_stream(pos):
+    _pos = get_posx(pos)
+
+    if __ROS2__:
+        msg = AlterMotionStream()
+        msg.pos = [float(p) for p in _pos]
+        
+        _ros2_alter_motion_stream_pub.publish(msg)
+        
+        return 0
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "alter_motion is only supported in ROS2 mode.")
+
+def servoj(pos, vel=None, acc=None, time=None, mode=DR_SERVO_QUEUE, v=None, a=None, t=None, m=None):
+    # pos
+    _pos = get_posj(pos)
+
+    # _vel
+    temp = get_param(vel, v)
+    if temp == None:
+        _vel = _g_velj
+    else:
+        if type(temp) == int or type(temp) == float:
+            _vel = [temp] * DR_VELJ_DT_LEN
+        elif type(temp) == list and len(temp) == DR_VELJ_DT_LEN:
+            _vel = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel, v")
+
+    if is_number(_vel) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    for item in _vel:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    # _acc
+    temp = get_param(acc, a)
+    if temp == None:
+        _acc = _g_accj
+    else:
+        if type(temp) == int or type(temp) == float:
+            _acc = [temp] * DR_ACCJ_DT_LEN
+        elif type(temp) == list and len(temp) == DR_ACCJ_DT_LEN:
+            _acc = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc, a")
+
+    if is_number(_acc) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    # _time
+    _time = get_param(time, t)
+    if _time == None:
+        _time = 0.0
+
+    if type(_time) != int and type(_time) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : time, t")
+
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+
+    # _mode
+    _mode = get_param(mode, m)
+    if _mode == None:
+        _mode = DR_SERVO_QUEUE
+    if type(_mode) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : mode, m")
+    if _mode != DR_SERVO_OVERRIDE and _mode != DR_SERVO_QUEUE:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : mode, m")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_joint(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = ServojStream()
+        msg.pos = [float(p) for p in _pos]
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        msg.mode = _mode
+        
+        _ros2_servoj_stream_pub.publish(msg)
+        
+        return 0
+
+def servol(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
+    # Constants for servol
+    DR_VELL_DT_LEN = 2
+    DR_ACCL_DT_LEN = 2
+
+    # pos
+    _pos = get_posx(pos)
+
+    # _vel
+    temp = get_param(vel, v)
+    if temp is None:
+        _vel = _g_velx
+    else:
+        if isinstance(temp, (int, float)):
+            _vel = [temp] * DR_VELL_DT_LEN
+        elif isinstance(temp, list) and len(temp) == DR_VELL_DT_LEN:
+            _vel = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel/v: Must be a number or a list of 2 numbers.")
+
+    if not is_number(_vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel/v.")
+
+    for item in _vel:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Velocity components cannot be negative.")
+
+    # _acc
+    temp = get_param(acc, a)
+    if temp is None:
+        _acc = _g_accx
+    else:
+        if isinstance(temp, (int, float)):
+            _acc = [temp] * DR_ACCL_DT_LEN
+        elif isinstance(temp, list) and len(temp) == DR_ACCL_DT_LEN:
+            _acc = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc/a: Must be a number or a list of 2 numbers.")
+
+    if not is_number(_acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc/a.")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_task(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = ServolStream()
+        msg.pos = [float(p) for p in _pos]
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_servol_stream_pub.publish(msg)
+        
+        return 0
+
+def speedj(vel=None, acc=None, time=None, v=None, a=None, t=None):
+    # _vel
+    _vel_param = get_param(vel, v)
+    if _vel_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: vel or v")
+
+    if isinstance(_vel_param, (int, float)):
+        _vel = [_vel_param] * DR_VELJ_DT_LEN
+    elif isinstance(_vel_param, list):
+        _vel = _check_input_joint(_vel_param, "vel/v")
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel, v")
+
+    if not is_number(_vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    # _acc
+    _acc_param = get_param(acc, a)
+    if _acc_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: acc or a")
+
+    if isinstance(_acc_param, (int, float)):
+        _acc = [_acc_param] * DR_ACCJ_DT_LEN
+    elif isinstance(_acc_param, list):
+        _acc = _check_input_joint(_acc_param, "acc/a")
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc, a")
+
+    if not is_number(_acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : time, t")
+
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_joint(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = SpeedjStream()
+        msg.vel = [float(item) for item in _vel]
+        msg.acc = [float(item) for item in _acc]
+        msg.time = float(_time)
+        
+        _ros2_speedj_stream_pub.publish(msg)
+        
+        return 0
+
+def speedl(vel, acc, time=None, v=None, a=None, t=None):
+    # Constants for speedl
+    DR_VELL_DT_LEN = 6
+    DR_ACCL_DT_LEN = 2
+
+    # _vel
+    _vel_param = get_param(vel, v)
+    if _vel_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: vel or v")
+
+    if isinstance(_vel_param, (int, float)):
+        _vel = [_vel_param] * DR_VELL_DT_LEN
+    elif isinstance(_vel_param, list) and len(_vel_param) == DR_VELL_DT_LEN:
+        _vel = _vel_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel/v: Must be a number or a list of 2 numbers.")
+
+    if not is_number(_vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel/v.")
+
+    # _acc
+    _acc_param = get_param(acc, a)
+    if _acc_param is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: acc or a")
+
+    if isinstance(_acc_param, (int, float)):
+        _acc = [_acc_param] * DR_ACCL_DT_LEN
+    elif isinstance(_acc_param, list) and len(_acc_param) == DR_ACCL_DT_LEN:
+        _acc = _acc_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc/a: Must be a number or a list of 2 numbers.")
+
+    if not is_number(_acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc/a.")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_task(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = SpeedlStream()
+        msg.vel = [float(item) for item in _vel]
+        msg.acc = [float(item) for item in _acc]
+        msg.time = float(_time)
+        
+        _ros2_speedl_stream_pub.publish(msg)
+        
+        return 0
+
+def servoj_rt(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
+    # pos
+    _pos = get_posj(pos)
+
+    # _vel
+    temp = get_param(vel, v)
+    if temp == None:
+        _vel = _g_velj
+    else:
+        if type(temp) == int or type(temp) == float:
+            _vel = [temp] * DR_VELJ_DT_LEN
+        elif type(temp) == list and len(temp) == DR_VELJ_DT_LEN:
+            _vel = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : vel, v")
+
+    if is_number(_vel) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    for item in _vel:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : vel, v")
+
+    # _acc
+    temp = get_param(acc, a)
+    if temp == None:
+        _acc = _g_accj
+    else:
+        if type(temp) == int or type(temp) == float:
+            _acc = [temp] * DR_ACCJ_DT_LEN
+        elif type(temp) == list and len(temp) == DR_ACCJ_DT_LEN:
+            _acc = temp
+        else:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : acc, a")
+
+    if is_number(_acc) != True:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : acc, a")
+
+    # _time
+    _time = get_param(time, t)
+    if _time == None:
+        _time = 0.0
+
+    if type(_time) != int and type(_time) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : time, t")
+
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_joint(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = ServojRtStream()
+        msg.pos = [float(p) for p in _pos]
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_servoj_rt_stream_pub.publish(msg)
+        
+        return 0
+    
+def servol_rt(pos, vel=None, acc=None, time=None, v=None, a=None, t=None):
+
+    # pos
+    _pos = get_posx(pos)
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        raise DR_Error(DR_ERROR_VALUE, "Missing required argument: time or t")
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : time, t")
+
+    # _vel
+    _vel_param = get_param(vel, v)
+    if _vel_param is None:
+        _vel = [DR_COND_NONE] * POINT_COUNT
+    elif isinstance(_vel_param, (int, float)):
+        _vel = [_vel_param] * POINT_COUNT
+    elif isinstance(_vel_param, list) and len(_vel_param) == POINT_COUNT:
+        _vel = _vel_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel/v: Must be a number or a list of 6 numbers.")
+    if not is_number(_vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel/v.")
+
+    # _acc
+    _acc_param = get_param(acc, a)
+    if _acc_param is None:
+        _acc = [DR_COND_NONE] * POINT_COUNT
+    elif isinstance(_acc_param, (int, float)):
+        _acc = [_acc_param] * POINT_COUNT
+    elif isinstance(_acc_param, list) and len(_acc_param) == POINT_COUNT:
+        _acc = _acc_param
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc/a: Must be a number or a list of 6 numbers.")
+    if not is_number(_acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc/a.")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_task(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = ServolRtStream()
+        msg.pos = [float(p) for p in _pos]
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_servol_rt_stream_pub.publish(msg)
+        
+        return 0
+
+def speedj_rt(vel, acc, time=None, t=None):
+    # _vel
+    _vel = _check_input_joint(vel, "vel")
+    if not is_number(_vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel: All elements must be numbers.")
+
+    # _acc
+    _acc = _check_input_joint(acc, "acc")
+    if not is_number(_acc):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc: All elements must be numbers.")
+    for item in _acc:
+        if item < 0:
+            raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_joint(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = SpeedjRtStream()
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_speedj_rt_stream_pub.publish(msg)
+        
+        return 0
+
+def speedl_rt(vel, acc=None, time=None, t=None):
+    DR_VELL_RT_DT_LEN = 6
+    DR_ACCL_RT_DT_LEN = 6
+
+    # _vel
+    if not isinstance(vel, list):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel: Must be a list of 6 numbers.")
+    if len(vel) != DR_VELL_RT_DT_LEN:
+        raise DR_Error(DR_ERROR_VALUE, f"Invalid length for vel: Must be {DR_VELL_RT_DT_LEN}.")
+    if not is_number(vel):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in vel: All elements must be numbers.")
+    _vel = vel
+
+    # _acc
+    if acc is None:
+        _acc = [DR_COND_NONE] * DR_ACCL_RT_DT_LEN 
+    elif isinstance(acc, list):
+        if len(acc) != DR_ACCL_RT_DT_LEN:
+            raise DR_Error(DR_ERROR_VALUE, f"Invalid length for acc: Must be {DR_ACCL_RT_DT_LEN}.")
+        if not is_number(acc):
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value in acc: All elements must be numbers.")
+        for item in acc:
+            if item < 0:
+                raise DR_Error(DR_ERROR_VALUE, "Acceleration components cannot be negative.")
+        _acc = acc
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc: Must be a list of 6 numbers or None.")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # check vel, acc, time
+    _check_valid_vel_acc_task(_vel, _acc, _time)
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = SpeedlRtStream()
+        msg.vel = [float(v) for v in _vel]
+        msg.acc = [float(a) for a in _acc]
+        msg.time = float(_time)
+        
+        _ros2_speedl_rt_stream_pub.publish(msg)
+        
+        return 0
+
+def torque_rt(tor, time=None, t=None):
+    # _tor
+    _tor = _check_input_joint(tor, "tor")
+    if not is_number(_tor):
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value in tor: All elements must be numbers.")
+
+    # _time
+    _time = get_param(time, t)
+    if _time is None:
+        _time = 0.0  # Default sync time
+
+    if not isinstance(_time, (int, float)):
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for time/t.")
+
+    if _time < 0 and _time != DR_COND_NONE:
+        raise DR_Error(DR_ERROR_VALUE, "Time cannot be negative.")
+
+    # Create and publish the message
+    if __ROS2__:
+        msg = TorqueRtStream()
+        msg.tor = [float(val) for val in _tor]
+        msg.time = float(_time)
+        
+        _ros2_torque_rt_stream_pub.publish(msg)
+        
+        return 0
+    
+    print_result("Error: ROS2 is not initialized. Cannot publish torque_rt.")
+    return -1
+
+def set_safety_mode(safety_mode, safety_event):
+    # Type checking for inputs
+    if type(safety_mode) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : safety_mode")
+    if type(safety_event) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : safety_event")
+
+    # ROS2 service call
+    if __ROS2__:
+        # Create a request object
+        req = SetSafetyMode.Request()
+        req.safety_mode = safety_mode
+        req.safety_event = safety_event
+
+        # Wait for the service to be available
+        while not _ros2_set_safety_mode.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Safety Mode service is not available, waiting for service to become available...")
+
+        future = _ros2_set_safety_mode.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().info('set_safety_mode Service call failed %r' % (e,))
+        else:
+            if result == None:
+                ret = -1    
+            else:        
+                ret = 0 if (result.success == True) else -1
+    return ret
+
+def connect_rt_control(ip_address=None, port=None):
+    g_node.get_logger().warning("RT service connection may already have been established by dsr_hw_interface; Need caution using this function again.")
+    req_ip = ip_address if ip_address is not None else "192.168.137.100" # Need set to 192.168.137.50 in version below 3.4
+    req_port = port if port is not None else 12347
+
+    if ip_address is not None and type(ip_address) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for ip_address: expected str")
+    if port is not None and type(port) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for port: expected int")
+
+    ret = -1
+    if __ROS2__:
+        req = ConnectRtControl.Request()
+        req.ip_address = req_ip
+        req.port = req_port
+
+        while not _ros2_connect_rt_control.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Connect RT Control Service is not available, waiting for it to become available...")
+
+        future = _ros2_connect_rt_control.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('connect_rt_control Service call failed: %r' % (e,))
+        else:
+            if result is None:
+                g_node.get_logger().error('connect_rt_control Service call returned None')
+            else:
+                ret = 0 if result.success else -1
+    return ret
+
+def disconnect_rt_control():
+    ret = -1
+    # ROS2 service call
+    if __ROS2__:
+        req = DisconnectRtControl.Request()
+
+        while not _ros2_disconnect_rt_control.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Disconnect RT Control Service is not available, waiting for it to become available...")
+
+        future = _ros2_disconnect_rt_control.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('disconnect_rt_control Service call failed: %r' % (e,))
+        else:
+            if result is None:
+                g_node.get_logger().error('disconnect_rt_control Service call returned None')
+            else:
+                ret = 0 if result.success else -1
+    return ret
+
+def get_rt_control_output_version_list():
+    ret = ""
+    # ROS2 service call
+    if __ROS2__:
+        req = GetRtControlOutputVersionList.Request()
+
+        while not _ros2_get_rt_control_output_version_list.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Get RT Control Output Version List Service is not available, waiting...")
+
+        future = _ros2_get_rt_control_output_version_list.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('get_rt_control_output_version_list Service call failed: %r' % (e,))
+        else:
+            if result is not None and result.success:
+                ret = result.version
+            else:
+                g_node.get_logger().error('Failed to get RT control output version list.')
+    return ret
+
+def get_rt_control_input_version_list():
+    ret = ""
+    # ROS2 service call
+    if __ROS2__:
+        req = GetRtControlInputVersionList.Request()
+
+        while not _ros2_get_rt_control_input_version_list.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Get RT Control Input Version List Service is not available, waiting...")
+
+        future = _ros2_get_rt_control_input_version_list.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('get_rt_control_input_version_list Service call failed: %r' % (e,))
+        else:
+            if result is not None and result.success:
+                ret = result.version
+            else:
+                g_node.get_logger().error('Failed to get RT control input version list.')
+    return ret
+
+def get_rt_control_input_data_list(version):
+    if type(version) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for version: expected str")
+
+    ret = ""
+    # ROS2 service call
+    if __ROS2__:
+        req = GetRtControlInputDataList.Request()
+        req.version = version
+
+        while not _ros2_get_rt_control_input_data_list.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Get RT Control Input Data List Service is not available, waiting...")
+
+        future = _ros2_get_rt_control_input_data_list.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('get_rt_control_input_data_list Service call failed: %r' % (e,))
+        else:
+            if result is not None and result.success:
+                ret = result.data
+            else:
+                g_node.get_logger().error('Failed to get RT control input data list.')
+    return ret
+
+def get_rt_control_output_data_list(version):
+    if type(version) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for version: expected str")
+
+    ret = ""
+    # ROS2 service call
+    if __ROS2__:
+        req = GetRtControlOutputDataList.Request()
+        req.version = version
+
+        while not _ros2_get_rt_control_output_data_list.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Get RT Control Output Data List Service is not available, waiting...")
+
+        future = _ros2_get_rt_control_output_data_list.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('get_rt_control_output_data_list Service call failed: %r' % (e,))
+        else:
+            if result is not None and result.success:
+                ret = result.data
+            else:
+                g_node.get_logger().error('Failed to get RT control output data list.')
+    return ret
+
+def start_rt_control():
+    ret = -1
+    # ROS2 service call
+    if __ROS2__:
+        req = StartRtControl.Request()
+
+        while not _ros2_start_rt_control.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Start RT Control Service is not available, waiting...")
+
+        future = _ros2_start_rt_control.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('start_rt_control Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+            else:
+                g_node.get_logger().error('start_rt_control Service call returned None')
+    return ret
+
+def stop_rt_control():
+    ret = -1
+    # ROS2 service call
+    if __ROS2__:
+        req = StopRtControl.Request()
+
+        while not _ros2_stop_rt_control.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Stop RT Control Service is not available, waiting...")
+
+        future = _ros2_stop_rt_control.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('stop_rt_control Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+            else:
+                g_node.get_logger().error('stop_rt_control Service call returned None')
+    return ret
+
+def set_rt_control_input(version, period, loss):
+    if type(version) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for version: expected str")
+    if type(period) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for period: expected float")
+    if type(loss) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for loss: expected int")
+
+    ret = -1
+    # ROS2 service call
+    if __ROS2__:
+        req = SetRtControlInput.Request()
+        req.version = version
+        req.period = period
+        req.loss = loss
+
+        while not _ros2_set_rt_control_input.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set RT Control Input Service is not available, waiting...")
+
+        future = _ros2_set_rt_control_input.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_rt_control_input Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+            else:
+                g_node.get_logger().error('set_rt_control_input Service call returned None')
+    return ret
+
+def set_rt_control_output(version, period, loss):
+    if type(version) != str:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for version: expected str")
+    if type(period) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for period: expected float")
+    if type(loss) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for loss: expected int")
+        
+    ret = -1
+    # ROS2 service call
+    if __ROS2__:
+        req = SetRtControlOutput.Request()
+        req.version = version
+        req.period = period
+        req.loss = loss
+
+        while not _ros2_set_rt_control_output.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set RT Control Output Service is not available, waiting...")
+
+        future = _ros2_set_rt_control_output.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_rt_control_output Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+            else:
+                g_node.get_logger().error('set_rt_control_output Service call returned None')
+    return ret
+
+def set_velj_rt(vel):
+    vel_list = None
+    if isinstance(vel, (int, float)):
+        vel_list = [float(vel)] * 6
+    elif isinstance(vel, (list, tuple)):
+        vel_list = _check_input_joint(vel, "vel")
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for vel: expected number, list, or tuple")
+
+    ret = -1
+    if __ROS2__:
+        req = SetVeljRt.Request()
+        req.vel = vel_list
+
+        while not _ros2_set_velj_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Velj RT Service is not available, waiting...")
+
+        future = _ros2_set_velj_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_velj_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+    return ret
+
+def set_accj_rt(acc):
+    acc_list = None
+    if isinstance(acc, (int, float)):
+        acc_list = [float(acc)] * 6
+    elif isinstance(acc, (list, tuple)):
+        acc_list = _check_input_joint(acc, "acc")
+    else:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for acc: expected number, list, or tuple")
+
+    ret = -1
+    if __ROS2__:
+        req = SetAccjRt.Request()
+        req.acc = acc_list
+
+        while not _ros2_set_accj_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Accj RT Service is not available, waiting...")
+
+        future = _ros2_set_accj_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_accj_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+    return ret
+
+def set_velx_rt(trans, rotation):
+    if type(trans) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for trans: expected float")
+    if type(rotation) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for rotation: expected float")
+        
+    ret = -1
+    if __ROS2__:
+        req = SetVelxRt.Request()
+        req.trans = trans
+        req.rotation = rotation
+
+        while not _ros2_set_velx_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Velx RT Service is not available, waiting...")
+
+        future = _ros2_set_velx_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_velx_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+    return ret
+
+def set_accx_rt(trans, rotation):
+    if type(trans) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for trans: expected float")
+    if type(rotation) != float:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for rotation: expected float")
+
+    ret = -1
+    if __ROS2__:
+        req = SetAccxRt.Request()
+        req.trans = trans
+        req.rotation = rotation
+
+        while not _ros2_set_accx_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set Accx RT Service is not available, waiting...")
+
+        future = _ros2_set_accx_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_accx_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+    return ret
+
+def read_data_rt():
+    ret = None # Default to None
+    # ROS2 service call
+    if __ROS2__:
+        req = ReadDataRt.Request()
+
+        while not _ros2_read_data_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Read Data RT Service is not available, waiting...")
+
+        future = _ros2_read_data_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('read_data_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = result.data
+            else:
+                g_node.get_logger().error('read_data_rt Service call returned None')
+    return ret
+
+def write_data_rt(external_force_torque, external_digital_input, external_digital_output, external_analog_input, external_analog_output):
+    if type(external_force_torque) not in (list, tuple) or len(external_force_torque) != 6:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_force_torque: expected list/tuple of 6 floats")
+    if type(external_digital_input) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_digital_input: expected int")
+    if type(external_digital_output) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_digital_output: expected int")
+    if type(external_analog_input) not in (list, tuple) or len(external_analog_input) != 6:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_analog_input: expected list/tuple of 6 floats")
+    if type(external_analog_output) not in (list, tuple) or len(external_analog_output) != 6:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for external_analog_output: expected list/tuple of 6 floats")
+
+    ret = -1
+    # ROS2 service call
+    if __ROS2__:
+        req = WriteDataRt.Request()
+        req.external_force_torque = external_force_torque
+        req.external_digital_input = external_digital_input
+        req.external_digital_output = external_digital_output
+        req.external_analog_input = external_analog_input
+        req.external_analog_output = external_analog_output
+
+        while not _ros2_write_data_rt.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Write Data RT Service is not available, waiting...")
+
+        future = _ros2_write_data_rt.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('write_data_rt Service call failed: %r' % (e,))
+        else:
+            if result is not None:
+                ret = 0 if result.success else -1
+            else:
+                g_node.get_logger().error('write_data_rt Service call returned None')
     return ret
 
 def movej(pos, vel=None, acc=None, time=None, radius=None, mod= DR_MV_MOD_ABS, ra=DR_MV_RA_DUPLICATE, v=None, a=None, t=None, r=None):
@@ -5944,10 +6995,8 @@ class CDsrRobot:
                 if result == None:
                     ret = -1    
                 else:     
-                    pos = list(result.pos)  # Convert tuple to list   
-                    # set posj
-                    cur_pos = posj(pos)
-                    ret = cur_pos           
+                    cur_pos = posj(list(result.pos))
+                    ret = _check_output_joint(cur_pos)      
         return ret
 
     def get_current_velj(self):
@@ -5965,7 +7014,8 @@ class CDsrRobot:
                 if result == None:
                     ret = -1    
                 else:        
-                    ret = list(result.joint_speed)  # Convert tuple to list            
+                    vel_list = list(result.joint_speed)
+                    ret = _check_output_joint(vel_list)
         return ret
 
     def get_desired_posj(self):

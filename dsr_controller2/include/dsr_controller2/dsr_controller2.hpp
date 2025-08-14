@@ -1,10 +1,23 @@
-/*
+/*********************************************************************
+ *
  * dsr_controller2
  * Author: Minsoo Song (minsoo.song@doosan.com)
  *
- * Copyright (c) 2024 Doosan Robotics
- * Use of this source code is governed by the BSD, see LICENSE
-*/
+ * Copyright (c) 2025 Doosan Robotics
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *********************************************************************/
 
 #ifndef DSR_CONTROLLER2__DSR_CONTROLLER2_HPP_
 #define DSR_CONTROLLER2__DSR_CONTROLLER2_HPP_
@@ -33,7 +46,6 @@
 #include <dsr_msgs2/msg/robot_error.hpp>
 #include <dsr_msgs2/msg/robot_state.hpp>
 #include <dsr_msgs2/msg/robot_stop.hpp>
-#include <dsr_msgs2/msg/jog_multi_axis.hpp>
 #include <dsr_msgs2/msg/alter_motion_stream.hpp>
 #include <dsr_msgs2/msg/servoj_stream.hpp>
 #include <dsr_msgs2/msg/servol_stream.hpp>
@@ -521,7 +533,6 @@ protected:
   // We may need to distinguish the callback group based on the traits of the services.
   rclcpp::CallbackGroup::SharedPtr cb_group_;
 
-  rclcpp::Subscription<dsr_msgs2::msg::JogMultiAxis>::SharedPtr        m_sub_jog_multi_axis;
   rclcpp::Subscription<dsr_msgs2::msg::AlterMotionStream>::SharedPtr   m_sub_alter_motion_stream;
   rclcpp::Subscription<dsr_msgs2::msg::ServojStream>::SharedPtr        m_sub_servoj_stream;
   rclcpp::Subscription<dsr_msgs2::msg::ServolStream>::SharedPtr        m_sub_servol_stream;
