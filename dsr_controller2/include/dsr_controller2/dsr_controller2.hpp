@@ -1,10 +1,23 @@
-/*
+/*********************************************************************
+ *
  * dsr_controller2
  * Author: Minsoo Song (minsoo.song@doosan.com)
  *
- * Copyright (c) 2024 Doosan Robotics
- * Use of this source code is governed by the BSD, see LICENSE
-*/
+ * Copyright (c) 2025 Doosan Robotics
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *********************************************************************/
 
 #ifndef DSR_CONTROLLER2__DSR_CONTROLLER2_HPP_
 #define DSR_CONTROLLER2__DSR_CONTROLLER2_HPP_
@@ -45,9 +58,6 @@
 #include <dsr_msgs2/msg/speedj_rt_stream.hpp>
 #include <dsr_msgs2/msg/speedl_rt_stream.hpp>
 #include <dsr_msgs2/msg/torque_rt_stream.hpp>
-#include <dsr_msgs2/msg/robot_error.hpp>
-#include <dsr_msgs2/msg/robot_disconnection.hpp>
-
 
 
 //system
@@ -481,78 +491,40 @@ typedef struct _ROBOT_JOINT_DATA
 std::string m_name;
 std::string m_model;
 
-bool g_bIsEmulatorMode = FALSE;
-bool g_bHasControlAuthority = FALSE;
-bool g_bTpInitailizingComplted = FALSE;
-bool g_bHommingCompleted = FALSE;
-bool init_state=TRUE;
-
-
-
-namespace DRFL_CALLBACKS {
-  void OnTpInitializingCompletedCB();
-  void OnHommingCompletedCB();
-  void OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/);
-  void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO);
-  void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO);
-  void OnMonitoringDataCB(const LPMONITORING_DATA pData);
-  void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
-  void OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus);
-  void OnMonitoringStateCB(const ROBOT_STATE eState);
-  void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl);
-  void OnLogAlarm(LPLOG_ALARM pLogAlarm);
-  void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
-  void OnDisConnected();
-}
-
-
 namespace dsr_controller2
 {
 class RobotController : public controller_interface::ControllerInterface
 {
 public:
-  CONTROLLER_INTERFACE_PUBLIC
   RobotController();
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::InterfaceConfiguration state_interface_configuration() const override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::return_type update(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::CallbackReturn on_init() override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::CallbackReturn on_configure(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::CallbackReturn on_activate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::CallbackReturn on_deactivate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::CallbackReturn on_cleanup(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::CallbackReturn on_error(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  CONTROLLER_INTERFACE_PUBLIC
   controller_interface::CallbackReturn on_shutdown(
     const rclcpp_lifecycle::State & previous_state) override;
   
-  rclcpp::Publisher<dsr_msgs2::msg::RobotDisconnection>::SharedPtr disconnect_pub_;
-  rclcpp::Publisher<dsr_msgs2::msg::RobotError>::SharedPtr error_log_pub_;
 protected:
   std::vector<std::string> joint_names_;
   std::vector<std::string> command_interface_types_;

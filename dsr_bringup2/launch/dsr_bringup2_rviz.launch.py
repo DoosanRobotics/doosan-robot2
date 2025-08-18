@@ -2,8 +2,18 @@
 #  dsr_bringup2
 #  Author: Minsoo Song (minsoo.song@doosan.com)
 #  
-#  Copyright (c) 2024 Doosan Robotics
-#  Use of this source code is governed by the BSD, see LICENSE
+#  Copyright (c) 2025 Doosan Robotics
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 # 
 
 import os
@@ -59,12 +69,6 @@ def generate_launch_description():
                 ]
             ),
             ".urdf.xacro",
-            " name:=", LaunchConfiguration('name'),
-            " host:=", LaunchConfiguration('host'),
-            " rt_host:=", LaunchConfiguration('rt_host'),
-            " port:=", LaunchConfiguration('port'),
-            " mode:=", LaunchConfiguration('mode'),
-            " model:=", LaunchConfiguration('model'),
         ]
     )
 
@@ -79,6 +83,27 @@ def generate_launch_description():
     )
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
+    )
+    
+    set_config_node = Node(
+        package="dsr_bringup2",
+        executable="set_config",
+        namespace=LaunchConfiguration('name'),
+        parameters=[
+            {"name":    LaunchConfiguration('name')  }, 
+            {"rate":    100         },
+            {"standby": 5000        },
+            {"command": True        },
+            {"host":    LaunchConfiguration('host')  },
+            {"port":    LaunchConfiguration('port')  },
+            {"mode":    LaunchConfiguration('mode')  },
+            {"model":   LaunchConfiguration('model') },
+            {"gripper": "none"      },
+            {"mobile":  "none"      },
+            {"rt_host":  LaunchConfiguration('rt_host')      },
+            #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
+        ],
+        output="screen",
     )
     
     run_emulator_node = Node(
@@ -117,19 +142,15 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
+        # remappings=[
+        #     (
+        #         "/joint_states",
+        #         "/dsr/joint_states",
+        #     ),
+        # ],
         parameters=[{
-            'robot_description': Command([
-                'xacro', ' ', xacro_path, '/', LaunchConfiguration('model'),
-                '.urdf.xacro color:=', LaunchConfiguration('color'),
-                " name:=", LaunchConfiguration('name'),
-                " host:=", LaunchConfiguration('host'),
-                " rt_host:=", LaunchConfiguration('rt_host'),
-                " port:=", LaunchConfiguration('port'),
-                " mode:=", LaunchConfiguration('mode'),
-                " model:=", LaunchConfiguration('model'),
-                ]),         
-        }]
-    )
+        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
+    }])
     
     rviz_node = Node(
         package="rviz2",
@@ -179,13 +200,22 @@ def generate_launch_description():
         )
     )
     
+    # Delay start of robot_controller after `joint_state_broadcaster`
+    delay_control_node_after_connection_node = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=set_config_node,
+            on_exit=[control_node],
+        )
+    )
+    
     nodes = [
+        set_config_node,
         run_emulator_node,
         robot_state_pub_node,
         robot_controller_spawner,
         joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
-        control_node,
+        delay_control_node_after_connection_node,
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

@@ -16,13 +16,12 @@ setup(
     maintainer='gossi',
     maintainer_email='mincheol710313@gmail.com',
     description='TODO: Package description',
-    license='BSD',
+    license='Apache License 2.0',    
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
                 'dance = dsr_example.demo.dance_m1013:main',
                 'single_robot_simple = dsr_example.simple.single_robot_simple:main',
-                'slope_demo = dsr_example.demo.slope_demo:main',
         ],
     },
 )
