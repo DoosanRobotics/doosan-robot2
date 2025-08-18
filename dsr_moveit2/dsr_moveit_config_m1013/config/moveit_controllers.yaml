@@ -5,6 +5,7 @@ moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControll
 moveit_simple_controller_manager:
   controller_names:
     - dsr_moveit_controller
+    - gripper_controller
 
   dsr_moveit_controller:
     type: FollowJointTrajectory
@@ -17,3 +18,9 @@ moveit_simple_controller_manager:
       - joint_6
     action_ns: follow_joint_trajectory
     default: true
+
+  gripper_controller:
+    type: FollowJointTrajectory
+    joints:
+      - robotiq_85_left_knuckle_joint
+    action_ns: follow_joint_trajectory

@@ -144,35 +144,74 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         return CallbackReturn::ERROR;
     }
 
-    // Initialize joint-related vectors based on the number of joints (DOF).
-    int dof = info_.joints.size(); // number of joints from hardware_info
-    joint_position_.assign(dof, 0);
-    joint_velocities_.assign(dof, 0);
-    joint_position_command_.assign(dof, 0);
-    joint_velocities_command_.assign(dof, 0);
-
-    if(dof == 0) {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "[on_init] No joints found!");
-        return CallbackReturn::ERROR;
-    }
-
-    // Initialize hardware joint mapping:
-    // Maps "joint_X" names to zero-based indices (e.g., joint_1 → 0).
-    // This ensures correct indexing when reading/writing hardware states
-    hw_mapping_.clear();
-    for (size_t i = 0; i < info.joints.size(); ++i)
+    // Separate arm joints from gripper joints
+    std::vector<std::string> arm_joints;
+    std::vector<std::string> gripper_joints;
+    
+    for (const auto & joint : info.joints)
     {
-        const std::string & name = info.joints[i].name;
-        if (name.rfind("joint_", 0) == 0) {
-            int hw_index = std::stoi(name.substr(6)) - 1;
-            hw_mapping_.push_back(hw_index);
-            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
-                        "[on_init] Mapping active joint '%s' to hw_index %d",
-                        name.c_str(), hw_index);
+        if (joint.name.find("robotiq") != std::string::npos) {
+            gripper_joints.push_back(joint.name);
+        } else if (joint.name.rfind("joint_", 0) == 0) {
+            arm_joints.push_back(joint.name);
         }
     }
 
-    for (size_t i = 0; i < info_.joints.size(); ++i)
+    // Validate we have exactly 6 arm joints and 1 gripper joint
+    if (arm_joints.size() != 6) {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                     "Expected 6 arm joints, but found %zu", arm_joints.size());
+        return CallbackReturn::ERROR;
+    }
+    
+    if (gripper_joints.size() != 1) {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                     "Expected 1 gripper joint, but found %zu", gripper_joints.size());
+        return CallbackReturn::ERROR;
+    }
+
+    // Initialize vectors for total joints (arm + gripper)
+    int total_dof = arm_joints.size() + gripper_joints.size(); // Should be 7
+    joint_position_.assign(total_dof, 0);
+    joint_velocities_.assign(total_dof, 0);
+    joint_position_command_.assign(total_dof, 0);
+    joint_velocities_command_.assign(total_dof, 0);
+
+    // Initialize hardware joint mapping for arm joints only
+    hw_mapping_.clear();
+    arm_joint_indices_.clear();
+    gripper_joint_indices_.clear();
+    
+    for (size_t i = 0; i < info.joints.size(); ++i)
+    {
+        const auto & joint = info.joints[i];
+        
+        if (joint.name.find("robotiq") != std::string::npos) {
+            // This is a gripper joint
+            gripper_joint_indices_.push_back(i);
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                        "Gripper joint '%s' mapped to index %zu", joint.name.c_str(), i);
+        } else if (joint.name.rfind("joint_", 0) == 0) {
+            // This is an arm joint
+            int hw_index = std::stoi(joint.name.substr(6)) - 1; // joint_1 -> 0, joint_2 -> 1, etc.
+            hw_mapping_.push_back(hw_index);
+            arm_joint_indices_.push_back(i);
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                        "Arm joint '%s' mapped to hw_index %d, vector index %zu", 
+                        joint.name.c_str(), hw_index, i);
+        }
+    }
+
+
+    // After iterating through all joints, check if we found exactly 6.
+    if (hw_mapping_.size() != 6) {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                     "Expected 6 arm joints (joint_1 to joint_6), but found %zu. Halting.",
+                     hw_mapping_.size());
+        return CallbackReturn::ERROR;
+    }
+    
+    for (size_t i = 0; i < 6; ++i)
     {
         //const auto &j = info_.joints[i];
         // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
@@ -428,84 +467,77 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 
 std::vector<hardware_interface::StateInterface> DRHWInterface::export_state_interfaces()
 {
-  std::vector<hardware_interface::StateInterface> state_interfaces;
-    // std::vector<size_t> sorted_indices(joint_interfaces["position"].size());
-    // std::iota(sorted_indices.begin(), sorted_indices.end(), 0);  // 0, 1, 2, ..., N-1
-
-    // std::sort(sorted_indices.begin(), sorted_indices.end(), [&](size_t i, size_t j) {
-    //     std::string name_i = joint_interfaces["position"][i];
-    //     std::string name_j = joint_interfaces["position"][j];
-
-    //     int num_i = std::stoi(name_i.substr(name_i.find("_") + 1));
-    //     int num_j = std::stoi(name_j.substr(name_j.find("_") + 1));
-
-    //     return num_i < num_j;  // 숫자 크기 순으로 정렬
-    // });
-
-    // std::cout << "🔹 Sorted Joint Names: ";
-    // for (size_t i : sorted_indices) {
-    //     std::cout << joint_interfaces["position"][i] << " ";
-    // }
-    // std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<< std::endl;
-
-	for(size_t i=0; i<joint_interfaces["position"].size(); i++) {
-		state_interfaces.emplace_back(joint_interfaces["position"][i], "position", &joint_position_[i]);
-	}
-	// TODO(songms, leeminju) support velocity control.
-    for(size_t i=0; i<joint_interfaces["velocity"].size(); i++) {
-		state_interfaces.emplace_back(joint_interfaces["velocity"][i], "velocity", &joint_velocities_[i]);
-	}
-	// TODO(songms, leeminju) support effort control.
-	for(size_t i=0; i<joint_interfaces["effort"].size(); i++) {
-		state_interfaces.emplace_back(joint_interfaces["effort"][i], "effort", &joint_effort_[i]);
-	}
-  return state_interfaces;
+    std::vector<hardware_interface::StateInterface> state_interfaces;
+    
+    // Export interfaces in the same order as info_.joints (which matches our vectors)
+    for (size_t i = 0; i < info_.joints.size(); ++i)
+    {
+        const auto& joint = info_.joints[i];
+        
+        // Export position interface for all joints
+        for (const auto& interface : joint.state_interfaces)
+        {
+            if (interface.name == "position")
+            {
+                state_interfaces.emplace_back(joint.name, "position", &joint_position_[i]);
+            }
+            else if (interface.name == "velocity")
+            {
+                state_interfaces.emplace_back(joint.name, "velocity", &joint_velocities_[i]);
+            }
+            // Skip effort for now as mentioned in your code
+        }
+    }
+    
+    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), 
+                "Exported %zu state interfaces", state_interfaces.size());
+    
+    return state_interfaces;
 }
 
 std::vector<hardware_interface::CommandInterface> DRHWInterface::export_command_interfaces()
 {
-  std::vector<hardware_interface::CommandInterface> command_interfaces;
-    pre_joint_position_command_ = joint_position_command_;
-	for(size_t i=0; i<joint_comm_interfaces["position"].size(); i++) {
-		command_interfaces.emplace_back(joint_comm_interfaces["position"][i], "position", &joint_position_command_[i]);
-	}
-	for(size_t i=0; i<joint_comm_interfaces["velocity"].size(); i++) {
-		command_interfaces.emplace_back(joint_comm_interfaces["velocity"][i], "velocity", &joint_velocities_command_[i]);
-	}
-	// TODO(songms, leeminju) support effort control.
-	for(size_t i=0; i<joint_comm_interfaces["effort"].size(); i++) {
-		command_interfaces.emplace_back(joint_comm_interfaces["effort"][i], "effort", &joint_effort_command_[i]);
-	}
-  return command_interfaces;
+    std::vector<hardware_interface::CommandInterface> command_interfaces;
+    
+    // Export interfaces in the same order as info_.joints (which matches our vectors)
+    for (size_t i = 0; i < info_.joints.size(); ++i)
+    {
+        const auto& joint = info_.joints[i];
+        
+        // Export command interfaces for all joints
+        for (const auto& interface : joint.command_interfaces)
+        {
+            if (interface.name == "position")
+            {
+                command_interfaces.emplace_back(joint.name, "position", &joint_position_command_[i]);
+            }
+            else if (interface.name == "velocity")
+            {
+                command_interfaces.emplace_back(joint.name, "velocity", &joint_velocities_command_[i]);
+            }
+            // Skip effort for now
+        }
+    }
+    
+    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), 
+                "Exported %zu command interfaces", command_interfaces.size());
+    
+    return command_interfaces;
 }
 
 
 return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-
-    size_t dof = joint_position_.size(); // Get current DOF size dynamically from joint_position_ vector
-
+    // Handle arm joints (existing DRFL logic)
     if(m_mode == "real") 
     {
         const LPRT_OUTPUT_DATA_LIST data = Drfl.read_data_rt();
-        for (size_t i = 0; i < dof; i++) // Loop over DOF instead of fixed 6
+        for (size_t i = 0; i < arm_joint_indices_.size(); i++)
         {   
-            int hw_idx = hw_mapping_[i];  // Map logical joint index to hardware index
-            joint_position_[i]  = static_cast<float>(data->actual_joint_position[hw_idx] * (M_PI / 180.0f));
-            joint_velocities_[i] = static_cast<float>(data->actual_joint_velocity[hw_idx] * (M_PI / 180.0f));
-        // // [added] Log the joint data (real mode)
-        // std::ostringstream real_log;
-        // real_log << "[read][real] joint_position_: {";
-        // for (size_t i = 0; i < dof; ++i)
-        // {
-        //     real_log << joint_position_[i] << (i < dof - 1 ? ", " : "}, ");
-        // }
-        // real_log << "joint_velocities_: {";
-        // for (size_t i = 0; i < dof; ++i)
-        // {
-        //     real_log << joint_velocities_[i] << (i < dof - 1 ? ", " : "}");
-        // }
-        // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "%s", real_log.str().c_str());
+            size_t joint_idx = arm_joint_indices_[i];
+            int hw_idx = hw_mapping_[i];
+            joint_position_[joint_idx]  = static_cast<float>(data->actual_joint_position[hw_idx] * (M_PI / 180.0f));
+            joint_velocities_[joint_idx] = static_cast<float>(data->actual_joint_velocity[hw_idx] * (M_PI / 180.0f));
         }
     }
     else if(m_mode == "virtual")
@@ -513,40 +545,35 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
         LPROBOT_POSE pose = Drfl.GetCurrentPose();
         if(nullptr == pose)
         {
-        RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
-                    "[read] GetCurrentPose retrieves nullptr");
-        return return_type::ERROR; //? what effection of this to control node 
+            RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[read] GetCurrentPose retrieves nullptr");
+            return return_type::ERROR;
         }
-        for (size_t i = 0; i < dof; i++) // Loop over DOF instead of fixed 6
+        for (size_t i = 0; i < arm_joint_indices_.size(); i++)
         {   
-            //[added] test
-            int hw_idx = hw_mapping_[i]; // Map logical joint index to hardware index
-            joint_position_[i] = deg2rad(pose->_fPosition[hw_idx]);
+            size_t joint_idx = arm_joint_indices_[i];
+            int hw_idx = hw_mapping_[i];
+            joint_position_[joint_idx] = deg2rad(pose->_fPosition[hw_idx]);
         }
-
-        // // [added] Log the joint data (virtual mode)
-        // std::ostringstream virtual_log;
-        // virtual_log << "[read][virtual] joint_position_: {";
-        // for (size_t i = 0; i < dof; i++)
-        // {
-        //     virtual_log << joint_position_[i] << (i < dof - 1 ? ", " : "}");
-        // }
-        // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "%s", virtual_log.str().c_str());
     }
 
-    else 
+    // Handle gripper joints (mock behavior - follow command)
+    for (size_t i = 0; i < gripper_joint_indices_.size(); i++)
     {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), 
-            "'mode' is neither 'real' nor 'virtual.'" );
+        size_t joint_idx = gripper_joint_indices_[i];
+        // For mock gripper, just follow the command with some simple dynamics
+        double position_error = joint_position_command_[joint_idx] - joint_position_[joint_idx];
+        double max_velocity = 0.5; // rad/s - adjust as needed
+        double velocity_limit = std::min(max_velocity, std::max(-max_velocity, position_error * 10.0));
+        
+        joint_velocities_[joint_idx] = velocity_limit;
+        joint_position_[joint_idx] += velocity_limit * 0.01; // Assuming ~100Hz update rate
+        
+        // Clamp to joint limits
+        joint_position_[joint_idx] = std::max(0.0, std::min(0.8, joint_position_[joint_idx]));
     }
-    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[READ] joint_position_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-    //     ,joint_position_[0]
-    //     ,joint_position_[1]
-    //     ,joint_position_[2]
-    //     ,joint_position_[3]
-    //     ,joint_position_[4]
-    //     ,joint_position_[5]);
-  return return_type::OK;
+
+    return return_type::OK;
 }
 
 bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<double>& rhs) {
@@ -560,68 +587,33 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
 vector<vector<float>> joint_position_commands;
 return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
 {
-    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] dt  : %.3f", float(dt.seconds()) );
-    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_position_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-    //         ,joint_position_command_[0]
-    //         ,joint_position_command_[1]
-    //         ,joint_position_command_[2]
-    //         ,joint_position_command_[3]
-    //         ,joint_position_command_[4]
-    //         ,joint_position_command_[5]);
-    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_velocities_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-    //         ,joint_velocities_command_[0]
-    //         ,joint_velocities_command_[1]
-    //         ,joint_velocities_command_[2]
-    //         ,joint_velocities_command_[3]
-    //         ,joint_velocities_command_[4]
-    //         ,joint_velocities_command_[5]);
-
     static bool idle = false;
-    size_t dof = joint_position_command_.size(); // [modified] Get current DOF dynamically
 
-    // TODO: this seems to be a workaround. refer to hardware design of 'prepare_command_mode_switch'
-    // [note] Check if joint position command has changed significantly
-    if(positionCommandRunning(pre_joint_position_command_, joint_position_command_)) {
+    // Check if arm joint commands have changed
+    std::vector<double> arm_commands(6);
+    for (size_t i = 0; i < arm_joint_indices_.size(); i++)
+    {
+        arm_commands[i] = joint_position_command_[arm_joint_indices_[i]];
+    }
+
+    if(positionCommandRunning(pre_joint_position_command_, arm_commands)) {
         if(true == idle) 
         {
-            // This is workaround to overcome issues :
-            // move_joint (drfl) API internally sent safety_off right after moving. 
-            // which occurs problems like :
-            // "move_joint service command -> trajectory command => error ! "
             Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
             idle = false;
         }
 
-        // [modified] Use fixed-size array for compatibility with DRFL API
+        // Send commands to arm only (same logic as before but using arm_joint_indices_)
         float pos[6] = {0.0f};
         float targetVel[6] = {0.0f};
 
-        // Use hw_mapping_ to map logical joint indices to hardware indices
-        for (size_t i = 0; i < dof; i++) 
+        for (size_t i = 0; i < arm_joint_indices_.size(); i++) 
         {
+            size_t joint_idx = arm_joint_indices_[i];
             int hw_idx = hw_mapping_[i];
-            pos[hw_idx]      = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
-            targetVel[hw_idx] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
-        
-            // [DEBUG] Print joint name with its command
-            // RCLCPP_INFO(
-            //     rclcpp::get_logger("dsr_hw_interface2"),
-            //     "[write] Joint[%zu]: name=%s, pos=%.3f deg, vel=%.3f deg/s",
-            //     i,
-            //     info_.joints[i].name.c_str(),
-            //     pos[i],
-            //     targetVel[i]
-            // );
+            pos[hw_idx] = static_cast<float>(joint_position_command_[joint_idx] * (180.0f / M_PI));
+            targetVel[hw_idx] = static_cast<float>(joint_velocities_command_[joint_idx] * (180.0f / M_PI));
         }
-
-        // if (m_mode == "real") {
-        //     float margin = 1.5f;
-        //     std::vector<float> acc(dof, 0.0f);
-        //     Drfl.servoj_rt(pos.data(), targetVel.data(), acc.data(), float(dt.seconds() * margin));
-        // } else { // virtual
-        //     std::vector<float> target_vel_acc(dof, 70.0f);
-        //     Drfl.amovej(pos.data(), target_vel_acc.data(), target_vel_acc.data());
-        // }
 
         if (m_mode == "real")
         {
@@ -633,21 +625,16 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
             float target_vel_acc[6] = {70, 70, 70, 70, 70, 70};
             Drfl.amovej(pos, target_vel_acc, target_vel_acc);
         }
-        // // [added] Log the sent command
-        // std::ostringstream log_msg;
-        // log_msg << "[write] Sent joint commands (dof=" << dof << ") pos: {";
-        // for (size_t i = 0; i < dof; ++i) {
-        //     log_msg << pos[i] << (i < dof - 1 ? ", " : "}, vel: {");
-        // }
-        // for (size_t i = 0; i < dof; ++i) {
-        //     log_msg << targetVel[i] << (i < dof - 1 ? ", " : "}");
-        // }
-        // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "%s", log_msg.str().c_str());
-        pre_joint_position_command_ = joint_position_command_;
+        
+        pre_joint_position_command_ = arm_commands;
         return return_type::OK;
     }
+    
+    // For gripper joints, commands are handled in the read() method (mock behavior)
+    // No additional action needed here since we're simulating the gripper
+    
     idle = true;
-    pre_joint_position_command_ = joint_position_command_;
+    pre_joint_position_command_ = arm_commands;
     return return_type::OK;
 }
 

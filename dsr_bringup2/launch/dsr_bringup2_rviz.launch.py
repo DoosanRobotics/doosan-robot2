@@ -47,6 +47,7 @@ def generate_launch_description():
         DeclareLaunchArgument('port',  default_value = '12345',     description = 'ROBOT_PORT'     ),
         DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
         DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
+        DeclareLaunchArgument('gripper', default_value='none', description='Gripper model to attach'),
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
@@ -149,7 +150,7 @@ def generate_launch_description():
         #     ),
         # ],
         parameters=[{
-        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
+        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color'), ' gripper:=', LaunchConfiguration('gripper')])          
     }])
     
     rviz_node = Node(
@@ -167,6 +168,13 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         executable="spawner",
         arguments=["joint_state_broadcaster", "-c", "controller_manager"],
+    )
+
+    robotiq_gripper_controller_spawner = Node(
+        package="controller_manager",
+        namespace=LaunchConfiguration('name'),
+        executable="spawner",
+        arguments=["robotiq_gripper_controller", "-c", "controller_manager"],
     )
 
     robot_controller_spawner = Node(
@@ -200,11 +208,19 @@ def generate_launch_description():
         )
     )
     
+    # Delay gripper controller after robot controller (ADD THIS)
+    delay_gripper_controller_after_robot_controller = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=robot_controller_spawner,
+            on_exit=[robotiq_gripper_controller_spawner],
+        )
+    )
+    
     # Delay start of robot_controller after `joint_state_broadcaster`
     delay_control_node_after_connection_node = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=set_config_node,
-            on_exit=[control_node],
+            on_exit=[control_node],  # Remove robotiq_gripper_controller_spawner from here
         )
     )
     
@@ -212,8 +228,9 @@ def generate_launch_description():
         set_config_node,
         run_emulator_node,
         robot_state_pub_node,
-        robot_controller_spawner,
         joint_state_broadcaster_spawner,
+        delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
+        delay_gripper_controller_after_robot_controller,  # Add this line
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_control_node_after_connection_node,
     ]
