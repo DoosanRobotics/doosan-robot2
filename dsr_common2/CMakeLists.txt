@@ -12,6 +12,16 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 
+# Find Python for automatic version setting
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+# Install Python modules to site-packages
+install(DIRECTORY imp/ 
+  DESTINATION lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages/
+  FILES_MATCHING PATTERN "*.py"
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+)
+
 ament_package()
 
 #install(PROGRAMS 

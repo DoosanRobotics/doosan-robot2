@@ -29,18 +29,30 @@ include_directories(
 
 LINK_LIBRARIES(DRFL PocoFoundation PocoNet)
 
-if($ENV{ROS_DISTRO} STREQUAL "humble")                          
+if($ENV{ROS_DISTRO} STREQUAL "jazzy")                          
   LINK_DIRECTORIES ("${COMMON_LIB_FILES}/$ENV{ROS_DISTRO}/x86_64")
 else()
   message("Unknown ROS distro:")
   message($ENV{ROS_DISTRO})
 endif()
 
+add_executable(rt_init src/rt_init.cpp)
+ament_target_dependencies(rt_init rclcpp dsr_msgs2)
+
 add_executable(dsr_realtime_control src/realtime_control.cpp)
 ament_target_dependencies(dsr_realtime_control rclcpp dsr_msgs2)
 
+add_executable(rt_shutdown src/rt_shutdown.cpp)
+ament_target_dependencies(rt_shutdown rclcpp dsr_msgs2)
+
+add_executable(dsr_realtime_api src/realtime_api.cpp)
+ament_target_dependencies(dsr_realtime_api rclcpp dsr_msgs2 Eigen3)
+
 install(TARGETS
+  rt_init  
   dsr_realtime_control
+  rt_shutdown
+  dsr_realtime_api
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -5,7 +5,8 @@
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="mincheol710313@gmail.com">gossi</maintainer>
-  <license>BSD</license>
+  
+  <license>Apache License 2.0</license>
 
   <depend>rclpy</depend>
   <depend>dsr_common2</depend>

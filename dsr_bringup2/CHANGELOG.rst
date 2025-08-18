@@ -3,7 +3,7 @@ Changelog for package dsr_bringup2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 2.0.1 (2021-07-01)
 ------------------
-* update ROS2 Humble
+* update ROS2 Jazzy
 * change name from dsr_launcher2 to dsr_bringup2
 
 1.1.0 (2021-07-01)
