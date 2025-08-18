@@ -21,22 +21,6 @@
         <joint name="joint_5" value="0" />
         <joint name="joint_6" value="0" />
     </group_state>
-
-    
-    <!-- Define gripper group -->
-    <group name="gripper">
-        <joint name="robotiq_85_left_knuckle_joint" />
-    </group>
-
-    <end_effector name="gripper" parent_link="link_6" group="gripper" />
-
-    <group_state name="open" group="gripper">
-        <joint name="robotiq_85_left_knuckle_joint" value="0.0" />
-    </group_state>
-    <group_state name="close" group="gripper">
-        <joint name="robotiq_85_left_knuckle_joint" value="0.8" />
-    </group_state>
-
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="FixedBase" type="fixed" parent_frame="world" child_link="base_link" />
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
@@ -50,34 +34,4 @@
     <disable_collisions link1="link_3" link2="link_6" reason="Never" />
     <disable_collisions link1="link_4" link2="link_5" reason="Adjacent" />
     <disable_collisions link1="link_5" link2="link_6" reason="Adjacent" />
-
-    <disable_collisions link1="link_6" link2="robotiq_85_base_link" reason="Adjacent" />
-
-    <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_left_finger_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_left_inner_knuckle_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_left_knuckle_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_right_finger_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_base_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_left_finger_tip_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_left_inner_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_finger_link" link2="robotiq_85_left_knuckle_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_left_inner_knuckle_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_right_finger_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_right_finger_tip_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_right_inner_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_finger_tip_link" link2="robotiq_85_right_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_left_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_right_finger_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_right_finger_tip_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_right_inner_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_inner_knuckle_link" link2="robotiq_85_right_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_knuckle_link" link2="robotiq_85_right_finger_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_knuckle_link" link2="robotiq_85_right_inner_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_left_knuckle_link" link2="robotiq_85_right_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_right_finger_link" link2="robotiq_85_right_finger_tip_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_right_finger_link" link2="robotiq_85_right_inner_knuckle_link" reason="Never" />
-    <disable_collisions link1="robotiq_85_right_finger_link" link2="robotiq_85_right_knuckle_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_right_finger_tip_link" link2="robotiq_85_right_inner_knuckle_link" reason="Adjacent" />
-    <disable_collisions link1="robotiq_85_right_inner_knuckle_link" link2="robotiq_85_right_knuckle_link" reason="Never" />
 </robot>

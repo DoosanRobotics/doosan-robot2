@@ -39,6 +39,9 @@
 #include <unistd.h>     
 #include <math.h>
 #include "../../dsr_common2/include/DRFLEx.h"
+
+#include <algorithm>  // <-- 추가
+
 using namespace std;
 using namespace chrono;
 using namespace DRAFramework;
@@ -144,74 +147,38 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         return CallbackReturn::ERROR;
     }
 
-    // Separate arm joints from gripper joints
-    std::vector<std::string> arm_joints;
-    std::vector<std::string> gripper_joints;
-    
-    for (const auto & joint : info.joints)
-    {
-        if (joint.name.find("robotiq") != std::string::npos) {
-            gripper_joints.push_back(joint.name);
-        } else if (joint.name.rfind("joint_", 0) == 0) {
-            arm_joints.push_back(joint.name);
-        }
-    }
+    // Initialize joint-related vectors based on the number of joints (DOF).
+    int dof = info_.joints.size(); // number of joints from hardware_info
+    joint_position_.assign(dof, 0);
+    joint_velocities_.assign(dof, 0);
+    joint_position_command_.assign(dof, 0);
+    joint_velocities_command_.assign(dof, 0);
 
-    // Validate we have exactly 6 arm joints and 1 gripper joint
-    if (arm_joints.size() != 6) {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
-                     "Expected 6 arm joints, but found %zu", arm_joints.size());
-        return CallbackReturn::ERROR;
-    }
-    
-    if (gripper_joints.size() != 1) {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
-                     "Expected 1 gripper joint, but found %zu", gripper_joints.size());
+    if(dof == 0) {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "[on_init] No joints found!");
         return CallbackReturn::ERROR;
     }
 
-    // Initialize vectors for total joints (arm + gripper)
-    int total_dof = arm_joints.size() + gripper_joints.size(); // Should be 7
-    joint_position_.assign(total_dof, 0);
-    joint_velocities_.assign(total_dof, 0);
-    joint_position_command_.assign(total_dof, 0);
-    joint_velocities_command_.assign(total_dof, 0);
-
-    // Initialize hardware joint mapping for arm joints only
+    // Initialize hardware joint mapping:
+    // Maps "joint_X" names to zero-based indices (e.g., joint_1 → 0).
+    // This ensures correct indexing when reading/writing hardware states
     hw_mapping_.clear();
-    arm_joint_indices_.clear();
-    gripper_joint_indices_.clear();
-    
     for (size_t i = 0; i < info.joints.size(); ++i)
     {
-        const auto & joint = info.joints[i];
-        
-        if (joint.name.find("robotiq") != std::string::npos) {
-            // This is a gripper joint
-            gripper_joint_indices_.push_back(i);
-            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
-                        "Gripper joint '%s' mapped to index %zu", joint.name.c_str(), i);
-        } else if (joint.name.rfind("joint_", 0) == 0) {
-            // This is an arm joint
-            int hw_index = std::stoi(joint.name.substr(6)) - 1; // joint_1 -> 0, joint_2 -> 1, etc.
+        const std::string & name = info.joints[i].name;
+        if (name.rfind("joint_", 0) == 0) {
+            int hw_index = std::stoi(name.substr(6)) - 1;
             hw_mapping_.push_back(hw_index);
-            arm_joint_indices_.push_back(i);
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
-                        "Arm joint '%s' mapped to hw_index %d, vector index %zu", 
-                        joint.name.c_str(), hw_index, i);
+                        "[on_init] Mapping active joint '%s' to hw_index %d",
+                        name.c_str(), hw_index);
         }
     }
 
+    size_t arm = hw_mapping_.size();
+    pre_joint_position_command_.assign(arm, 0.0);
 
-    // After iterating through all joints, check if we found exactly 6.
-    if (hw_mapping_.size() != 6) {
-        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
-                     "Expected 6 arm joints (joint_1 to joint_6), but found %zu. Halting.",
-                     hw_mapping_.size());
-        return CallbackReturn::ERROR;
-    }
-    
-    for (size_t i = 0; i < 6; ++i)
+    for (size_t i = 0; i < info_.joints.size(); ++i)
     {
         //const auto &j = info_.joints[i];
         // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
@@ -467,114 +434,125 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 
 std::vector<hardware_interface::StateInterface> DRHWInterface::export_state_interfaces()
 {
-    std::vector<hardware_interface::StateInterface> state_interfaces;
-    
-    // Export interfaces in the same order as info_.joints (which matches our vectors)
-    for (size_t i = 0; i < info_.joints.size(); ++i)
-    {
-        const auto& joint = info_.joints[i];
-        
-        // Export position interface for all joints
-        for (const auto& interface : joint.state_interfaces)
-        {
-            if (interface.name == "position")
-            {
-                state_interfaces.emplace_back(joint.name, "position", &joint_position_[i]);
-            }
-            else if (interface.name == "velocity")
-            {
-                state_interfaces.emplace_back(joint.name, "velocity", &joint_velocities_[i]);
-            }
-            // Skip effort for now as mentioned in your code
-        }
-    }
-    
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), 
-                "Exported %zu state interfaces", state_interfaces.size());
-    
-    return state_interfaces;
+  std::vector<hardware_interface::StateInterface> state_interfaces;
+    // std::vector<size_t> sorted_indices(joint_interfaces["position"].size());
+    // std::iota(sorted_indices.begin(), sorted_indices.end(), 0);  // 0, 1, 2, ..., N-1
+
+    // std::sort(sorted_indices.begin(), sorted_indices.end(), [&](size_t i, size_t j) {
+    //     std::string name_i = joint_interfaces["position"][i];
+    //     std::string name_j = joint_interfaces["position"][j];
+
+    //     int num_i = std::stoi(name_i.substr(name_i.find("_") + 1));
+    //     int num_j = std::stoi(name_j.substr(name_j.find("_") + 1));
+
+    //     return num_i < num_j;  // 숫자 크기 순으로 정렬
+    // });
+
+    // std::cout << "🔹 Sorted Joint Names: ";
+    // for (size_t i : sorted_indices) {
+    //     std::cout << joint_interfaces["position"][i] << " ";
+    // }
+    // std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<< std::endl;
+
+	for(size_t i=0; i<joint_interfaces["position"].size(); i++) {
+		state_interfaces.emplace_back(joint_interfaces["position"][i], "position", &joint_position_[i]);
+	}
+	// TODO(songms, leeminju) support velocity control.
+    for(size_t i=0; i<joint_interfaces["velocity"].size(); i++) {
+		state_interfaces.emplace_back(joint_interfaces["velocity"][i], "velocity", &joint_velocities_[i]);
+	}
+	// TODO(songms, leeminju) support effort control.
+	for(size_t i=0; i<joint_interfaces["effort"].size(); i++) {
+		state_interfaces.emplace_back(joint_interfaces["effort"][i], "effort", &joint_effort_[i]);
+	}
+  return state_interfaces;
 }
 
 std::vector<hardware_interface::CommandInterface> DRHWInterface::export_command_interfaces()
 {
-    std::vector<hardware_interface::CommandInterface> command_interfaces;
-    
-    // Export interfaces in the same order as info_.joints (which matches our vectors)
-    for (size_t i = 0; i < info_.joints.size(); ++i)
-    {
-        const auto& joint = info_.joints[i];
-        
-        // Export command interfaces for all joints
-        for (const auto& interface : joint.command_interfaces)
-        {
-            if (interface.name == "position")
-            {
-                command_interfaces.emplace_back(joint.name, "position", &joint_position_command_[i]);
-            }
-            else if (interface.name == "velocity")
-            {
-                command_interfaces.emplace_back(joint.name, "velocity", &joint_velocities_command_[i]);
-            }
-            // Skip effort for now
-        }
-    }
-    
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), 
-                "Exported %zu command interfaces", command_interfaces.size());
-    
-    return command_interfaces;
+  std::vector<hardware_interface::CommandInterface> command_interfaces;
+    pre_joint_position_command_ = joint_position_command_;
+	for(size_t i=0; i<joint_comm_interfaces["position"].size(); i++) {
+		command_interfaces.emplace_back(joint_comm_interfaces["position"][i], "position", &joint_position_command_[i]);
+	}
+	for(size_t i=0; i<joint_comm_interfaces["velocity"].size(); i++) {
+		command_interfaces.emplace_back(joint_comm_interfaces["velocity"][i], "velocity", &joint_velocities_command_[i]);
+	}
+	// TODO(songms, leeminju) support effort control.
+	for(size_t i=0; i<joint_comm_interfaces["effort"].size(); i++) {
+		command_interfaces.emplace_back(joint_comm_interfaces["effort"][i], "effort", &joint_effort_command_[i]);
+	}
+  return command_interfaces;
 }
 
 
 return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-    // Handle arm joints (existing DRFL logic)
-    if(m_mode == "real") 
+    // 전체 조인트 수(팔 + 그리퍼)
+    const size_t dof = joint_position_.size();
+    // 실제 팔 관절 수 (hw_mapping_ 에 매핑된 개수)
+    const size_t arm = hw_mapping_.size();
+
+    if (m_mode == "real")
     {
         const LPRT_OUTPUT_DATA_LIST data = Drfl.read_data_rt();
-        for (size_t i = 0; i < arm_joint_indices_.size(); i++)
-        {   
-            size_t joint_idx = arm_joint_indices_[i];
-            int hw_idx = hw_mapping_[i];
-            joint_position_[joint_idx]  = static_cast<float>(data->actual_joint_position[hw_idx] * (M_PI / 180.0f));
-            joint_velocities_[joint_idx] = static_cast<float>(data->actual_joint_velocity[hw_idx] * (M_PI / 180.0f));
-        }
-    }
-    else if(m_mode == "virtual")
-    {
-        LPROBOT_POSE pose = Drfl.GetCurrentPose();
-        if(nullptr == pose)
+        if (!data)
         {
             RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
-                        "[read] GetCurrentPose retrieves nullptr");
+                        "[read][real] read_data_rt() returned nullptr");
             return return_type::ERROR;
         }
-        for (size_t i = 0; i < arm_joint_indices_.size(); i++)
-        {   
-            size_t joint_idx = arm_joint_indices_[i];
-            int hw_idx = hw_mapping_[i];
-            joint_position_[joint_idx] = deg2rad(pose->_fPosition[hw_idx]);
+
+        // 팔 관절만 하드웨어로부터 갱신
+        for (size_t i = 0; i < arm; ++i)
+        {
+            const int hw_idx = hw_mapping_[i];
+            joint_position_[i]   = static_cast<double>(data->actual_joint_position[hw_idx]) * (M_PI / 180.0);
+            joint_velocities_[i] = static_cast<double>(data->actual_joint_velocity[hw_idx]) * (M_PI / 180.0);
         }
     }
-
-    // Handle gripper joints (mock behavior - follow command)
-    for (size_t i = 0; i < gripper_joint_indices_.size(); i++)
+    else if (m_mode == "virtual")
     {
-        size_t joint_idx = gripper_joint_indices_[i];
-        // For mock gripper, just follow the command with some simple dynamics
-        double position_error = joint_position_command_[joint_idx] - joint_position_[joint_idx];
-        double max_velocity = 0.5; // rad/s - adjust as needed
-        double velocity_limit = std::min(max_velocity, std::max(-max_velocity, position_error * 10.0));
-        
-        joint_velocities_[joint_idx] = velocity_limit;
-        joint_position_[joint_idx] += velocity_limit * 0.01; // Assuming ~100Hz update rate
-        
-        // Clamp to joint limits
-        joint_position_[joint_idx] = std::max(0.0, std::min(0.8, joint_position_[joint_idx]));
+        LPROBOT_POSE pose = Drfl.GetCurrentPose();
+        if (pose == nullptr)
+        {
+            RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[read][virtual] GetCurrentPose() returned nullptr");
+            return return_type::ERROR;
+        }
+
+        // 팔 관절만 가상 포즈로부터 갱신
+        for (size_t i = 0; i < arm; ++i)
+        {
+            const int hw_idx = hw_mapping_[i];
+            joint_position_[i] = deg2rad(pose->_fPosition[hw_idx]);
+            // 가상 모드 속도는 필요시 추정/초기화 (여기서는 유지)
+        }
+    }
+    else
+    {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                     "'mode' is neither 'real' nor 'virtual'.");
+        return return_type::ERROR;
+    }
+
+    // ---- 그리퍼(가상 추종) ----
+    // dof > arm 이면 마지막 조인트가 그리퍼라고 가정하고 모의 추종
+    if (dof > arm)
+    {
+        const size_t g = arm;                       // 그리퍼 조인트 인덱스(팔 다음)
+        const double e = joint_position_command_[g] - joint_position_[g];
+        const double vmax = 0.5;                    // rad/s
+        const double v = std::clamp(e * 10.0, -vmax, vmax);
+
+        joint_velocities_[g] = v;
+        // 약 100Hz 가정 → 0.01s
+        joint_position_[g] = std::clamp(joint_position_[g] + v * 0.01, 0.0, 0.8);
     }
 
     return return_type::OK;
 }
+
 
 bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<double>& rhs) {
     double var = 0;
@@ -587,54 +565,49 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
 vector<vector<float>> joint_position_commands;
 return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
 {
+    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] dt  : %.3f", float(dt.seconds()) );
+    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_position_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+    //         ,joint_position_command_[0]
+    //         ,joint_position_command_[1]
+    //         ,joint_position_command_[2]
+    //         ,joint_position_command_[3]
+    //         ,joint_position_command_[4]
+    //         ,joint_position_command_[5]);
+    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_velocities_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+    //         ,joint_velocities_command_[0]
+    //         ,joint_velocities_command_[1]
+    //         ,joint_velocities_command_[2]
+    //         ,joint_velocities_command_[3]
+    //         ,joint_velocities_command_[4]
+    //         ,joint_velocities_command_[5]);
+
     static bool idle = false;
+    size_t dof = joint_position_command_.size(); // [modified] Get current DOF dynamically
+    size_t arm = hw_mapping_.size();
 
-    // Check if arm joint commands have changed
-    std::vector<double> arm_commands(6);
-    for (size_t i = 0; i < arm_joint_indices_.size(); i++)
-    {
-        arm_commands[i] = joint_position_command_[arm_joint_indices_[i]];
-    }
-
-    if(positionCommandRunning(pre_joint_position_command_, arm_commands)) {
-        if(true == idle) 
-        {
-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
-            idle = false;
-        }
-
-        // Send commands to arm only (same logic as before but using arm_joint_indices_)
-        float pos[6] = {0.0f};
-        float targetVel[6] = {0.0f};
-
-        for (size_t i = 0; i < arm_joint_indices_.size(); i++) 
-        {
-            size_t joint_idx = arm_joint_indices_[i];
-            int hw_idx = hw_mapping_[i];
-            pos[hw_idx] = static_cast<float>(joint_position_command_[joint_idx] * (180.0f / M_PI));
-            targetVel[hw_idx] = static_cast<float>(joint_velocities_command_[joint_idx] * (180.0f / M_PI));
-        }
-
-        if (m_mode == "real")
-        {
-            float acc[6] = {0};
-            float margin = 1.5f;
-            Drfl.servoj_rt(pos, targetVel, acc, float(dt.seconds() * margin));
-        }
-        else {
-            float target_vel_acc[6] = {70, 70, 70, 70, 70, 70};
-            Drfl.amovej(pos, target_vel_acc, target_vel_acc);
-        }
-        
-        pre_joint_position_command_ = arm_commands;
-        return return_type::OK;
-    }
     
-    // For gripper joints, commands are handled in the read() method (mock behavior)
-    // No additional action needed here since we're simulating the gripper
-    
-    idle = true;
-    pre_joint_position_command_ = arm_commands;
+    // 팔 명령만 추출해 변화 감지
+    std::vector<double> arm_cmd(arm);
+    for (size_t i = 0; i < arm; ++i) arm_cmd[i] = joint_position_command_[i];
+
+    if (positionCommandRunning(pre_joint_position_command_, arm_cmd)) {
+    float pos[6] = {0}, vel[6] = {0};           // 항상 6칸
+    for (size_t i = 0; i < arm; ++i) {
+        int hw = hw_mapping_[i];
+        pos[hw] = float(joint_position_command_[i] * 180.0/M_PI);
+        vel[hw] = float(joint_velocities_command_[i] * 180.0/M_PI);
+    }
+    if (m_mode == "real") {
+        float acc[6] = {0}, margin = 1.5f;
+        Drfl.servoj_rt(pos, vel, acc, float(dt.seconds()*margin));
+    } else {
+        float va[6] = {70,70,70,70,70,70};
+        Drfl.amovej(pos, va, va);
+    }
+    pre_joint_position_command_ = arm_cmd;
+    return return_type::OK;
+    }
+    pre_joint_position_command_ = arm_cmd;
     return return_type::OK;
 }
 
@@ -1114,4 +1087,3 @@ void DSRInterface::OnLogAlarm(LPLOG_ALARM pLogAlarm)
 PLUGINLIB_EXPORT_CLASS(
   dsr_hardware2::DRHWInterface, hardware_interface::SystemInterface)
       
-

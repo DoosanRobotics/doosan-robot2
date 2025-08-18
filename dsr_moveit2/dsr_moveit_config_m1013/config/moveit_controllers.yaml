@@ -1,26 +1,31 @@
-# MoveIt uses this configuration for controller management
+# # MoveIt uses this configuration for controller management
 
-moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+# moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
 
-moveit_simple_controller_manager:
-  controller_names:
-    - dsr_moveit_controller
-    - gripper_controller
+# moveit_simple_controller_manager:
+#   controller_names:
+#     - dsr_moveit_controller
 
-  dsr_moveit_controller:
-    type: FollowJointTrajectory
-    joints:
-      - joint_1
-      - joint_2
-      - joint_3
-      - joint_4
-      - joint_5
-      - joint_6
-    action_ns: follow_joint_trajectory
-    default: true
+#   dsr_moveit_controller:
+#     type: FollowJointTrajectory
+#     joints:
+#       - joint_1
+#       - joint_2
+#       - joint_3
+#       - joint_4
+#       - joint_5
+#       - joint_6
+#     action_ns: follow_joint_trajectory
+#     default: true
 
-  gripper_controller:
-    type: FollowJointTrajectory
-    joints:
-      - robotiq_85_left_knuckle_joint
-    action_ns: follow_joint_trajectory
+# MoveIt uses this configuration for controller management via ros2_control
+moveit_controller_manager: ros2_control_manager/MoveItControllerManager
+
+# ros2_control의 controller_manager 노드 이름
+# 네임스페이스가 없으면 그대로 '/controller_manager'
+# (예: name:=dsr01 를 쓰면 '/dsr01/controller_manager' 로 바꾸세요)
+controller_manager_name: /controller_manager
+
+# (옵션) 기본 사용할 컨트롤러를 지정하고 싶다면 주석 해제
+# ros2_control_plugin:
+#   default_controller: dsr_moveit_controller

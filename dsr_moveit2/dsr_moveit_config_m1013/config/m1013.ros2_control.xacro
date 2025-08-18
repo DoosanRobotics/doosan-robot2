@@ -50,8 +50,6 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <!-- Import Gripper Control -->
-            <!-- <xacro:insert_block name="gripper_control_xacro"/> -->
 
         </ros2_control>
     </xacro:macro>

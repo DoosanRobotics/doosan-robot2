@@ -46,10 +46,11 @@ def include_launch_description(context):
             'mode': LaunchConfiguration('mode'), 
             'name': LaunchConfiguration('name'),
             'color': LaunchConfiguration('color'),
-            'model': LaunchConfiguration('model'),        
+            'model': LaunchConfiguration('model'),
             'host': LaunchConfiguration('host'),
             'port': LaunchConfiguration('port'),
             'rt_host': LaunchConfiguration('rt_host'),
+            'gripper': LaunchConfiguration('gripper'), # gripper 인자 추가
         }.items(),
     )]
 
@@ -60,10 +61,10 @@ def generate_launch_description():
         DeclareLaunchArgument('port',  default_value='12345', description='ROBOT_PORT'),
         DeclareLaunchArgument('mode',  default_value='virtual', description='OPERATION MODE'),
         DeclareLaunchArgument('model', default_value='m1013', description='ROBOT_MODEL'),
-        DeclareLaunchArgument('gripper', default_value='none', description='Gripper model to attach'),        
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER'), # gripper 인자 추가
     ]
 
     # Use OpaqueFunction to dynamically compute the path at launch time and include launch

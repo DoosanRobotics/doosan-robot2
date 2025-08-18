@@ -12,51 +12,74 @@
       dsr_controller2:
         type: dsr_controller2/RobotController
 
+      dsr_joint_trajectory:
+        type: dsr_joint_trajectory/RobotController
+
+      dsr_joint_publisher:
+        type: joint_state_controller/JointStateController
+
       dsr_position_controller:
         type: forward_command_controller/ForwardCommandController
 
-      robotiq_gripper_controller:
-        type: forward_command_controller/ForwardCommandController
+dsr_controller2:
+  ros__parameters:
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+      
+dsr_position_controller:
+  ros__parameters:
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+    interface_name: position
 
-  # Controller parameters at the same level as controller_manager
-  robotiq_gripper_controller:
-    ros__parameters:
-      joints: ["robotiq_85_left_knuckle_joint"]
-      interface_name: "position"
+    # command_interfaces:
+    #   - position
+    #   - velocity
 
-  dsr_controller2:
-    ros__parameters:
-      joints:
-        - joint_1
-        - joint_2
-        - joint_3
-        - joint_4
-        - joint_5
-        - joint_6
+    # state_interfaces:
+    #   - position
+    #   - velocity
 
-  dsr_position_controller:
-    ros__parameters:
-      joints:
-        - joint_1
-        - joint_2
-        - joint_3
-        - joint_4
-        - joint_5
-        - joint_6
-      interface_name: position
+dsr_joint_trajectory:
+  ros__parameters:
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
 
-  dsr_moveit_controller:
-    ros__parameters:
-      command_interfaces:
-        - position
-        - velocity
-      state_interfaces:
-        - position
-        - velocity
-      joints:
-        - joint_1
-        - joint_2
-        - joint_3
-        - joint_4
-        - joint_5
-        - joint_6
+    command_interfaces:
+      - position
+      - velocity
+
+    state_interfaces:
+      - position
+      - velocity
+
+dsr_moveit_controller:
+  ros__parameters:
+    command_interfaces:
+      - position
+      - velocity
+    state_interfaces:
+      - position
+      - velocity
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6

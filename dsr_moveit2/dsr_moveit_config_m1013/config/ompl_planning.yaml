@@ -173,15 +173,3 @@ manipulator:
     - SPARStwo
   projection_evaluator: joints(joint_1,joint_2)
   longest_valid_segment_fraction: 0.005
-
-gripper:
-  default_planner_config: RRTConnect
-  planner_configs:
-    - RRTConnect
-    - RRT
-    - EST
-    - LBKPIECE
-    - BKPIECE
-    - KPIECE
-  projection_evaluator: joints(robotiq_85_left_knuckle_joint)
-  longest_valid_segment_fraction: 0.01

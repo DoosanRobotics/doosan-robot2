@@ -8,20 +8,7 @@
     <!-- Import control_xacro -->
     <xacro:include filename="m1013.ros2_control.xacro" />
 
-    <!-- Import robotiq 2f85 gripper -->
-    <xacro:include filename="$(find dsr_description2)/urdf/robotiq_2f_85_macro.urdf.xacro" />
 
     <xacro:m1013_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
-
-    <!-- Attach Robotiq 2F-85 gripper -->
-    <xacro:robotiq_gripper
-        name="RobotiqGripper"
-        prefix=""
-        parent="link_6"
-        use_fake_hardware="true"
-        include_ros2_control="true">
-        <origin xyz="0 0 0" rpy="0 0 0" />
-    </xacro:robotiq_gripper>
-
 
 </robot>
