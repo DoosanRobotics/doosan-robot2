@@ -173,8 +173,3 @@ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=real model:=m1013 h
 ```bash
 ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=virtual model:=m1013 host:=127.0.0.1
 ```
-
-## Additional Resources
-
-[Demo Video](https://github.com/user-attachments/assets/bd91aea0-b8b6-4ce1-9040-9ab06630edbe)
-
