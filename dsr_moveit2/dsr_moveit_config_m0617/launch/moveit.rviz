@@ -19,6 +19,8 @@ Panels:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
+  - Class: robotiq_2f85_gripper/GripperControllerPanel
+    Name: Gripper Control
 Visualization Manager:
   Class: ""
   Displays:

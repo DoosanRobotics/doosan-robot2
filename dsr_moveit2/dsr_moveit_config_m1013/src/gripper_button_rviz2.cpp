@@ -54,7 +54,7 @@ public:
       if (action_client_->action_server_is_ready()) {
         open_button_->setEnabled(true);
         close_button_->setEnabled(true);
-        open_button_->setText("Open"); // Reset text in case it was showing status
+        open_button_->setText("Open");
         close_button_->setText("Close");
         server_check_timer_->stop();
       } else {
@@ -62,7 +62,7 @@ public:
         close_button_->setText("Waiting...");
       }
     });
-    server_check_timer_->start(500); // Check every 500ms
+    server_check_timer_->start(500);
   }
 
 private Q_SLOTS:
@@ -100,9 +100,8 @@ private:
   QTimer* server_check_timer_{nullptr};
 };
 
-}  // namespace dsr_moveit_config_m1013
+}
 
-// IMPORTANT: The class name here has changed!
 PLUGINLIB_EXPORT_CLASS(dsr_moveit_config_m1013::GripperControllerPanel, rviz_common::Panel)
 
 #include "gripper_button_rviz2.moc"
