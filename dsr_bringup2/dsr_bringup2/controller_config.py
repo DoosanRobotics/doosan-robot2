@@ -29,7 +29,6 @@ def adjust_dsr_controller_yaml(yaml_path, active_joints, passive_joints):
     with open(yaml_path, 'r') as f:
         data = yaml.safe_load(f)
 
-    # 팔(매니퓰레이터) 관련 컨트롤러만 갱신
     arm_controllers = [
         "dsr_controller2",
         "dsr_moveit_controller",
@@ -39,8 +38,7 @@ def adjust_dsr_controller_yaml(yaml_path, active_joints, passive_joints):
 
     arm_joints = [j for j in active_joints if "robotiq" not in j.lower()]
 
-
-    for ctrl in ["dsr_controller2", "dsr_moveit_controller", "dsr_position_controller", "dsr_joint_trajectory"]:
+    for ctrl in arm_controllers:
         if ctrl in data:
             params = data[ctrl].get("ros__parameters", {})
             params["joints"] = list(arm_joints)
@@ -57,19 +55,16 @@ def parse_joints_from_urdf(model, color=None, gripper='none'):
     if color is None:
         color = "white"  # default color
 
-    # xacro 경로
     xacro_file = os.path.join(
         get_package_share_directory('dsr_description2'),
         'xacro',
         f"{model}.urdf.xacro"
     )
 
-    # xacro 실행 (color / gripper 인자 전달)
     urdf_xml = subprocess.check_output(
-        ['xacro', xacro_file, f'color:={color}', f'gripper:={gripper}']
+        ['xacro', xacro_file, f'color:={color}', f'gripper:={gripper}'] # [modified] gripper argument 
     ).decode('utf-8')
 
-    # URDF 파싱
     robot_model = URDF.from_xml_string(urdf_xml)
 
     # 조인트 분리

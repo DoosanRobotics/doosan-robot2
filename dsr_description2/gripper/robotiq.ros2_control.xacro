@@ -1,12 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Robotiq Gripper ros2_control system (mode-aware) -->
   <xacro:arg name="mode" default="virtual"/>
   <xacro:arg name="mock_sensor_commands" default="true"/>
-  <xacro:arg name="com_port" default="/dev/ttyUSB0"/>
 
-  <!-- 조인트/시스템 이름을 파라미터화 (프리픽스 대응) -->
   <xacro:arg name="joint_name"  default="robotiq_85_left_knuckle_joint"/>
   <xacro:arg name="system_name" default="robotiq_gripper_system"/>
 
@@ -18,27 +15,23 @@
   <xacro:arg name="max_speed" default="0.150"/>
   <xacro:arg name="max_force" default="235.0"/>
 
-  <xacro:macro name="robotiq_gripper_system" params="
-      mode:=${mode}
-      com_port:=${com_port}
-      joint_name:=${joint_name}
-      system_name:=${system_name}
-      pos_min:=${pos_min}
-      pos_max:=${pos_max}
-      init_pos:=${init_pos}
-      speed_mult:=${speed_mult}
-      force_mult:=${force_mult}
-      max_speed:=${max_speed}
-      max_force:=${max_force}
-      mock_sensor_commands:=${mock_sensor_commands}">
+<xacro:macro name="robotiq_gripper_system" params="
+      mode
+      joint_name
+      system_name
+      pos_min
+      pos_max
+      init_pos
+      speed_mult
+      force_mult
+      max_speed
+      max_force
+      mock_sensor_commands">
 
-    <!-- REAL: 실제 하드웨어 드라이버 -->
     <xacro:if value="${mode == 'real'}">
       <ros2_control name="${system_name}" type="system">
         <hardware>
-          <!-- 실제 사용 드라이버 플러그인명 확인/수정 필요 -->
           <plugin>robotiq_driver/RobotiqGripperHardwareInterface</plugin>
-          <param name="COM_port">${com_port}</param>
           <param name="gripper_speed_multiplier">${speed_mult}</param>
           <param name="gripper_force_multiplier">${force_mult}</param>
           <param name="gripper_max_speed">${max_speed}</param>
@@ -58,7 +51,6 @@
       </ros2_control>
     </xacro:if>
 
-    <!-- VIRTUAL: 모의 하드웨어 -->
     <xacro:unless value="${mode == 'real'}">
       <ros2_control name="${system_name}" type="system">
         <hardware>
