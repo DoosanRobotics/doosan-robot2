@@ -6,6 +6,10 @@
   <xacro:arg name="mock_sensor_commands" default="true"/>
   <xacro:arg name="com_port" default="/dev/ttyUSB0"/>
 
+  <!-- 조인트/시스템 이름을 파라미터화 (프리픽스 대응) -->
+  <xacro:arg name="joint_name"  default="robotiq_85_left_knuckle_joint"/>
+  <xacro:arg name="system_name" default="robotiq_gripper_system"/>
+
   <xacro:arg name="pos_min" default="0.0"/>
   <xacro:arg name="pos_max" default="0.8"/>
   <xacro:arg name="init_pos" default="0.0"/>
@@ -17,6 +21,8 @@
   <xacro:macro name="robotiq_gripper_system" params="
       mode:=${mode}
       com_port:=${com_port}
+      joint_name:=${joint_name}
+      system_name:=${system_name}
       pos_min:=${pos_min}
       pos_max:=${pos_max}
       init_pos:=${init_pos}
@@ -26,9 +32,11 @@
       max_force:=${max_force}
       mock_sensor_commands:=${mock_sensor_commands}">
 
+    <!-- REAL: 실제 하드웨어 드라이버 -->
     <xacro:if value="${mode == 'real'}">
-      <ros2_control name="robotiq_gripper_system" type="system">
+      <ros2_control name="${system_name}" type="system">
         <hardware>
+          <!-- 실제 사용 드라이버 플러그인명 확인/수정 필요 -->
           <plugin>robotiq_driver/RobotiqGripperHardwareInterface</plugin>
           <param name="COM_port">${com_port}</param>
           <param name="gripper_speed_multiplier">${speed_mult}</param>
@@ -37,7 +45,7 @@
           <param name="gripper_max_force">${max_force}</param>
         </hardware>
 
-        <joint name="robotiq_85_left_knuckle_joint">
+        <joint name="${joint_name}">
           <command_interface name="position">
             <param name="min">${pos_min}</param>
             <param name="max">${pos_max}</param>
@@ -50,15 +58,16 @@
       </ros2_control>
     </xacro:if>
 
+    <!-- VIRTUAL: 모의 하드웨어 -->
     <xacro:unless value="${mode == 'real'}">
-      <ros2_control name="robotiq_gripper_system" type="system">
+      <ros2_control name="${system_name}" type="system">
         <hardware>
           <plugin>mock_components/GenericSystem</plugin>
           <param name="mock_sensor_commands">${mock_sensor_commands}</param>
           <param name="state_following_offset">0.0</param>
         </hardware>
 
-        <joint name="robotiq_85_left_knuckle_joint">
+        <joint name="${joint_name}">
           <command_interface name="position">
             <param name="min">${pos_min}</param>
             <param name="max">${pos_max}</param>

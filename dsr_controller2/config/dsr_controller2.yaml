@@ -83,3 +83,4 @@ dsr_moveit_controller:
       - joint_4
       - joint_5
       - joint_6
+
