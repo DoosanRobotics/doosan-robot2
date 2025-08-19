@@ -15,7 +15,7 @@ set(CMAKE_AUTOMOC ON)
 
 # Add this section to build your C++ file into a plugin library
 add_library(gripper_button_panel SHARED
-  src/gripper_button_rviz2.cpp
+  src/dsr_gripper_button_rviz2.cpp
 )
 target_link_libraries(gripper_button_panel PUBLIC
   Qt5::Widgets

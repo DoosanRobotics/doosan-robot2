@@ -104,4 +104,4 @@ private:
 
 PLUGINLIB_EXPORT_CLASS(dsr_moveit_config_m1013::GripperControllerPanel, rviz_common::Panel)
 
-#include "gripper_button_rviz2.moc"
+#include "dsr_gripper_button_rviz2.moc"
