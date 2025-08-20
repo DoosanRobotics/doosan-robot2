@@ -114,6 +114,12 @@
         </geometry>
         <material name="yellow"><color rgba="1 1 0 1"/></material>
       </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="0.004"/> 
+        </geometry>
+      </collision>
     </link>
 
     <link name="${prefix}gripper_tcp_opened">
@@ -129,6 +135,12 @@
         </geometry>
         <material name="yellow"><color rgba="1 1 0 1"/></material>
       </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="0.004"/>
+        </geometry>
+      </collision>
     </link>
     
     <joint name="${prefix}robotiq_85_base_joint" type="fixed">
