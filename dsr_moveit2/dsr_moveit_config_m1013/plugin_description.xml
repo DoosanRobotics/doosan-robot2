@@ -1,0 +1,8 @@
+<library path="gripper_button_panel">
+  <class
+      name="robotiq_2f85_gripper/GripperControllerPanel"
+      type="dsr_moveit_config_m1013::GripperControllerPanel"
+      base_class_type="rviz_common::Panel">
+    <description>Gripper open/close buttons using control_msgs/GripperCommand action.</description>
+  </class>
+</library>
