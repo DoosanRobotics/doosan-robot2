@@ -22,6 +22,7 @@ import subprocess
 from ament_index_python.packages import get_package_share_directory
 from urdf_parser_py.urdf import URDF
 
+
 def adjust_dsr_controller_yaml(yaml_path, active_joints, passive_joints):
     # Adjust dsr_controller2.yaml to replace the 'joints' list with active_joint and remove any 'passive_joints' entries.
     temp_yaml = "/tmp/adjusted_dsr_controller2.yaml"
@@ -51,28 +52,35 @@ def adjust_dsr_controller_yaml(yaml_path, active_joints, passive_joints):
 
     return temp_yaml
 
-def parse_joints_from_urdf(model, color=None):
-    # Parse URDF generated from a xacro file to extract active (non-fixed) and passive (fixed) joints.
-    if color is None:
-        color = "white"  # default color
 
-    # Build xacro file path
+def parse_joints_from_urdf(model, color=None, gripper='none'):
+    if color is None:
+        color = "white"
+
     xacro_file = os.path.join(
         get_package_share_directory('dsr_description2'),
         'xacro',
         f"{model}.urdf.xacro"
     )
 
-    # Execute xacro to generate URDF XML
     urdf_xml = subprocess.check_output(
-        ['xacro', xacro_file, f'color:={color}']
+        ['xacro', xacro_file, f'color:={color}', f'gripper:={gripper}']
     ).decode('utf-8')
 
-    # Parse URDF
     robot_model = URDF.from_xml_string(urdf_xml)
 
-    # Extract active and passive joints
-    active_joints = [j.name for j in robot_model.joints if j.type != "fixed"]
-    passive_joints = [j.name for j in robot_model.joints if j.type == "fixed"]
+    def is_active_joint(j):
+        if j.type == "fixed":
+            return False
+        if getattr(j, "mimic", None) is not None:
+            return False
+        return j.name.startswith("joint_")
+
+    active_joints = [j.name for j in robot_model.joints if is_active_joint(j)]
+
+    passive_joints = sorted({
+        j.name for j in robot_model.joints
+        if (j.type == "fixed" or getattr(j, "mimic", None) is not None) and j.name.startswith("joint_")
+    })
 
     return urdf_xml, active_joints, passive_joints

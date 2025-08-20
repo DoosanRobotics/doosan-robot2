@@ -1,0 +1,18 @@
+# gripper_controller.yaml
+
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+
+    gripper_position_controller:
+      type: position_controllers/GripperActionController
+
+gripper_position_controller:
+  ros__parameters:
+    action_monitor_rate: 20.0
+    allow_stalling: true
+    goal_tolerance: 0.01
+    joint: 'robotiq_85_left_knuckle_joint'
+    max_effort: 100.0
+    stall_timeout: 3.0
+    stall_velocity_threshold: 0.001

@@ -19,6 +19,8 @@ Panels:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
+  - Class: robotiq_2f85_gripper/GripperControllerPanel
+    Name: Gripper Control
 Visualization Manager:
   Class: ""
   Displays:
@@ -267,7 +269,7 @@ Visualization Manager:
         Colliding Link Color: 255; 0; 0
         Goal State Alpha: 1
         Goal State Color: 250; 128; 0
-        Interactive Marker Size: 0
+        Interactive Marker Size: 0.25
         Joint Violation Color: 255; 0; 255
         Planning Group: manipulator
         Query Goal State: true
