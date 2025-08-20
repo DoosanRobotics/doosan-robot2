@@ -28,29 +28,6 @@
       max_force
       mock_sensor_commands">
 
-    <xacro:if value="${mode == 'real'}">
-      <ros2_control name="${system_name}" type="system">
-        <hardware>
-          <plugin>robotiq_driver/RobotiqGripperHardwareInterface</plugin>
-          <param name="gripper_speed_multiplier">${speed_mult}</param>
-          <param name="gripper_force_multiplier">${force_mult}</param>
-          <param name="gripper_max_speed">${max_speed}</param>
-          <param name="gripper_max_force">${max_force}</param>
-        </hardware>
-
-        <joint name="${joint_name}">
-          <command_interface name="position">
-            <param name="min">${pos_min}</param>
-            <param name="max">${pos_max}</param>
-          </command_interface>
-          <state_interface name="position">
-            <param name="initial_value">${init_pos}</param>
-          </state_interface>
-          <state_interface name="velocity"/>
-        </joint>
-      </ros2_control>
-    </xacro:if>
-
     <xacro:unless value="${mode == 'real'}">
       <ros2_control name="${system_name}" type="system">
         <hardware>
