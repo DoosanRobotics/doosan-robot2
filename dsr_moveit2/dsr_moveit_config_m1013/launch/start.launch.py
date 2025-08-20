@@ -1,38 +1,49 @@
-#  dsr_moveit2 (reworked)
+# 
+#  dsr_moveit2
 #  Author: Minsoo Song (minsoo.song@doosan.com)
-#  License: Apache-2.0
+#  
+#  Copyright (c) 2025 Doosan Robotics
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+# 
 
 import os
 
 from launch import LaunchDescription
-from launch.actions import (
-    RegisterEventHandler, DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration
-)
+from launch.actions import RegisterEventHandler, DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration, TimerAction
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution, FindExecutable
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 
-# Moveit2
 from moveit_configs_utils import MoveItConfigsBuilder
-
-# dsr utils
 from dsr_bringup2.controller_config import adjust_dsr_controller_yaml, parse_joints_from_urdf
 
-
-# === [STEP 0] robot_description + controller_yaml 동적 결정 =====================
+# Generate robot_description and select controller YAML based on the URDF model.
 def generate_robot_description_action(context, *args, **kwargs):
     dynamic_yaml = LaunchConfiguration('dynamic_yaml').perform(context).lower() == 'true'
     model = LaunchConfiguration('model').perform(context)
     color = LaunchConfiguration('color').perform(context)
     gripper = LaunchConfiguration('gripper').perform(context)
 
-    # URDF 파싱
+    # Parse URDF to extract active and passive joints
     urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, gripper)
+    print(f"[DEBUG] model={model}, gripper={gripper}")
+    print(f"[DEBUG] active_joints={active_joints}")
+    print(f"[DEBUG] passive_joints={passive_joints}")
 
-    # controller.yaml 결정
+    # Decide controller YAML
     if dynamic_yaml:
         original_yaml = os.path.join(
             get_package_share_directory("dsr_controller2"),
@@ -60,35 +71,44 @@ def generate_robot_description_action(context, *args, **kwargs):
 
     return [
         SetLaunchConfiguration('robot_description', urdf_xml),
-        SetLaunchConfiguration('controller_yaml', adjusted_yaml)
+        SetLaunchConfiguration('controller_yaml', adjusted_yaml),
     ]
 
-
-# === [STEP 1] MoveGroup & RViz =================================================
-def rviz_node_function(context):
+def rviz_and_move_group_fn(context):
     model_value = LaunchConfiguration('model').perform(context)
-    package_name_str = f"dsr_moveit_config_{model_value}"
-    package_path_str = FindPackageShare(package_name_str).perform(context)
-    print("Package:", package_name_str)
-    print("Package Path:", package_path_str)
+    gui = LaunchConfiguration('gui').perform(context).lower() == 'true'
 
+    package_name = f"dsr_moveit_config_{model_value}"
+    package_path = FindPackageShare(package_name).perform(context)
+    print("MoveIt Config Package:", package_name)
+    print("Package Path:", package_path)
+
+    # 
     moveit_config = (
-        MoveItConfigsBuilder(model_value, "robot_description", package_name_str)
+        MoveItConfigsBuilder(model_value, "robot_description", package_name)
         .robot_description(file_path=f"config/{model_value}.urdf.xacro")
-        .robot_description_semantic(file_path="config/m1013.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
-        .planning_pipelines(
-            pipelines=["ompl", "chomp"],
-            default_planning_pipeline="ompl",
-            load_all=False
-        )
+        .planning_pipelines(pipelines=["ompl", "chomp"],      # List of planning pipelines to load (each loaded from config/<name>_planning.yaml)
+                            default_planning_pipeline="ompl", # Name of the default planning pipeline (used if none is explicitly selected)
+                            load_all= False                   # If pipelines is None: True loads all from config/default packages; False loads only from config package
+                            )
         .to_moveit_configs()
     )
 
-    # robot_description를 LaunchConfiguration 값으로 오버라이드
+    # SRDF xacro (allows gripper switch)
+    srdf_xacro_rel = "config/dsr.srdf.xacro"
+    robot_description_semantic = ParameterValue(
+        Command([
+            FindExecutable(name='xacro'), ' ',
+            PathJoinSubstitution([FindPackageShare(package_name), srdf_xacro_rel]), ' ', 'gripper:=', LaunchConfiguration('gripper')
+        ]),
+        value_type=str
+    )
+
     common_params = [
-        moveit_config.to_dict(),
-        {"robot_description": ParameterValue(LaunchConfiguration('robot_description'), value_type=str)}
+        moveit_config.to_dict(),  # base MoveIt params (will be overridden by later dicts if duplicated)
+        {"robot_description": ParameterValue(LaunchConfiguration('robot_description'), value_type=str)},
+        {"robot_description_semantic": robot_description_semantic},
     ]
 
     run_move_group_node = Node(
@@ -99,7 +119,7 @@ def rviz_node_function(context):
         parameters=common_params,
     )
 
-    rviz_base = os.path.join(get_package_share_directory(package_name_str), "launch")
+    rviz_base = os.path.join(get_package_share_directory(package_name), "launch")
     rviz_full_config = os.path.join(rviz_base, "moveit.rviz")
 
     rviz_node = Node(
@@ -112,15 +132,11 @@ def rviz_node_function(context):
     )
     return [run_move_group_node, rviz_node]
 
-
-# === [STEP 2] ros2_control_node (controller_manager) 구성 ======================
+# sets up the parameters for the controller manager node, if 'gripper' argument is setted, it additionally loads the 'gripper_controller.yaml' file
 def control_node_fn(context):
-    params = [{
-        "robot_description": ParameterValue(LaunchConfiguration('robot_description'), value_type=str)
-    }, LaunchConfiguration('controller_yaml')]
+    params = [{"robot_description": ParameterValue(LaunchConfiguration('robot_description'), value_type=str)}, LaunchConfiguration('controller_yaml')]
 
-    # gripper=robotique 이면 gripper_controller.yaml을 추가 로드
-    if LaunchConfiguration('gripper').perform(context) == 'robotique':
+    if LaunchConfiguration('gripper').perform(context) == 'robotiq_2f85':
         pkg_share = get_package_share_directory("dsr_controller2")
         gripper_yaml = os.path.join(pkg_share, "config", "gripper_controller.yaml")
         params.append(gripper_yaml)
@@ -135,13 +151,10 @@ def control_node_fn(context):
     )
     return [node]
 
-
-# === [STEP 3] 그리퍼 스포너 (조건부) ============================================
 def gripper_spawner_fn(context):
-    if LaunchConfiguration('gripper').perform(context) != 'robotique':
+    if LaunchConfiguration('gripper').perform(context) != 'robotiq_2f85':
         return []
 
-    # spawner에는 --controller-type 옵션이 없음. 타입은 YAML에 선언됨.
     return [Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
@@ -149,14 +162,10 @@ def gripper_spawner_fn(context):
         arguments=[
             "gripper_position_controller",
             "-c", "controller_manager",
-            # 필요 시 컨트롤러 개별 파라미터를 별도로 넘기려면 아래 주석 해제
-            # "--param-file", os.path.join(get_package_share_directory("dsr_controller2"), "config", "gripper_controller.yaml"),
         ],
         output="screen",
     )]
 
-
-# === 메인 Launch =================================================================
 def generate_launch_description():
     ARGUMENTS = [
         DeclareLaunchArgument('name',  default_value='', description='NAME_SPACE'),
@@ -169,12 +178,13 @@ def generate_launch_description():
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
         DeclareLaunchArgument('dynamic_yaml', default_value='false', description='Use dynamic controller.yaml'),
-        DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotique)'),
+        DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotiq_2f85)'),
     ]
 
+    # Build robot_description and select controller YAML
     robot_description_action = OpaqueFunction(function=generate_robot_description_action)
 
-    # 설정/에뮬레이터
+    # Run set_config
     set_config_node = Node(
         package="dsr_bringup2",
         executable="set_config",
@@ -195,6 +205,7 @@ def generate_launch_description():
         output="screen",
     )
 
+    # Run emulator
     run_emulator_node = Node(
         package="dsr_bringup2",
         executable="run_emulator",
@@ -215,9 +226,7 @@ def generate_launch_description():
         output="screen",
     )
 
-    # controller_manager (조건부 파라미터 포함)
-    control_node = OpaqueFunction(function=control_node_fn)
-
+    # Run robot_state_publisher
     robot_state_pub_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -229,6 +238,10 @@ def generate_launch_description():
         }],
     )
 
+    # Run ros2_control_node(controller_manager)
+    control_node = OpaqueFunction(function=control_node_fn)
+
+    # Spawn joint_state_broadcaster
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
@@ -236,6 +249,7 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster", "-c", "controller_manager"],
     )
 
+    # Spawn dsr_controller2
     robot_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
@@ -243,6 +257,7 @@ def generate_launch_description():
         arguments=["dsr_controller2", "-c", "controller_manager"],
     )
 
+    # Spawn dsr_moveit_controller
     dsr_moveit_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -250,20 +265,25 @@ def generate_launch_description():
         arguments=["dsr_moveit_controller", "-c", "controller_manager"],
     )
 
-    rviz_node = OpaqueFunction(function=rviz_node_function)
-    gripper_spawner = OpaqueFunction(function=gripper_spawner_fn)
+    # MoveGroup + (optional) RViz
+    rviz_and_move_group = OpaqueFunction(function=rviz_and_move_group_fn)
 
-    # === 이벤트 체인 ===
+    # A) After set_config exits, start controller manager and then (after a short delay) spawn joint_state_broadcaster.
     delay_control_node_after_set_config = RegisterEventHandler(
         OnProcessExit(
             target_action=set_config_node,
             on_exit=[
-                LogInfo(msg=">> [STEP 1 COMPLETED] set_config_node finished. Starting ros2_control_node..."),
-                control_node
+                LogInfo(msg=">> [STEP 1 COMPLETED] set_config finished. Starting ros2_control_node..."),
+                control_node,
+                TimerAction(period=1.0, actions=[
+                    LogInfo(msg=">> [STEP 1B] Spawning joint_state_broadcaster..."),
+                    joint_state_broadcaster_spawner
+                ]),
             ],
         )
     )
 
+    # B) Once joint_state_broadcaster is active, spawn dsr_controller2 (arm controller).
     delay_robot_controller_after_joint_state = RegisterEventHandler(
         OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -274,17 +294,18 @@ def generate_launch_description():
         )
     )
 
-    # dsr_controller2 활성 후: (조건부) 그리퍼, 이어서 MoveIt 컨트롤러 병렬로 진행
+    # C) After dsr_controller2 becomes active, (conditionally) spawn the gripper position controller.
     delay_gripper_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
             on_exit=[
-                LogInfo(msg=">> [STEP 3a] dsr_controller2 active. (cond) starting gripper_position_controller..."),
-                gripper_spawner
+                LogInfo(msg=">> [STEP 3A] dsr_controller2 active. (cond) starting gripper_position_controller..."),
+                OpaqueFunction(function=gripper_spawner_fn),
             ],
         )
     )
 
+    # D) After dsr_controller2 becomes active, spawn dsr_moveit_controller (MoveIt-compatible trajectory controller).
     delay_dsr_moveit_controller_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
@@ -295,12 +316,13 @@ def generate_launch_description():
         )
     )
 
+    # E) After dsr_moveit_controller is active, start MoveGroup (and RViz if gui=true).
     delay_rviz_after_moveit_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=dsr_moveit_controller_spawner,
             on_exit=[
-                LogInfo(msg=">> [STEP 4 COMPLETED] dsr_moveit_controller active. Launching MoveGroup + RViz2..."),
-                rviz_node
+                LogInfo(msg=">> [STEP 4 COMPLETED] dsr_moveit_controller active. Launching MoveGroup (+ RViz if gui=true)..."),
+                rviz_and_move_group
             ],
         )
     )
@@ -312,9 +334,8 @@ def generate_launch_description():
         run_emulator_node,
         robot_state_pub_node,
         delay_control_node_after_set_config,
-        joint_state_broadcaster_spawner,
         delay_robot_controller_after_joint_state,
-        delay_gripper_after_robot_controller,            # (조건부) 그리퍼
+        delay_gripper_after_robot_controller,
         delay_dsr_moveit_controller_after_robot_controller,
         delay_rviz_after_moveit_controller,
     ]

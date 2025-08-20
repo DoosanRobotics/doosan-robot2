@@ -1,18 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!--
-    Robotiq 2F-85 module
-    Params:
-      parent  : 부착 부모 링크명 (예: tool0, link_6 등)
-      prefix  : 멀티로봇 충돌 방지용 접두사 (예: dsr01_)
-      base_xyz/base_rpy : 베이스 조인트 오프셋 (필요시 조정)
-  -->
-
-
   <xacro:macro name="robotiq_85" params="parent prefix base_xyz:='0 0 0' base_rpy:='0 0 0'">
 
-    <!-- ===== Links ===== -->
     <link name="${prefix}robotiq_85_base_link">
       <visual>
         <geometry>
@@ -111,7 +101,6 @@
       </inertial>
     </link>
 
-    <!-- 닫힘 고정 TCP 링크 -->
     <link name="${prefix}gripper_tcp_closed">
       <inertial>
         <mass value="0.0001"/>
@@ -125,9 +114,14 @@
         </geometry>
         <material name="yellow"><color rgba="1 1 0 1"/></material>
       </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="0.004"/> 
+        </geometry>
+      </collision>
     </link>
 
-        <!-- 닫힘 고정 TCP 링크 -->
     <link name="${prefix}gripper_tcp_opened">
       <inertial>
         <mass value="0.0001"/>
@@ -141,19 +135,20 @@
         </geometry>
         <material name="yellow"><color rgba="1 1 0 1"/></material>
       </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="0.004"/>
+        </geometry>
+      </collision>
     </link>
-
-
     
-
-    <!-- ===== Joints ===== -->
     <joint name="${prefix}robotiq_85_base_joint" type="fixed">
       <parent link="${parent}"/>
       <child  link="${prefix}robotiq_85_base_link"/>
       <origin xyz="${base_xyz}" rpy="${base_rpy}"/>
     </joint>
 
-    <!-- Actuated joint (controller 대상) -->
     <joint name="${prefix}robotiq_85_left_knuckle_joint" type="revolute">
       <parent link="${prefix}robotiq_85_base_link"/>
       <child  link="${prefix}robotiq_85_left_knuckle_link"/>
@@ -231,7 +226,6 @@
       <origin xyz="0.00 0.000 0.1493" rpy="0.000 0.000 0.000"/>
     </joint>
 
-    
   </xacro:macro>
 
 </robot>

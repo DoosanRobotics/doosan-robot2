@@ -4,11 +4,9 @@ controller_manager:
   ros__parameters:
     update_rate: 100
 
-    # 여기서 type을 선언해야 함
     gripper_position_controller:
       type: position_controllers/GripperActionController
 
-# 그리퍼 컨트롤러 자체 파라미터
 gripper_position_controller:
   ros__parameters:
     action_monitor_rate: 20.0

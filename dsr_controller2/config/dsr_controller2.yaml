@@ -12,11 +12,8 @@
       dsr_controller2:
         type: dsr_controller2/RobotController
 
-      dsr_joint_trajectory:
+      dsr_joint_trajectory_controller:
         type: dsr_joint_trajectory/RobotController
-
-      dsr_joint_publisher:
-        type: joint_state_controller/JointStateController
 
       dsr_position_controller:
         type: forward_command_controller/ForwardCommandController
@@ -50,7 +47,7 @@ dsr_position_controller:
     #   - position
     #   - velocity
 
-dsr_joint_trajectory:
+dsr_joint_trajectory_controller:
   ros__parameters:
     joints:
       - joint_1
