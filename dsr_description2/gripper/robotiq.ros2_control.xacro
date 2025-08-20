@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="mode" default="virtual"/>
+  <xacro:arg name="mock_sensor_commands" default="true"/>
+
+  <xacro:arg name="joint_name"  default="robotiq_85_left_knuckle_joint"/>
+  <xacro:arg name="system_name" default="robotiq_gripper_system"/>
+
+  <xacro:arg name="pos_min" default="0.0"/>
+  <xacro:arg name="pos_max" default="0.8"/>
+  <xacro:arg name="init_pos" default="0.0"/>
+  <xacro:arg name="speed_mult" default="1.0"/>
+  <xacro:arg name="force_mult" default="0.5"/>
+  <xacro:arg name="max_speed" default="0.150"/>
+  <xacro:arg name="max_force" default="235.0"/>
+
+<xacro:macro name="robotiq_gripper_system" params="
+      mode
+      joint_name
+      system_name
+      pos_min
+      pos_max
+      init_pos
+      speed_mult
+      force_mult
+      max_speed
+      max_force
+      mock_sensor_commands">
+
+    <xacro:unless value="${mode == 'real'}">
+      <ros2_control name="${system_name}" type="system">
+        <hardware>
+          <plugin>mock_components/GenericSystem</plugin>
+          <param name="mock_sensor_commands">${mock_sensor_commands}</param>
+          <param name="state_following_offset">0.0</param>
+        </hardware>
+
+        <joint name="${joint_name}">
+          <command_interface name="position">
+            <param name="min">${pos_min}</param>
+            <param name="max">${pos_max}</param>
+          </command_interface>
+          <state_interface name="position">
+            <param name="initial_value">${init_pos}</param>
+          </state_interface>
+          <state_interface name="velocity"/>
+        </joint>
+      </ros2_control>
+    </xacro:unless>
+
+  </xacro:macro>
+</robot>

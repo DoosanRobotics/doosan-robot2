@@ -85,7 +85,13 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "dense": "cpp"
+        "dense": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "format": "cpp",
+        "span": "cpp",
+        "stdfloat": "cpp",
+        "valarray": "cpp"
     },
     "python.analysis.extraPaths": [
         "/opt/ros/jazzy/lib/python3.10/site-packages/"

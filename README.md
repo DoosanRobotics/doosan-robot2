@@ -10,8 +10,6 @@
     
 This package provides the function to control all models of Doosan robots in the ROS2(Jazzy) environment.
 
-For tutorials and more information, please refer to the [official Doosan Robotics ROS2 manual](https://doosanrobotics.github.io/doosan-robotics-ros-manual/index.html).
-
 
 ## Installation
 
@@ -24,18 +22,24 @@ To utilize the new emulator in virtual mode, **Docker** is required. Install Doc
 Before installing the package, ensure that the necessary dependencies are installed:
 
 ```bash
-sudo apt update
-sudo apt install -y libpoco-dev libyaml-cpp-dev wget \
-  ros-jazzy-control-msgs ros-jazzy-realtime-tools ros-jazzy-xacro \
-  ros-jazzy-joint-state-publisher-gui ros-jazzy-ros2-control \
-  ros-jazzy-ros2-controllers ros-jazzy-gazebo-msgs ros-jazzy-moveit-msgs \
-  dbus-x11 ros-jazzy-moveit-configs-utils ros-jazzy-moveit-ros-move-group
+sudo apt-get update
+sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget \
+                        ros-jazzy-control-msgs ros-jazzy-realtime-tools ros-jazzy-xacro \
+                        ros-jazzy-joint-state-publisher-gui ros-jazzy-ros2-control \
+                        ros-jazzy-ros2-controllers ros-jazzy-gazebo-msgs ros-jazzy-moveit-msgs \
+                        dbus-x11 ros-jazzy-moveit-configs-utils ros-jazzy-moveit-ros-move-group \
+                        ros-jazzy-gazebo-ros-pkgs ros-jazzy-ros-gz-sim ros-jazzy-ign-ros2-control
+
+
 ```
 
 ### Install Gazebo Simulation
 
 ```bash
-sudo apt install -y ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install -y libignition-gazebo6-dev ros-jazzy-gazebo-ros-pkgs ros-jazzy-ros-gz-sim ros-jazzy-ros-gz
 ```
 
 ### Package Installation
@@ -56,8 +60,7 @@ git clone -b jazzy https://github.com/doosan-robotics/doosan-robot2.git
 Install dependencies:
 
 ```bash
-cd ~/ros2_ws
-rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
 ```
 
 Run the emulator installation script:
@@ -170,3 +173,8 @@ ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=real model:=m1013 h
 ```bash
 ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=virtual model:=m1013 host:=127.0.0.1
 ```
+
+## Additional Resources
+
+[Demo Video](https://github.com/user-attachments/assets/bd91aea0-b8b6-4ce1-9040-9ab06630edbe)
+

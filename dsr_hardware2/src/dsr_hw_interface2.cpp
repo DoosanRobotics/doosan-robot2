@@ -1127,4 +1127,3 @@ void DSRInterface::OnLogAlarm(LPLOG_ALARM pLogAlarm)
 PLUGINLIB_EXPORT_CLASS(
   dsr_hardware2::DRHWInterface, hardware_interface::SystemInterface)
       
-

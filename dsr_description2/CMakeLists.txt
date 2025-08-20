@@ -15,6 +15,6 @@ find_package(ament_cmake REQUIRED)
 ament_environment_hooks("dsr_description2_path.dsv.in")
 ament_package()
 
-install(DIRECTORY meshes urdf xacro config ros2_control DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY gripper meshes urdf xacro config ros2_control DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY rviz DESTINATION share/${PROJECT_NAME})

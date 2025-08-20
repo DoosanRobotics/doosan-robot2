@@ -1,40 +1,69 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="a0509" >
 
-  <xacro:arg name="color"   default="white"/>
-  <xacro:arg name="gripper" default="none"/>
-  <xacro:arg name="namespace" default=""/>
+  <xacro:arg name="mode"           default="virtual"/>   
+  <xacro:arg name="color"          default="white"/>      
+  <xacro:arg name="namespace"      default=""/>
+
+  <!-- gripper control argument -->
+  <xacro:arg name="gripper"              default="none"/>         <!-- none | robotique -->
+  <xacro:arg name="gripper_prefix"       default=""/>             <!-- ex) dsr01_ -->
+  <xacro:arg name="gripper_parent_link"  default="link_6"/>
+
   <xacro:arg name="use_gazebo" default="false"/>
-  
-  <xacro:property name="cr" value="$(arg color)"/>
-  <xacro:property name="gr" value="$(arg gripper)"/>
   <xacro:property name="gz" value="$(arg use_gazebo)"/>
-  
+
+  <xacro:property name="cr" value="$(arg color)"/>
+
+  <xacro:property name="gr" value="$(arg gripper)"/>
+
   <xacro:if value="${cr == 'white'}">
-     <xacro:include filename="$(find dsr_description2)/xacro/macro.a0509.white.xacro" />
+    <xacro:include filename="$(find dsr_description2)/xacro/macro.a0509.white.xacro"/>
   </xacro:if>
   <xacro:if value="${cr == 'blue'}">
-     <xacro:include filename="$(find dsr_description2)/xacro/macro.a0509.blue.xacro" />
+    <xacro:include filename="$(find dsr_description2)/xacro/macro.a0509.blue.xacro"/>
   </xacro:if>
   <xacro:a0509 namespace="$(arg namespace)"/>
 
-  <link name="world" />
-  <!-- World fixed joint-->
+  <link name="world"/>
   <joint name="world_fixed" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <parent link="world"/>
-    <child link="base_link"/>
+    <child  link="base_link"/>
   </joint>
-  
-  <xacro:if value="${gz}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/a0509.gz_ros2_control.xacro" />
+
+  <xacro:if value="${gz == 'true'}">
+    <xacro:include filename="$(find dsr_description2)/ros2_control/a0509.gz_ros2_control.xacro"/>
     <xacro:a0509_gz_ros2_control namespace="$(arg namespace)"/>
   </xacro:if>
-  <xacro:unless value="${gz}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/a0509.ros2_control.xacro" />
+  <xacro:unless value="${gz == 'true'}">
+    <xacro:include filename="$(find dsr_description2)/ros2_control/a0509.ros2_control.xacro"/>
     <xacro:a0509_ros2_control name="a0509"/>
   </xacro:unless>
 
-  
+  <xacro:if value="${gr == 'robotiq_2f85'}">
+
+    <xacro:include filename="$(find dsr_description2)/gripper/robotiq.xacro"/>
+    <xacro:robotiq_85
+      parent="$(arg gripper_parent_link)"
+      prefix="$(arg gripper_prefix)"/>
+
+    <xacro:include filename="$(find dsr_description2)/gripper/robotiq.ros2_control.xacro"/>
+      <xacro:robotiq_gripper_system
+      mode="$(arg mode)"
+      joint_name="$(arg gripper_prefix)robotiq_85_left_knuckle_joint"
+      system_name="$(arg gripper_prefix)robotiq_gripper_system"
+      pos_min="0.0"
+      pos_max="0.8"
+      init_pos="0.0"
+      speed_mult="1.0"
+      force_mult="0.5"
+      max_speed="0.150"
+      max_force="235.0"
+      mock_sensor_commands="true" />
+
+  </xacro:if>
+
 </robot>
+
 

@@ -50,6 +50,7 @@ def include_launch_description(context):
             'host': LaunchConfiguration('host'),
             'port': LaunchConfiguration('port'),
             'rt_host': LaunchConfiguration('rt_host'),
+            'gripper': LaunchConfiguration('gripper'), # [modified]
         }.items(),
     )]
 
@@ -63,6 +64,7 @@ def generate_launch_description():
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotique)'), # [modified]
     ]
 
     # Use OpaqueFunction to dynamically compute the path at launch time and include launch
