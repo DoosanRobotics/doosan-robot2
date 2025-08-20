@@ -87,6 +87,7 @@ def rviz_and_move_group_fn(context):
     moveit_config = (
         MoveItConfigsBuilder(model_value, "robot_description", package_name)
         .robot_description(file_path=f"config/{model_value}.urdf.xacro")
+        .robot_description_semantic(file_path="config/dsr.srdf.xacro", mappings={'gripper': LaunchConfiguration('gripper')})
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
         .planning_pipelines(pipelines=["ompl", "chomp"],      # List of planning pipelines to load (each loaded from config/<name>_planning.yaml)
                             default_planning_pipeline="ompl", # Name of the default planning pipeline (used if none is explicitly selected)
@@ -95,20 +96,9 @@ def rviz_and_move_group_fn(context):
         .to_moveit_configs()
     )
 
-    # SRDF xacro (allows gripper switch)
-    srdf_xacro_rel = "config/dsr.srdf.xacro"
-    robot_description_semantic = ParameterValue(
-        Command([
-            FindExecutable(name='xacro'), ' ',
-            PathJoinSubstitution([FindPackageShare(package_name), srdf_xacro_rel]), ' ', 'gripper:=', LaunchConfiguration('gripper')
-        ]),
-        value_type=str
-    )
-
     common_params = [
-        moveit_config.to_dict(),  # base MoveIt params (will be overridden by later dicts if duplicated)
+        moveit_config.to_dict(),  # robot_description & robot_description_semantic from MoveitConfigbuilder
         {"robot_description": ParameterValue(LaunchConfiguration('robot_description'), value_type=str)},
-        {"robot_description_semantic": robot_description_semantic},
     ]
 
     run_move_group_node = Node(
