@@ -8,9 +8,10 @@
 
 ## Overview
     
-This package provides the function to control all models of Doosan robots in the ROS2(Jazzy) environment. 
+This package provides the function to control all models of Doosan robots in the ROS2(Jazzy) environment.
 
-For more details, please refer to the [Doosan Robotics ROS2 Manual](https://doosanrobotics.github.io/doosan-robotics-ros-manual/).
+For tutorials and more information, please refer to the [official Doosan Robotics ROS2 manual](https://doosanrobotics.github.io/doosan-robotics-ros-manual/index.html).
+
 
 ## Installation
 
@@ -29,7 +30,6 @@ sudo apt install -y libpoco-dev libyaml-cpp-dev wget \
   ros-jazzy-joint-state-publisher-gui ros-jazzy-ros2-control \
   ros-jazzy-ros2-controllers ros-jazzy-gazebo-msgs ros-jazzy-moveit-msgs \
   dbus-x11 ros-jazzy-moveit-configs-utils ros-jazzy-moveit-ros-move-group
-
 ```
 
 ### Install Gazebo Simulation
@@ -56,7 +56,8 @@ git clone -b jazzy https://github.com/doosan-robotics/doosan-robot2.git
 Install dependencies:
 
 ```bash
-rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
+cd ~/ros2_ws
+rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 ```
 
 Run the emulator installation script:
