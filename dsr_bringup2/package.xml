@@ -14,14 +14,14 @@
   
   <url type="website">http://wiki.ros.org/doosan_robotics</url>
 
-  <build_depend>gazebo_ros</build_depend>
+  <build_depend>ros_gz</build_depend>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>dsr_msgs2</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>ros_gz</exec_depend>
   <exec_depend>rviz2</exec_depend>
 
   <export>
