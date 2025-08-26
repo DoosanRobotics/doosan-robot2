@@ -11,6 +11,7 @@
     
 This package provides the function to control all models of Doosan robots in the ROS2(Humble) environment.
 
+For tutorials and more information, please refer to the [official Doosan Robotics ROS2 manual](https://doosanrobotics.github.io/doosan-robotics-ros-manual/humble/index.html).
 
 ## Installation
 
