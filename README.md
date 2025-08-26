@@ -28,7 +28,7 @@ sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget \
                         ros-jazzy-joint-state-publisher-gui ros-jazzy-ros2-control \
                         ros-jazzy-ros2-controllers ros-jazzy-gazebo-msgs ros-jazzy-moveit-msgs \
                         dbus-x11 ros-jazzy-moveit-configs-utils ros-jazzy-moveit-ros-move-group \
-                        ros-jazzy-example-interfaces ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
+                        ros-jazzy-example-interfaces
 
 
 ```
@@ -39,7 +39,7 @@ sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget \
 sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
 wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 sudo apt-get update
-sudo apt-get install -y libignition-gazebo6-dev ros-jazzy-gazebo-ros-pkgs ros-jazzy-ros-gz-sim ros-jazzy-ros-gz
+sudo apt-get install -y ros-jazzy-gazebo-msgs ros-jazzy-ros-gz ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
 ```
 
 ### Package Installation
