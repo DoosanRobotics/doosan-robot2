@@ -28,14 +28,14 @@ sudo apt update
 sudo apt install -y libpoco-dev libyaml-cpp-dev wget \
   ros-jazzy-control-msgs ros-jazzy-realtime-tools ros-jazzy-xacro \
   ros-jazzy-joint-state-publisher-gui ros-jazzy-ros2-control \
-  ros-jazzy-ros2-controllers ros-jazzy-gazebo-msgs ros-jazzy-moveit-msgs \
+  ros-jazzy-ros2-controllers ros-jazzy-moveit-msgs \
   dbus-x11 ros-jazzy-moveit-configs-utils ros-jazzy-moveit-ros-move-group
 ```
 
 ### Install Gazebo Simulation
 
 ```bash
-sudo apt install -y ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
+sudo apt install -y ros-jazzy-gazebo-msgs ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
 ```
 
 ### Package Installation
