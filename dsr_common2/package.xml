@@ -15,7 +15,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>gazebo_ros</build_depend>
+  <build_depend>ros_gz</build_depend>
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>launch</exec_depend>

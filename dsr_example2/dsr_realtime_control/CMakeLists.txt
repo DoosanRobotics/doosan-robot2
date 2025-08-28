@@ -27,14 +27,14 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-LINK_LIBRARIES(DRFL PocoFoundation PocoNet)
-
 if($ENV{ROS_DISTRO} STREQUAL "jazzy")                          
-  LINK_DIRECTORIES ("${COMMON_LIB_FILES}/$ENV{ROS_DISTRO}/x86_64")
+LINK_DIRECTORIES ("${COMMON_LIB_FILES}/$ENV{ROS_DISTRO}/x86_64")
 else()
-  message("Unknown ROS distro:")
-  message($ENV{ROS_DISTRO})
+message("Unknown ROS distro:")
+message($ENV{ROS_DISTRO})
 endif()
+
+LINK_LIBRARIES(DRFL PocoFoundation PocoNet)
 
 add_executable(rt_init src/rt_init.cpp)
 ament_target_dependencies(rt_init rclcpp dsr_msgs2)

@@ -305,7 +305,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 
     //Use extended monitoring callbacks to avoid deprecated warnings
     Drfl.set_on_monitoring_data_ex(DSRInterface::OnMonitoringDataExCB);  // For monitoring data (v2.5+)
-    Drfl.set_on_monitoring_ctrl_io_ex(DSRInterface::OnMonitoringCtrlIOExCB); // For control I/O (v2.5+)
+    // Drfl.set_on_monitoring_ctrl_io_ex(DSRInterface::OnMonitoringCtrlIOExCB); // For control I/O (v2.5+)
 
     Drfl.set_on_monitoring_state(DSRInterface::OnMonitoringStateCB);//RELATED TO LOGIC
     Drfl.set_on_monitoring_access_control(DSRInterface::OnMonitoringAccessControlCB);//RELATED TO LOGIC
@@ -353,7 +353,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     // Extended API is recommended for DRCF >= 2.5
     if (m_nVersionDRCF >= 120500) {
         Drfl.set_on_monitoring_data_ex(DSRInterface::OnMonitoringDataExCB);
-        Drfl.set_on_monitoring_ctrl_io_ex(DSRInterface::OnMonitoringCtrlIOExCB);
+        // Drfl.set_on_monitoring_ctrl_io_ex(DSRInterface::OnMonitoringCtrlIOExCB);
         Drfl.setup_monitoring_version(1);
     } else {
         // For legacy versions, fallback to old callbacks
