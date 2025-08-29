@@ -157,6 +157,15 @@ ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=real host:=192.168.
 ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12346 name:=dsr01 x:=0 y:=0
 ```
 
+To add additional arms for multi-control:
+
+```bash
+ros2 launch dsr_bringup2 dsr_bringup2_spawn_on_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12347 name:=dsr02 x:=2 y:=2
+```
+
+**Note:** Ensure each additional arm has a unique `port`, `name`, and location (`x`, `y`) to avoid collisions in Gazebo.
+**Important:** Each emulator instance needs 4 dedicated CPU cores and cannot share them with other emulator instances. Therefore, we advise spawning at most `(TOTAL_CPU_CORES // 4) - 1` robots to ensure emulator stability.
+
 
 ### Launch with **MoveIt2**
 
