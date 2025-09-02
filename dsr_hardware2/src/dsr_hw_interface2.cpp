@@ -250,7 +250,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 	// Virtual controller doesn't support real time connection.
 	if(mode != "virtual") {
 		if(m_nVersionDRCF >= 3000000 && m_nVersionDRCF < 3040000) {
-			drcf_ip = drcf_rt_ip;
+			drcf_rt_ip = drcf_ip;
 		}
 		if (!Drfl.connect_rt_control(drcf_ip)) {
 			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
@@ -425,3 +425,4 @@ DRHWInterface::~DRHWInterface()
 
 PLUGINLIB_EXPORT_CLASS(
   dsr_hardware2::DRHWInterface, hardware_interface::SystemInterface)
+
