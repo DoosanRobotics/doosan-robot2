@@ -436,19 +436,74 @@ auto moveb_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveBlending::Reque
 auto movespiral_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSpiral::Request> req, std::shared_ptr<dsr_msgs2::srv::MoveSpiral::Response> res)-> void          
 {
     res->success = false;
+    std::array<float, 3> target_pos;
     std::array<float, 2> target_vel;
-    
     std::array<float, 2> target_acc;
+    std::copy(req->target_pos.cbegin(), req->target_pos.cend(), target_pos.begin());
     std::copy(req->vel.cbegin(), req->vel.cend(), target_vel.begin());
     std::copy(req->acc.cbegin(), req->acc.cend(), target_acc.begin());
 
+    bool use_spiral_ex = std::any_of(req->target_pos.cbegin(), req->target_pos.cend(), [](float v){ return v != 0.0; });
+
     if(req->sync_type == 0){
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->move_spiral");
-        res->success = Drfl->move_spiral((TASK_AXIS)req->task_axis, req->revolution, req->max_radius, req->max_length, target_vel.data(), target_acc.data(), req->time, (MOVE_REFERENCE)req->ref);
+        if (use_spiral_ex){
+            RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->move_spiral_ex");
+            res->success = Drfl->move_spiral(
+                (TASK_AXIS)req->task_axis,
+                req->revolution,
+                target_pos.data(),
+                target_vel.data(),
+                target_acc.data(),
+                req->time,
+                (MOVE_REFERENCE)req->ref,
+                (MOVE_MODE)req->mode,
+                (SPIRAL_DIR)req->spiral_dir,
+                (ROT_DIR)req->rot_dir
+            );
+        }
+        else {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->move_spiral");
+            res->success = Drfl->move_spiral(
+                (TASK_AXIS)req->task_axis,
+                req->revolution,
+                req->max_radius,
+                req->max_length,
+                target_vel.data(),
+                target_acc.data(),
+                req->time,
+                (MOVE_REFERENCE)req->ref
+            );
+        }
     }
     else{
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->amove_spiral");
-        res->success = Drfl->amove_spiral((TASK_AXIS)req->task_axis, req->revolution, req->max_radius, req->max_length, target_vel.data(), target_acc.data(), req->time, (MOVE_REFERENCE)req->ref);
+        if (use_spiral_ex){
+            RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->amove_spiral_ex");
+            res->success = Drfl->amove_spiral(
+                (TASK_AXIS)req->task_axis,
+                req->revolution,
+                target_pos.data(),
+                target_vel.data(),
+                target_acc.data(),
+                req->time,
+                (MOVE_REFERENCE)req->ref,
+                (MOVE_MODE)req->mode,
+                (SPIRAL_DIR)req->spiral_dir,
+                (ROT_DIR)req->rot_dir
+            );
+        }
+        else {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->amove_spiral");
+            res->success = Drfl->amove_spiral(
+                (TASK_AXIS)req->task_axis,
+                req->revolution,
+                req->max_radius,
+                req->max_length,
+                target_vel.data(),
+                target_acc.data(),
+                req->time,
+                (MOVE_REFERENCE)req->ref
+            );
+        }
     }
 };
 
