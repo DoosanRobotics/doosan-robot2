@@ -166,6 +166,8 @@ ros2 launch dsr_bringup2 dsr_bringup2_spawn_on_gazebo.launch.py mode:=virtual ho
 ```
 
 **Note:** Ensure each additional arm has a unique `port`, `name`, and location (`x`, `y`) to avoid collisions in Gazebo.
+**Note:** When launching multiple robots, we recommend using `remap_tf:=true` on `dsr_bringup2_gazebo` and `dsr_bringup2_spawn_on_gazebo`, to separate the robot TFs.
+
 
 ### Launch with **MoveIt2**
 

@@ -9,14 +9,14 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler,DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import RegisterEventHandler,DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition, LaunchConfigurationEquals
+from launch.conditions import IfCondition, LaunchConfigurationEquals, UnlessCondition
 
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, PythonExpression
 
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetRemap
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 
@@ -35,7 +35,7 @@ ARGUMENTS =[
     DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
     DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
     DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
-
+    DeclareLaunchArgument('remap_tf',   default_value = 'false',     description = 'REMAP TF'    ),
 ]
 
 def generate_launch_description():
@@ -106,7 +106,6 @@ def generate_launch_description():
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
     )
-    
 
     node_robot_state_publisher = Node(
         package="robot_state_publisher",
@@ -114,21 +113,6 @@ def generate_launch_description():
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
         output="screen",
         parameters=[robot_description],
-    )
-
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
-        arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
-    )
-        # condition=LaunchConfigurationEquals('use_sim_time', 'false')  
-    
-    dsr_position_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
-        arguments=["dsr_position_controller", "--controller-manager", "controller_manager"],
     )
     rviz_node = Node(
         package="rviz2",
@@ -139,6 +123,13 @@ def generate_launch_description():
         condition=IfCondition(gui),
     )
 
+    joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
+        arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
+    )
+        # condition=LaunchConfigurationEquals('use_sim_time', 'false')  
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -146,6 +137,30 @@ def generate_launch_description():
             on_exit=[rviz_node],
         )
     )
+
+    original_tf_nodes = GroupAction(
+        actions=[
+            node_robot_state_publisher,
+        ],
+        condition=UnlessCondition(LaunchConfiguration('remap_tf'))
+    )
+
+    remapped_tf_nodes = GroupAction(
+        actions=[
+            SetRemap(src='/tf', dst='tf'),
+            SetRemap(src='/tf_static', dst='tf_static'),
+            node_robot_state_publisher,
+        ],
+        condition=IfCondition(LaunchConfiguration('remap_tf'))
+    )
+    
+    dsr_position_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
+        arguments=["dsr_position_controller", "--controller-manager", "controller_manager"],
+    )
+
 
     # launch issue position controller
     dsr_position_controller_spawner_action = TimerAction(
@@ -169,7 +184,8 @@ def generate_launch_description():
 
     nodes = [
         gazebo,
-        node_robot_state_publisher,
+        original_tf_nodes,
+        remapped_tf_nodes,
         gz_spawn_entity,
         dsr_position_controller_spawner_action,
         # delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner

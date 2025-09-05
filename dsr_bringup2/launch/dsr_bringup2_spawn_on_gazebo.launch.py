@@ -9,12 +9,12 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler,DeclareLaunchArgument
+from launch.actions import RegisterEventHandler,DeclareLaunchArgument, GroupAction
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration,PythonExpression
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetRemap
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import IncludeLaunchDescription
@@ -48,7 +48,7 @@ def generate_launch_description():
         DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
-        
+        DeclareLaunchArgument('remap_tf',   default_value = 'false',     description = 'REMAP TF'    ),
     ]
     set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='true')
     
@@ -131,6 +131,7 @@ def generate_launch_description():
         parameters=[robot_description, robot_controllers],
         # output="both",
     )
+
     robot_state_pub_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -138,8 +139,9 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         output='both',
         parameters=[{
-        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
-    }])
+            'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
+        }],
+    )
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -149,19 +151,45 @@ def generate_launch_description():
         arguments=["-d", rviz_config_file],
         condition=IfCondition(gui),
     )
+    
+    robot_controller_spawner = Node(
+        package="controller_manager",
+        namespace=LaunchConfiguration('name'),
+        executable="spawner",
+        arguments=["dsr_controller2", "-c", "controller_manager"],
+    )
+    
+    # Delay rviz start after `joint_state_broadcaster`
+    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=robot_controller_spawner,
+            on_exit=[rviz_node],
+        )
+    )
+
+    original_tf_nodes = GroupAction(
+        actions=[
+            robot_state_pub_node,
+            rviz_node
+        ],
+        condition=UnlessCondition(LaunchConfiguration('remap_tf'))
+    )
+
+    remapped_tf_nodes = GroupAction(
+        actions=[
+            SetRemap(src='/tf', dst='tf'),
+            SetRemap(src='/tf_static', dst='tf_static'),
+            robot_state_pub_node,
+            rviz_node
+        ],
+        condition=IfCondition(LaunchConfiguration('remap_tf'))
+    )
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
         arguments=["joint_state_broadcaster", "-c", "controller_manager"],
-    )
-
-    robot_controller_spawner = Node(
-        package="controller_manager",
-        namespace=LaunchConfiguration('name'),
-        executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
     )
 
     joint_trajectory_controller_spawner = Node(
@@ -172,13 +200,6 @@ def generate_launch_description():
     )
 
 
-    # Delay rviz start after `joint_state_broadcaster`
-    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=robot_controller_spawner,
-            on_exit=[rviz_node],
-        )
-    )
 
     # Delay start of robot_controller after `joint_state_broadcaster`
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -210,7 +231,8 @@ def generate_launch_description():
                           'R' :LaunchConfiguration('R'),
                           'P' :LaunchConfiguration('P'),
                           'Y' :LaunchConfiguration('Y'),
-                          'use_sim_time' : LaunchConfiguration('use_sim_time')
+                          'use_sim_time' : LaunchConfiguration('use_sim_time'),
+                          'remap_tf' : LaunchConfiguration('remap_tf'),
                           }.items(),
     )
     
@@ -227,10 +249,10 @@ def generate_launch_description():
         set_use_sim_time,
         run_emulator_node,
         gazebo_connection_node,
-        robot_state_pub_node,
+        original_tf_nodes,
+        remapped_tf_nodes,
         robot_controller_spawner,
         joint_state_broadcaster_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
         included_launch_after_robot_controller_spawner,
         control_node,
     ]
