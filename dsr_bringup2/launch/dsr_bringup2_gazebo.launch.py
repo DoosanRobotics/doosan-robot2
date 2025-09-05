@@ -22,12 +22,12 @@ from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, PythonExpression
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetRemap
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import IncludeLaunchDescription, SetLaunchConfiguration
+from launch.actions import IncludeLaunchDescription, SetLaunchConfiguration, GroupAction
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
@@ -40,22 +40,23 @@ def print_launch_configuration_value(context, *args, **kwargs):
 
 def generate_launch_description():
     ARGUMENTS =[ 
-        DeclareLaunchArgument('name',  default_value = 'dsr01',     description = 'NAME_SPACE'     ),
-        DeclareLaunchArgument('host',  default_value = '127.0.0.1', description = 'ROBOT_IP'       ),
-        DeclareLaunchArgument('port',  default_value = '12345',     description = 'ROBOT_PORT'     ),
-        DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
-        DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
-        DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
-        DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
-        DeclareLaunchArgument('gz',    default_value = 'true',     description = 'USE GAZEBO SIM'    ),
-        DeclareLaunchArgument('x',   default_value = '0',     description = 'Location x on Gazebo '    ),
-        DeclareLaunchArgument('y',   default_value = '0',     description = 'Location y on Gazebo'    ),
-        DeclareLaunchArgument('z',   default_value = '0',     description = 'Location z on Gazebo'    ),
-        DeclareLaunchArgument('R',   default_value = '0',     description = 'Location Roll on Gazebo'    ),
-        DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
-        DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
-        DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
-        DeclareLaunchArgument('use_sim_time', default_value='false', description='Use simulation time'),
+        DeclareLaunchArgument('name',         default_value = 'dsr01',          description = 'NAME_SPACE'              ),
+        DeclareLaunchArgument('host',         default_value = '127.0.0.1',      description = 'ROBOT_IP'                ),
+        DeclareLaunchArgument('port',         default_value = '12345',          description = 'ROBOT_PORT'              ),
+        DeclareLaunchArgument('mode',         default_value = 'virtual',        description = 'OPERATION MODE'          ),
+        DeclareLaunchArgument('model',        default_value = 'm1013',          description = 'ROBOT_MODEL'             ),
+        DeclareLaunchArgument('color',        default_value = 'white',          description = 'ROBOT_COLOR'             ),
+        DeclareLaunchArgument('gui',          default_value = 'false',          description = 'Start RViz2'             ),
+        DeclareLaunchArgument('gz',           default_value = 'true',           description = 'USE GAZEBO SIM'          ),
+        DeclareLaunchArgument('x',            default_value = '0',              description = 'Location x on Gazebo '   ),
+        DeclareLaunchArgument('y',            default_value = '0',              description = 'Location y on Gazebo'    ),
+        DeclareLaunchArgument('z',            default_value = '0',              description = 'Location z on Gazebo'    ),
+        DeclareLaunchArgument('R',            default_value = '0',              description = 'Location Roll on Gazebo' ),
+        DeclareLaunchArgument('P',            default_value = '0',              description = 'Location Pitch on Gazebo'),
+        DeclareLaunchArgument('Y',            default_value = '0',              description = 'Location Yaw on Gazebo'  ),
+        DeclareLaunchArgument('rt_host',      default_value = '192.168.137.50', description = 'ROBOT_RT_IP'             ),
+        DeclareLaunchArgument('use_sim_time', default_value='false',            description='Use simulation time'       ),
+        DeclareLaunchArgument('remap_tf',     default_value = 'false',          description = 'REMAP TF'                ),
     ]
     
     set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='false')
@@ -152,6 +153,7 @@ def generate_launch_description():
         parameters=[robot_description, robot_controllers],
         # output="both",
     )
+    
     robot_state_pub_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -159,8 +161,9 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         output='both',
         parameters=[{
-        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])
-    }])
+            'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])
+        }],
+    )
     
     rviz_node = Node(
         package="rviz2",
@@ -195,6 +198,23 @@ def generate_launch_description():
         )
     )
 
+    original_tf_nodes = GroupAction(
+        actions=[
+            robot_state_pub_node,
+            rviz_node
+        ],
+        condition=UnlessCondition(LaunchConfiguration('remap_tf'))
+    )
+
+    remapped_tf_nodes = GroupAction(
+        actions=[
+            SetRemap(src='/tf', dst='tf'),
+            SetRemap(src='/tf_static', dst='tf_static'),
+            robot_state_pub_node,
+            rviz_node
+        ],
+        condition=IfCondition(LaunchConfiguration('remap_tf'))
+    )
 
     # 두 번째 Launch 파일의 경로를 설정합니다.
     included_launch_file_path = os.path.join(
@@ -216,7 +236,7 @@ def generate_launch_description():
                           'R' :LaunchConfiguration('R'),
                           'P' :LaunchConfiguration('P'),
                           'Y' :LaunchConfiguration('Y'),
-                          'use_sim_time' : LaunchConfiguration('use_sim_time')
+                          'use_sim_time' : LaunchConfiguration('use_sim_time'),
                           }.items(),
     )
     
@@ -241,10 +261,10 @@ def generate_launch_description():
         set_config_node,
         run_emulator_node,
         gazebo_connection_node,
-        robot_state_pub_node,
+        original_tf_nodes,
+        remapped_tf_nodes,
         robot_controller_spawner,
         joint_state_broadcaster_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
         included_launch_after_robot_controller_spawner,
         delay_control_node_after_connection_node,
     ]
