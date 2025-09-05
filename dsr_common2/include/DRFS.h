@@ -33,6 +33,8 @@ using namespace std;
 #pragma pack(1)
 
 #define INFRACORE_PATCH
+#define _FUNC_E_SERIES
+#define _FUNC_AUTO_ACCELERATION
 
 typedef struct _SYSTEM_VERSION
 {
