@@ -19,7 +19,7 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler,DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import RegisterEventHandler,DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, LaunchConfigurationEquals
 
@@ -177,12 +177,28 @@ def generate_launch_description():
     #         on_exit=[dsr_position_controller_spawner_action],
     #     )
     # )
+    
+    ### Unique part on gazebo ros.
+    ### to remove "No clock received, using time argument instead! Check your node's clock configuration (use_sim_time parameter) and if a valid clock source is available"
+    t = PathJoinSubstitution([LaunchConfiguration('name'), 'gz', 'controller_manager'])
+    aaa = TimerAction(
+        period=2.0,
+        actions=[ExecuteProcess(
+                cmd=[
+                    'ros2', 'param', 'set',
+                    t,
+                    'use_sim_time', 'false'
+                ],
+                output='screen'
+            )]
+    )
 
     nodes = [
         # gazebo,
         node_robot_state_publisher,
         gz_spawn_entity,
         dsr_position_controller_spawner_action,
+        aaa,
         # delay_dsr_position_controller_spawner_after_joint_state_broadcaster_spawner
     ]
 
