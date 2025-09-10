@@ -1,25 +1,19 @@
-#-*- coding: utf-8 -*-
-
-# ##
-# @file     DL_tcp_client.py
-# @brief    Implementation for DRL TCP communication
-# @author   htjeong
-# @version  0.01
-# @Last update date     2017-03-19
-# @details
 #
-# history
+#  dsr_common2
+#  Author: Minsoo Song (minsoo.song@doosan.com)
 #
-# 0.01      : 2017-06-08, htjeong
-#           : first release
-# <functions>
-#  client_socket_open(ip, port)
-#  client_socket_close(sock)
-#  client_socket_state(sock)
-#  client_socket_end_data(sock, end_data)
-#  client_socket_write(sock, tx_data)
-#  client_socket_read(sock, length=-1, timeout=-1)
-#  client_socket_flush(sock)
+#  Copyright (c) 2025 Doosan Robotics
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 #
 
 import socket
@@ -37,8 +31,8 @@ DR_TCP_CLIENT_COMM_TIMEOUT   = 0.01    #3
 DR_TCP_CLIENT_DEF_TIMEOUT    = 0.01   #3
 DR_TCP_CLIENT_BUFF_SIZE      = 4096   #1024
 
-DR_TCP_CLIENT_CONN_LIST = dict()            #opened socket 저장 리스트
-DR_TCP_CLIENT_CONN_STATE_LIST = dict()      #opened socket의 연결 상태 저장 리스트
+DR_TCP_CLIENT_CONN_LIST = dict()          
+DR_TCP_CLIENT_CONN_STATE_LIST = dict()      
 DR_TCP_CLIENT_END_DATA = dict()
 
 # =============================================================================================

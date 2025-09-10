@@ -1,17 +1,24 @@
-planning_plugin: ompl_interface/OMPLPlanner
-request_adapters: >-
-  default_planner_request_adapters/AddTimeOptimalParameterization
-  default_planner_request_adapters/ResolveConstraintFrames
-  default_planner_request_adapters/FixWorkspaceBounds
-  default_planner_request_adapters/FixStartStateBounds
-  default_planner_request_adapters/FixStartStateCollision
-  default_planner_request_adapters/FixStartStatePathConstraints
-start_state_max_bounds_error: 0.1
+# The old `planning_plugin` (str) is now replaced with `planning_plugins` (List[str])
+planning_plugins:
+  - ompl_interface/OMPLPlanner
+
+# Adapters are now split into `request_adapters` and `response_adapters`
+request_adapters:
+  - default_planning_request_adapters/ResolveConstraintFrames
+  - default_planning_request_adapters/ValidateWorkspaceBounds
+  - default_planning_request_adapters/CheckStartStateBounds
+  - default_planning_request_adapters/CheckStartStateCollision
+
+response_adapters:
+  - default_planning_response_adapters/AddTimeOptimalParameterization
+  - default_planning_response_adapters/ValidateSolution
+  - default_planning_response_adapters/DisplayMotionPath
+
 planner_configs:
   AnytimePathShortening:
     type: geometric::AnytimePathShortening
-    shortcut: true  # Attempt to shortcut all new solution paths
-    hybridize: true  # Compute hybrid solution trajectories
+    shortcut: 1  # Attempt to shortcut all new solution paths
+    hybridize: 1  # Compute hybrid solution trajectories
     max_hybrid_paths: 24  # Number of hybrid paths generated per iteration
     num_planners: 4  # The number of default planners to use for planning
     planners: ""  # A comma-separated list of planner types (e.g., "PRM,EST,RRTConnect"Optionally, planner parameters can be passed to change the default:"PRM[max_nearest_neighbors=5],EST[goal_bias=.5],RRT[range=10. goal_bias=.1]"
@@ -62,7 +69,7 @@ planner_configs:
     init_temperature: 10e-6  # initial temperature. default: 10e-6
     frountier_threshold: 0.0  # dist new state to nearest neighbor to disqualify as frontier. default: 0.0 set in setup()
     frountierNodeRatio: 0.1  # 1/10, or 1 nonfrontier for every 10 frontier. default: 0.1
-    k_constant: 0.0  # value used to normalize expresssion. default: 0.0 set in setup()
+    k_constant: 0.0  # value used to normalize expression. default: 0.0 set in setup()
   PRM:
     type: geometric::PRM
     max_nearest_neighbors: 10  # use k nearest neighbors. default: 10
@@ -136,6 +143,7 @@ planner_configs:
     sparse_delta_fraction: 0.25  # delta fraction for connection distance. This value represents the visibility range of sparse samples. default: 0.25
     dense_delta_fraction: 0.001  # delta fraction for interface detection. default: 0.001
     max_failures: 5000  # maximum consecutive failure limit. default: 5000
+
 manipulator:
   default_planner_config: RRTConnect
   planner_configs:

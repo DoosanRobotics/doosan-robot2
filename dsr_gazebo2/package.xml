@@ -21,7 +21,7 @@
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>control_msgs</exec_depend>
-  <exec_depend>gazebo_ros_pkgs</exec_depend>
+  <!-- <exec_depend>gazebo_ros_pkgs</exec_depend> -->
   <exec_depend>gazebo_ros2_control</exec_depend>
   <exec_depend>gazebo_ros</exec_depend>
   <exec_depend>hardware_interface</exec_depend>

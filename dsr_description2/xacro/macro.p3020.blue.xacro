@@ -22,8 +22,16 @@
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_0_1.STL"
                         scale="0.001 0.001 0.001"/>
                 </geometry>
-                <material name="dr_white"/>
+                <material name="dr_blue"/>
             </visual>
+            <!-- collision -->
+            <collision>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_0_1.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
         </link>
 
         <!-- link_1 -->
@@ -31,7 +39,7 @@
             <inertial>
                 <mass value="28.624"/>
                 <origin xyz="-1.1e-05     0.11205   -0.065579"/>
-                <inertia ixx="0.69287" ixy="4.9232e-05" ixz="-0.21299" iyy="0.36715" iyz="-0.00012952"
+                <inertia ixx="0.69287" ixy="4.9232e-05" ixz="0.0" iyy="0.36715" iyz="-0.00012952"
                         izz="0.46086"/>
             </inertial>
             <visual>
@@ -74,6 +82,42 @@
                 </geometry>
                 <material name="dr_blue"/>
             </visual>
+            <!-- collisions -->
+            <collision>
+                <origin xyz="0 0 -0.3943"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_1_1.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="0 0 -0.3943"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_1_2.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="0 0 -0.3943"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_1_3.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="0 0 -0.3943"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_1_4.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="0 0 -0.3943"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_1_5.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
         </link>
 
         <!-- link_2 -->
@@ -94,9 +138,7 @@
                 <material name="dr_blue"/>
             </visual>
             <visual>
-                <!-- <origin xyz="0 -0.2351 -0.3943" rpy="-1.5708  -1.5708 -1.5708"/> -->
                  <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
-
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_2.STL"
                         scale="0.001 0.001 0.001"/>
@@ -104,9 +146,7 @@
                 <material name="dr_blue"/>
             </visual>
             <visual>
-                <!-- <origin xyz="0 -0.2351 -0.3943" rpy="-1.5708  0 1.5708"/> -->
                  <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
-                
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_3.STL"
                         scale="0.001 0.001 0.001"/>
@@ -114,9 +154,7 @@
                 <material name="dr_blue"/>
             </visual>
             <visual>
-                <!-- <origin xyz="0 -0.2351 -0.3943" rpy="-1.5708  0 1.5708"/> -->
                  <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
-                
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_4.STL"
                         scale="0.001 0.001 0.001"/>
@@ -124,9 +162,7 @@
                 <material name="dr_blue"/>
             </visual>
             <visual>
-                <!-- <origin xyz="0 -0.2351 -0.3943" rpy="-1.5708  0 1.5708"/> -->
                  <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
-                
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_5.STL"
                         scale="0.001 0.001 0.001"/>
@@ -134,9 +170,7 @@
                 <material name="dr_blue"/>
             </visual>
             <visual>
-                <!-- <origin xyz="0 -0.2351 -0.3943" rpy="-1.5708  0 1.5708"/> -->
                  <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
-                
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_6.STL"
                         scale="0.001 0.001 0.001"/>
@@ -144,9 +178,7 @@
                 <material name="dr_blue"/>
             </visual>
             <visual>
-                <!-- <origin xyz="0 -0.2351 -0.3943" rpy="-1.5708  0 1.5708"/> -->
                  <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
-                
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_7.STL"
                         scale="0.001 0.001 0.001"/>
@@ -154,15 +186,70 @@
                 <material name="dr_blue"/>
             </visual>
             <visual>
-                <!-- <origin xyz="0 -0.2351 -0.3943" rpy="-1.5708  0 1.5708"/> -->
                  <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
-                
                 <geometry>
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_8.STL"
                         scale="0.001 0.001 0.001"/>
                 </geometry>
                 <material name="dr_blue"/>
             </visual>
+            <!-- collisions -->
+            <collision>
+                <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_1.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_2.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_3.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_4.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_5.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_6.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_7.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin xyz="-0.3943 0 -0.2351" rpy="1.5708 0 1.5708"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_2_8.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
         </link>
 
         <!-- link_3 -->
@@ -206,6 +293,35 @@
                 </geometry>
                 <material name="dr_blue"/>
             </visual>
+            <!-- collisions -->
+            <collision>
+                <origin rpy="1.5708 0 0" xyz="0 1.4043 -0.2351"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_3_1.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin rpy="1.5708 0 0" xyz="0 1.4043 -0.2351"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_3_2.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin rpy="1.5708 0 0" xyz="0 1.4043 -0.2351"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_3_3.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin rpy="1.5708 0 0" xyz="0 1.4043 -0.2351"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_3_4.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
         </link>
 
         <!-- link_4 (Dummy Link for joint_4) -->
@@ -216,6 +332,7 @@
                 <inertia ixx="0.56389" ixy="5.1281e-06" ixz="-0.00030672" iyy="0.56341" iyz="3.2061e-05"
                         izz="0.023517"/>
             </inertial>
+            <!-- 시각/충돌 없음 (더미 링크). 실제 기하가 필요하면 collision 추가하세요. -->
         </link>
 
         <!-- link_5 -->
@@ -251,6 +368,28 @@
                 </geometry>
                 <material name="dr_blue"/>
             </visual>
+            <!-- collisions -->
+            <collision>
+                <origin rpy="1.5708 0 0" xyz="0 2.2943 -0.2079"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_5_1.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin rpy="1.5708 0 0" xyz="0 2.2943 -0.2079"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_5_2.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
+            <collision>
+                <origin rpy="1.5708 0 0" xyz="0 2.2943 -0.2079"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_5_3.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
         </link>
 
         <!-- link_6 -->
@@ -268,8 +407,16 @@
                     <mesh filename="package://dsr_description2/meshes/p3020/P3020_6_1.STL"
                         scale="0.001 0.001 0.001"/>
                 </geometry>
-                <material name="dr_white"/>
+                <material name="dr_blue"/>
             </visual>
+            <!-- collision -->
+            <collision>
+                <origin rpy="0 0 0" xyz="0 -0.2079 -2.4243"/>
+                <geometry>
+                    <mesh filename="package://dsr_description2/meshes/p3020/P3020_6_1.STL"
+                          scale="0.001 0.001 0.001"/>
+                </geometry>
+            </collision>
         </link>
 
         <!-- Joints -->
@@ -298,15 +445,14 @@
         </joint>
 
         <!-- Dummy joint_4 -->
-         <joint name="joint_4" type="fixed">
+        <joint name="joint_4" type="fixed">
             <parent link="link_3"/>
             <child link="link_4"/>
             <origin rpy="1.5708           0           0" xyz="0       -0.89           -0.1731"/>
             <axis xyz="0 0 1"/>
-            <!-- <limit effort="163" lower="0" upper="0" velocity="0"/> -->
         </joint>
 
-       <joint name="joint_5" type="revolute">
+        <joint name="joint_5" type="revolute">
             <parent link="link_4"/>
             <child link="link_5"/>
             <origin rpy="-1.5708           0           0" xyz="0  0.1459  0"/>

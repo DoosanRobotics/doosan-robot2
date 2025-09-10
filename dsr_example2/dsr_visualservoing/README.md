@@ -1,5 +1,5 @@
 # Overview    
-This package provides the visual servoing example using Doosan robots in the ROS 2(Humble) environment.
+This package provides the visual servoing example using Doosan robots in the ROS 2(Jazzy) environment.
 
 
 ![Visual_Servoing_FlowChart drawio](https://github.com/user-attachments/assets/51d8284c-c446-4942-a8f7-d9390151b2d0)
@@ -10,7 +10,7 @@ This package provides the visual servoing example using Doosan robots in the ROS
 tf-transformations
 
 ```bash
-sudo apt install ros-humble-tf-transformations
+sudo apt install ros-jazzy-tf-transformations
 ```
 
 ---
@@ -56,8 +56,8 @@ It needs to be adjusted to match the performance of the camera being used.
 
 2. Install the necessary packages for camera calibration:
 ```bash
-sudo apt install ros-humble-camera-calibration
-sudo apt install ros-humble-image-pipeline
+sudo apt install ros-jazzy-camera-calibration
+sudo apt install ros-jazzy-image-pipeline
 ```
 
 3. Run `camera_calibration.launch.py`:

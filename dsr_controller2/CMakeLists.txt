@@ -50,7 +50,7 @@ include_directories(
 
 LINK_LIBRARIES(DRFL PocoFoundation PocoNet)
 
-if($ENV{ROS_DISTRO} STREQUAL "humble")                          
+if($ENV{ROS_DISTRO} STREQUAL "jazzy")                          
   LINK_DIRECTORIES ("${COMMON_LIB_FILES}/$ENV{ROS_DISTRO}/x86_64")
 else()
   message("Unknown ROS distro:")
@@ -75,21 +75,21 @@ target_include_directories(dsr_controller2 PUBLIC
 )
 ament_target_dependencies(dsr_controller2 PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-add_library(dsr_joint_trajectory SHARED
-  # src/joint_group_velocity_controller.cpp
-  src/dsr_joint_trajectory.cpp
-)
-target_compile_features(dsr_joint_trajectory PUBLIC cxx_std_17)
-target_include_directories(dsr_joint_trajectory PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include/dsr_joint_trajectory>
-)
-ament_target_dependencies(dsr_joint_trajectory PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+# add_library(dsr_joint_trajectory SHARED
+#   # src/joint_group_velocity_controller.cpp
+#   src/dsr_joint_trajectory.cpp
+# )
+# target_compile_features(dsr_joint_trajectory PUBLIC cxx_std_17)
+# target_include_directories(dsr_joint_trajectory PUBLIC
+#   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include/dsr_joint_trajectory>
+# )
+# ament_target_dependencies(dsr_joint_trajectory PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(dsr_controller2 PRIVATE "DSR_CONTROLLER2_BUILDING_DLL")
-target_compile_definitions(dsr_joint_trajectory PRIVATE "DSR_CONTROLLER2_BUILDING_DLL")
+# target_compile_definitions(dsr_joint_trajectory PRIVATE "DSR_CONTROLLER2_BUILDING_DLL")
 
 
 pluginlib_export_plugin_description_file(controller_interface dsr_controller2_plugins.xml)
@@ -120,16 +120,16 @@ install(
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
 )
-install(
-  TARGETS
-  dsr_joint_trajectory
-  EXPORT export_dsr_joint_trajectory
-  RUNTIME DESTINATION bin
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-)
+# install(
+#   TARGETS
+#   dsr_joint_trajectory
+#   EXPORT export_dsr_joint_trajectory
+#   RUNTIME DESTINATION bin
+#   ARCHIVE DESTINATION lib
+#   LIBRARY DESTINATION lib
+# )
 
 ament_export_targets(export_dsr_controller2 HAS_LIBRARY_TARGET)
-ament_export_targets(export_dsr_joint_trajectory HAS_LIBRARY_TARGET)
+# ament_export_targets(export_dsr_joint_trajectory HAS_LIBRARY_TARGET)
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_package()

@@ -1,1 +1,0 @@
-### Event driven when the robot connection losts.

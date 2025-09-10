@@ -2,8 +2,18 @@
 #  dsr_bringup2
 #  Author: Minsoo Song (minsoo.song@doosan.com)
 #  
-#  Copyright (c) 2024 Doosan Robotics
-#  Use of this source code is governed by the BSD, see LICENSE
+#  Copyright (c) 2025 Doosan Robotics
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 # 
 
 import os
@@ -24,9 +34,7 @@ from launch.actions import OpaqueFunction
 from launch.launch_context import LaunchContext
 
 def print_launch_configuration_value(context, *args, **kwargs):
-    # LaunchConfiguration 값을 평가합니다.
     gz_value = LaunchConfiguration('gz').perform(context)
-    # 평가된 값을 콘솔에 출력합니다.
     print(f'LaunchConfiguration gz: {gz_value}')
     return gz_value
 
@@ -47,11 +55,15 @@ def generate_launch_description():
         DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
         DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
+<<<<<<< HEAD
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
         DeclareLaunchArgument('remap_tf',   default_value = 'false',     description = 'REMAP TF'    ),
+=======
+        DeclareLaunchArgument('use_sim_time', default_value='false', description='Use simulation time'),
+>>>>>>> upstream/jazzy
     ]
     
-    set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='true')
+    set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='false')
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
@@ -69,12 +81,6 @@ def generate_launch_description():
                 ]
             ),
             ".urdf.xacro",
-            " name:=", LaunchConfiguration('name'),
-            " host:=", LaunchConfiguration('host'),
-            " rt_host:=", LaunchConfiguration('rt_host'),
-            " port:=", LaunchConfiguration('port'),
-            " mode:=", LaunchConfiguration('mode'),
-            " model:=", LaunchConfiguration('model'),
         ]
     )
 
@@ -89,6 +95,27 @@ def generate_launch_description():
     )
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
+    )
+    
+    set_config_node = Node(
+        package="dsr_bringup2",
+        executable="set_config",
+        namespace=LaunchConfiguration('name'),
+        parameters=[
+            {"name":    LaunchConfiguration('name')  }, 
+            {"rate":    100         },
+            {"standby": 5000        },
+            {"command": True        },
+            {"host":    LaunchConfiguration('host')  },
+            {"port":    LaunchConfiguration('port')  },
+            {"mode":    LaunchConfiguration('mode')  },
+            {"model":   LaunchConfiguration('model') },
+            {"gripper": "none"      },
+            {"mobile":  "none"      },
+            {"rt_host":  LaunchConfiguration('rt_host')      },
+            #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
+        ],
+        output="screen",
     )
     
     run_emulator_node = Node(
@@ -226,8 +253,17 @@ def generate_launch_description():
         )
     )
     
+    # Delay start of robot_controller after `joint_state_broadcaster`
+    delay_control_node_after_connection_node = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=set_config_node,
+            on_exit=[control_node],
+        )
+    )
+
     nodes = [
         set_use_sim_time,
+        set_config_node,
         run_emulator_node,
         gazebo_connection_node,
         original_tf_nodes,
@@ -235,7 +271,7 @@ def generate_launch_description():
         robot_controller_spawner,
         joint_state_broadcaster_spawner,
         included_launch_after_robot_controller_spawner,
-        control_node,
+        delay_control_node_after_connection_node,
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

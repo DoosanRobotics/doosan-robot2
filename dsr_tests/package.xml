@@ -3,10 +3,9 @@
 <package format="3">
   <name>dsr_tests</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>dsr_tests code</description>
   <maintainer email="minju3.lee@doosan.com">doosan-robotics</maintainer>
-  <license>TODO: License declaration</license>
-
+  <license>Apache License 2.0</license>
   <exec_depend>ros2launch</exec_depend>
 
   <test_depend>ament_copyright</test_depend>

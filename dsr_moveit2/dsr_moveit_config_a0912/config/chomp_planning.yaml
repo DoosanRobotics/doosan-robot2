@@ -1,10 +1,18 @@
-planning_plugin: chomp_interface/CHOMPPlanner
-request_adapters: >-
-  default_planner_request_adapters/AddTimeParameterization
-  default_planner_request_adapters/FixWorkspaceBounds
-  default_planner_request_adapters/FixStartStateBounds
-  default_planner_request_adapters/FixStartStateCollision
-  default_planner_request_adapters/FixStartStatePathConstraints
+# The old `planning_plugin` (str) is now replaced with `planning_plugins` (List[str])
+planning_plugins:
+  - chomp_interface/CHOMPPlanner
+
+# Adapters are now split into `request_adapters` and `response_adapters`
+request_adapters:
+  - default_planning_request_adapters/ResolveConstraintFrames
+  - default_planning_request_adapters/ValidateWorkspaceBounds
+  - default_planning_request_adapters/CheckStartStateBounds
+  - default_planning_request_adapters/CheckStartStateCollision
+response_adapters:
+  - default_planning_response_adapters/AddTimeOptimalParameterization
+  - default_planning_response_adapters/ValidateSolution
+  - default_planning_response_adapters/DisplayMotionPath
+
 start_state_max_bounds_error: 0.1
 planning_time_limit: 10.0
 max_iterations: 200
