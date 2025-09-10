@@ -36,7 +36,7 @@ export PYTHONPATH=$PYTHONPATH:~/ros2_ws/install/dsr_common2/lib/dsr_common2/imp
 Build dsr_example package:
 ```shell
 cd ros2_ws
-colcon build --packages-select dsr_example
+colcon build --packages-select example
 ```
 
 ### Run Dance Example

@@ -19,12 +19,12 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler,DeclareLaunchArgument, TimerAction, GroupAction
+from launch.actions import RegisterEventHandler,DeclareLaunchArgument, TimerAction
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, PythonExpression
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition
 
-from launch_ros.actions import Node, SetRemap
+from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import IncludeLaunchDescription
@@ -48,10 +48,9 @@ def generate_launch_description():
         DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
         DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
-        DeclareLaunchArgument('gui',        default_value = 'false',     description = 'Start RViz2'    ),
-        DeclareLaunchArgument('gz',         default_value = 'false',     description = 'USE GAZEBO SIM'    ),
+        DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
+        DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
-        DeclareLaunchArgument('remap_tf',   default_value = 'false',     description = 'REMAP TF'    )
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # gui = LaunchConfiguration("gui")
@@ -163,24 +162,6 @@ def generate_launch_description():
         # condition=IfCondition(gui),
     )
 
-    original_tf_nodes = GroupAction(
-        actions=[
-            robot_state_pub_node,
-            rviz_node
-        ],
-        condition=UnlessCondition(LaunchConfiguration('remap_tf'))
-    )
-
-    remapped_tf_nodes = GroupAction(
-        actions=[
-            SetRemap(src='/tf', dst='tf'),
-            SetRemap(src='/tf_static', dst='tf_static'),
-            robot_state_pub_node,
-            rviz_node
-        ],
-        condition=IfCondition(LaunchConfiguration('remap_tf'))
-    )
-
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
@@ -230,16 +211,11 @@ def generate_launch_description():
     nodes = [
         set_config_node,
         run_emulator_node,
-        original_tf_nodes,
-        remapped_tf_nodes,
+        robot_state_pub_node,
         robot_controller_spawner,
         joint_state_broadcaster_spawner,
-<<<<<<< HEAD
-        control_node,
-=======
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_control_node_after_connection_node,
->>>>>>> upstream/jazzy
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

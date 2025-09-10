@@ -36,7 +36,13 @@ apt-get install -y \
     ros-jazzy-xacro \
     ros-jazzy-joint-state-publisher-gui \
     ros-jazzy-ros2-control \
-    ros-jazzy-ros2-controllers
+    ros-jazzy-ros2-controllers \
+    ros-jazzy-gazebo-msgs \
+    ros-jazzy-moveit-msgs \
+    ros-jazzy-ros-gz \
+    ros-jazzy-gz-ros2-control \
+    ros-jazzy-moveit-configs-utils \
+    ros-jazzy-moveit-ros-move-group
 
 # Update rosdep
 rosdep update

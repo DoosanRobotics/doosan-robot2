@@ -328,35 +328,12 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
             m_nVersionDRCF += (tSysVerion._szController[i]-'0')*pow(10.0,k++);
     if(m_nVersionDRCF < 100000) m_nVersionDRCF += 100000; 
 
-<<<<<<< HEAD
-	// Basically, Controller automatically servo-off after elapse time (5 min)
-	// Deactivate it.
-	Drfl.set_auto_servo_off(0, 5.0);
-	// Virtual controller doesn't support real time connection.
-	if(mode != "virtual") {
-		if(m_nVersionDRCF >= 3000000 && m_nVersionDRCF < 3040000) {
-			drcf_rt_ip = drcf_ip;
-		}
-		if (!Drfl.connect_rt_control(drcf_ip)) {
-			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
-			return CallbackReturn::FAILURE;
-		}
-		RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "Connected RT control stream");
-		const std::string version   = "v1.0";
-		const float       period    = 0.001;
-		const int         losscount = 4;
-		if (!Drfl.set_rt_control_output(version, period, losscount)) {
-			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
-			return CallbackReturn::FAILURE;
-		}
-=======
     if(g_bIsEmulatorMode) RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    Emulator Mode");
     else                  RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    Real Robot Mode");
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRCF version = %s",tSysVerion._szController);
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRFL version = %s",Drfl.get_library_version());
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    m_nVersionDRCF = %d", m_nVersionDRCF);  //ex> M2.40 = 120400, M2.50 = 120500  
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");   
->>>>>>> upstream/jazzy
 
         // if(m_nVersionDRCF >= 120500 && m_nVersionDRCF < 3000000)    //M2.5 or later        
         // {
@@ -799,7 +776,7 @@ void DSRInterface::OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO)
 // }
 
 // M2.5 or higher
-void DSRInterface::OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO) 
+void DSRInterface::OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX_VERSION pCtrlIO) 
 {
     //RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"DSRInterface::OnMonitoringCtrlIOExCB");
 
@@ -1149,8 +1126,4 @@ void DSRInterface::OnLogAlarm(LPLOG_ALARM pLogAlarm)
 
 PLUGINLIB_EXPORT_CLASS(
   dsr_hardware2::DRHWInterface, hardware_interface::SystemInterface)
-<<<<<<< HEAD
-
-=======
       
->>>>>>> upstream/jazzy

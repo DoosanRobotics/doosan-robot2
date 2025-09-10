@@ -10,9 +10,6 @@
     
 This package provides the function to control all models of Doosan robots in the ROS2(Jazzy) environment.
 
-For tutorials and more information, please refer to the [official Doosan Robotics ROS2 manual](https://doosanrobotics.github.io/doosan-robotics-ros-manual/index.html).
-
-For tutorials and more information, please refer to the [official Doosan Robotics ROS2 manual](https://doosanrobotics.github.io/doosan-robotics-ros-manual/humble/index.html).
 
 ## Installation
 
@@ -25,18 +22,24 @@ To utilize the new emulator in virtual mode, **Docker** is required. Install Doc
 Before installing the package, ensure that the necessary dependencies are installed:
 
 ```bash
-sudo apt update
-sudo apt install -y libpoco-dev libyaml-cpp-dev wget \
-  ros-jazzy-control-msgs ros-jazzy-realtime-tools ros-jazzy-xacro \
-  ros-jazzy-joint-state-publisher-gui ros-jazzy-ros2-control \
-  ros-jazzy-ros2-controllers ros-jazzy-moveit-msgs \
-  dbus-x11 ros-jazzy-moveit-configs-utils ros-jazzy-moveit-ros-move-group
+sudo apt-get update
+sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget \
+                        ros-jazzy-control-msgs ros-jazzy-realtime-tools ros-jazzy-xacro \
+                        ros-jazzy-joint-state-publisher-gui ros-jazzy-ros2-control \
+                        ros-jazzy-ros2-controllers ros-jazzy-gazebo-msgs ros-jazzy-moveit-msgs \
+                        dbus-x11 ros-jazzy-moveit-configs-utils ros-jazzy-moveit-ros-move-group \
+                        ros-jazzy-example-interfaces
+
+
 ```
 
 ### Install Gazebo Simulation
 
 ```bash
-sudo apt install -y ros-jazzy-gazebo-msgs ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install -y ros-jazzy-gazebo-msgs ros-jazzy-ros-gz ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
 ```
 
 ### Package Installation
@@ -57,8 +60,7 @@ git clone -b jazzy https://github.com/doosan-robotics/doosan-robot2.git
 Install dependencies:
 
 ```bash
-cd ~/ros2_ws
-rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
 ```
 
 Run the emulator installation script:
@@ -155,7 +157,6 @@ ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=real host:=192.168.
 ros2 launch dsr_bringup2 dsr_bringup2_gazebo.launch.py mode:=virtual host:=127.0.0.1 port:=12346 name:=dsr01 x:=0 y:=0
 ```
 
-<<<<<<< HEAD
 To add additional arms for multi-control:
 
 ```bash
@@ -163,10 +164,8 @@ ros2 launch dsr_bringup2 dsr_bringup2_spawn_on_gazebo.launch.py mode:=virtual ho
 ```
 
 **Note:** Ensure each additional arm has a unique `port`, `name`, and location (`x`, `y`) to avoid collisions in Gazebo.
-**Note:** When launching multiple robots, we recommend using `remap_tf:=true` on `dsr_bringup2_gazebo` and `dsr_bringup2_spawn_on_gazebo`, to separate the robot TFs.
+**Important:** Each emulator instance needs 4 dedicated CPU cores and cannot share them with other emulator instances. Therefore, we advise spawning at most `(TOTAL_CPU_CORES // 4) - 1` robots to ensure emulator stability.
 
-=======
->>>>>>> upstream/jazzy
 
 ### Launch with **MoveIt2**
 
