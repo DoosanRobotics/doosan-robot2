@@ -5,8 +5,7 @@
   <version>0.0.0</version>
   <description> doosan-robot control example using dsr_realtime-api of doosan-api </description>
   <maintainer email="uzchan98@gmail.com">Jichan You</maintainer>
-
-  <license>Apache License 2.0</license>
+  <license>BSD</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
