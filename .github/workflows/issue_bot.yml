@@ -1,0 +1,68 @@
+name: Issue Automation
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  add-question-label:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    steps:
+      - name: Add "question" label when issue is opened
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: question
+
+  mark-answered-by-org-members:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issue_comment' && github.event.action == 'created'
+    steps:
+      - name: Check if commenter is a member of DoosanRobotics org
+        id: check_org
+        run: |
+          USER="${{ github.actor }}"
+          ORG="DoosanRobotics"
+
+          echo "🔍 Checking if $USER is a member of $ORG..."
+
+          # GitHub API call (204 = member, 404 = not a member)
+          STATUS=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/orgs/$ORG/members/$USER" \
+            --silent --method GET \
+            --jq '.message' 2>/dev/null || true)
+
+          if [ -z "$STATUS" ]; then
+            echo "is_org_member=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_org_member=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add "answered" label if org member
+        if: steps.check_org.outputs.is_org_member == 'true'
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: answered
+
+  close-answered-after-week:
+    runs-on: ubuntu-latest
+    if: false # replace with schedule trigger when enabling
+    steps:
+      - name: Close stale answered issues
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-label: answered
+          days-before-stale: 7
+          days-before-close: 0
+          stale-issue-message: >
+            ⏰ This issue has been marked as `answered` and will be automatically closed if there is no further activity for 7 days.
+          close-issue-message: >
+            ✅ This issue has been automatically closed since it has been in the `answered` state for more than 7 days.
