@@ -1,0 +1,68 @@
+name: Issue Automation
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  add-question-label:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    steps:
+      - name: Add "question" label when issue is opened
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: question
+
+  mark-answered-by-org-members:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issue_comment' && github.event.action == 'created'
+    steps:
+      - name: Check if commenter is in DoosanRobotics org
+        id: check_org
+        run: |
+          USER="${{ github.actor }}"
+          ORG="DoosanRobotics"
+
+          echo "🔍 Checking if $USER is a member of $ORG..."
+
+          # GitHub API 호출 (멤버면 204, 아니면 404 반환)
+          STATUS=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/orgs/$ORG/members/$USER" \
+            --silent --method GET \
+            --jq '.message' 2>/dev/null || true)
+
+          if [ -z "$STATUS" ]; then
+            echo "is_org_member=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_org_member=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add "answered" label if org member
+        if: steps.check_org.outputs.is_org_member == 'true'
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: answered
+
+  close-answered-after-week:
+    runs-on: ubuntu-latest
+    if: false # cron 트리거 추가 시 활성화 가능
+    steps:
+      - name: Close stale answered issues
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-label: answered
+          days-before-stale: 7
+          days-before-close: 0
+          stale-issue-message: >
+            ⏰ `answered` 상태로 1주일이 지나 자동으로 종료됩니다.
+          close-issue-message: >
+            ✅ 1주가 지나 답변됨 이후 자동으로 이슈를 클로즈합니다.
