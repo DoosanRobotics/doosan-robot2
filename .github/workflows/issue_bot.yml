@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'issue_comment' && github.event.action == 'created'
     steps:
-      - name: Check if commenter is in DoosanRobotics org
+      - name: Check if commenter is a member of DoosanRobotics org
         id: check_org
         run: |
           USER="${{ github.actor }}"
@@ -29,7 +29,7 @@ jobs:
 
           echo "🔍 Checking if $USER is a member of $ORG..."
 
-          # GitHub API 호출 (멤버면 204, 아니면 404 반환)
+          # GitHub API call (204 = member, 404 = not a member)
           STATUS=$(gh api \
             -H "Accept: application/vnd.github+json" \
             "/orgs/$ORG/members/$USER" \
@@ -53,7 +53,7 @@ jobs:
 
   close-answered-after-week:
     runs-on: ubuntu-latest
-    if: false # cron 트리거 추가 시 활성화 가능
+    if: false # replace with schedule trigger when enabling
     steps:
       - name: Close stale answered issues
         uses: actions/stale@v9
@@ -63,6 +63,6 @@ jobs:
           days-before-stale: 7
           days-before-close: 0
           stale-issue-message: >
-            ⏰ `answered` 상태로 1주일이 지나 자동으로 종료됩니다.
+            ⏰ This issue has been marked as `answered` and will be automatically closed if there is no further activity for 7 days.
           close-issue-message: >
-            ✅ 1주가 지나 답변됨 이후 자동으로 이슈를 클로즈합니다.
+            ✅ This issue has been automatically closed since it has been in the `answered` state for more than 7 days.
