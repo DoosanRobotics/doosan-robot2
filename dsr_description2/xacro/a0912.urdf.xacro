@@ -32,11 +32,11 @@
     <child  link="base_link"/>
   </joint>
 
-  <xacro:if value="${gz == 'true'}">
+  <xacro:if value="${gz}">
     <xacro:include filename="$(find dsr_description2)/ros2_control/a0912.gz_ros2_control.xacro"/>
     <xacro:a0912_gz_ros2_control namespace="$(arg namespace)"/>
   </xacro:if>
-  <xacro:unless value="${gz == 'true'}">
+  <xacro:unless value="${gz}">
     <xacro:include filename="$(find dsr_description2)/ros2_control/a0912.ros2_control.xacro"/>
     <xacro:a0912_ros2_control name="a0912"/>
   </xacro:unless>
@@ -65,5 +65,3 @@
   </xacro:if>
 
 </robot>
-
-

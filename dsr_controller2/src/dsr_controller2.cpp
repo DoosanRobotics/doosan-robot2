@@ -270,11 +270,11 @@ auto movejx_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveJointx::Reques
     std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
     check_dsr_model(target_pos);
     if(req->sync_type == 0){
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->movejx");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->movejx");
         res->success = Drfl->movejx(target_pos.data(), req->sol, req->vel, req->acc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->radius, (BLENDING_SPEED_TYPE)req->blend_type);    
     }
     else{
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->amovejx");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->amovejx");
         res->success = Drfl->amovejx(target_pos.data(), req->sol, req->vel, req->acc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, (BLENDING_SPEED_TYPE)req->blend_type);    
     }
 };
@@ -300,11 +300,11 @@ auto movec_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveCircle::Request
     ///RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"  <xxx pos1> %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f",fTargetPos[0][0],fTargetPos[0][1],fTargetPos[0][2],fTargetPos[0][3],fTargetPos[0][4],fTargetPos[0][5]);
     ///RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"  <xxx pos2> %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f",fTargetPos[1][0],fTargetPos[1][1],fTargetPos[1][2],fTargetPos[1][3],fTargetPos[1][4],fTargetPos[1][5]);
     if(req->sync_type == 0){   
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movec_cb() called and calling Drfl->movec");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movec_cb() called and calling Drfl->movec");
         res->success = Drfl->movec(fTargetPos, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->angle1, req->angle2, req->radius, (BLENDING_SPEED_TYPE)req->blend_type);      
     }
     else{
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movec_cb() called and calling Drfl->amovec");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movec_cb() called and calling Drfl->amovec");
         res->success = Drfl->amovec(fTargetPos, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->angle1, req->angle2, (BLENDING_SPEED_TYPE)req->blend_type);
     }
 };
@@ -342,12 +342,12 @@ auto movesj_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSplineJoint::R
 
 
     if(req->sync_type == 0){
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->movesj");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->movesj");
         //res->success = Drfl->MoveSJ(fTargetPos, req->pos_cnt, fTargetVel, req->acc, req->time, (MOVE_MODE)req->mode);
         res->success = Drfl->movesj(fTargetPos, req->pos_cnt, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode); //need updata API
     }
     else{
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->amovesj");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->amovesj");
         //res->success = Drfl->MoveSJAsync(fTargetPos, req->pos_cnt, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode);
         res->success = Drfl->amovesj(fTargetPos, req->pos_cnt, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode); //need updata API
     }
@@ -373,11 +373,11 @@ auto movesx_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSplineTask::Re
         fTargetAcc[i] = req->acc[i];
     }
     if(req->sync_type == 0){
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movesx_cb() called and calling Drfl->movesx");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movesx_cb() called and calling Drfl->movesx");
         res->success = Drfl->movesx(fTargetPos, req->pos_cnt, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, (SPLINE_VELOCITY_OPTION)req->opt);
     }
     else{
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movesx_cb() called and calling Drfl->amovesx");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movesx_cb() called and calling Drfl->amovesx");
         res->success = Drfl->amovesx(fTargetPos, req->pos_cnt, fTargetVel, fTargetAcc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, (SPLINE_VELOCITY_OPTION)req->opt);
     }
 };
@@ -418,12 +418,12 @@ auto moveb_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveBlending::Reque
     std::copy(req->acc.cbegin(), req->acc.cend(), target_acc.begin());
 
     if(req->sync_type == 0){
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveb_cb() called and calling Drfl->moveb");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveb_cb() called and calling Drfl->moveb");
         //Convert std::vector<MOVE_POSB> to MOVE_POSB* using .data()
         res->success = Drfl->moveb(posb.data(), req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
     }
     else{
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveb_cb() called and calling Drfl->amoveb");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveb_cb() called and calling Drfl->amoveb");
         //Convert std::vector<MOVE_POSB> to MOVE_POSB* using .data()
         res->success = Drfl->amoveb(posb.data(), req->pos_cnt, target_vel.data(), target_acc.data(), req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref);
     }
@@ -432,19 +432,74 @@ auto moveb_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveBlending::Reque
 auto movespiral_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveSpiral::Request> req, std::shared_ptr<dsr_msgs2::srv::MoveSpiral::Response> res)-> void          
 {
     res->success = false;
+    std::array<float, 3> target_pos;
     std::array<float, 2> target_vel;
-    
     std::array<float, 2> target_acc;
+    std::copy(req->target_pos.cbegin(), req->target_pos.cend(), target_pos.begin());
     std::copy(req->vel.cbegin(), req->vel.cend(), target_vel.begin());
     std::copy(req->acc.cbegin(), req->acc.cend(), target_acc.begin());
 
+    bool use_spiral_ex = std::any_of(req->target_pos.cbegin(), req->target_pos.cend(), [](float v){ return v != 0.0; });
+
     if(req->sync_type == 0){
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->move_spiral");
-        res->success = Drfl->move_spiral((TASK_AXIS)req->task_axis, req->revolution, req->max_radius, req->max_length, target_vel.data(), target_acc.data(), req->time, (MOVE_REFERENCE)req->ref);
+        if (use_spiral_ex){
+            RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->move_spiral_ex");
+            res->success = Drfl->move_spiral(
+                (TASK_AXIS)req->task_axis,
+                req->revolution,
+                target_pos.data(),
+                target_vel.data(),
+                target_acc.data(),
+                req->time,
+                (MOVE_REFERENCE)req->ref,
+                (MOVE_MODE)req->mode,
+                (SPIRAL_DIR)req->spiral_dir,
+                (ROT_DIR)req->rot_dir
+            );
+        }
+        else {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->move_spiral");
+            res->success = Drfl->move_spiral(
+                (TASK_AXIS)req->task_axis,
+                req->revolution,
+                req->max_radius,
+                req->max_length,
+                target_vel.data(),
+                target_acc.data(),
+                req->time,
+                (MOVE_REFERENCE)req->ref
+            );
+        }
     }
     else{
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->amove_spiral");
-        res->success = Drfl->amove_spiral((TASK_AXIS)req->task_axis, req->revolution, req->max_radius, req->max_length, target_vel.data(), target_acc.data(), req->time, (MOVE_REFERENCE)req->ref);
+        if (use_spiral_ex){
+            RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->amove_spiral_ex");
+            res->success = Drfl->amove_spiral(
+                (TASK_AXIS)req->task_axis,
+                req->revolution,
+                target_pos.data(),
+                target_vel.data(),
+                target_acc.data(),
+                req->time,
+                (MOVE_REFERENCE)req->ref,
+                (MOVE_MODE)req->mode,
+                (SPIRAL_DIR)req->spiral_dir,
+                (ROT_DIR)req->rot_dir
+            );
+        }
+        else {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movespiral_cb() called and calling Drfl->amove_spiral");
+            res->success = Drfl->amove_spiral(
+                (TASK_AXIS)req->task_axis,
+                req->revolution,
+                req->max_radius,
+                req->max_length,
+                target_vel.data(),
+                target_acc.data(),
+                req->time,
+                (MOVE_REFERENCE)req->ref
+            );
+        }
     }
 };
 
@@ -456,7 +511,7 @@ auto moveperiodic_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MovePeriodic
     std::copy(req->amp.cbegin(), req->amp.cend(), target_amp.begin());
     std::copy(req->periodic.cbegin(), req->periodic.cend(), target_periodic.begin());
     if(req->sync_type == 0){
-        //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveperiodic_cb() called and calling Drfl->move_periodic");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"moveperiodic_cb() called and calling Drfl->move_periodic");
         res->success = Drfl->move_periodic(target_amp.data(), target_periodic.data(), req->acc, req->repeat, (MOVE_REFERENCE)req->ref);
     }
     else{
@@ -467,7 +522,7 @@ auto moveperiodic_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MovePeriodic
 
 auto movewait_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveWait::Request> /*req*/, std::shared_ptr<dsr_msgs2::srv::MoveWait::Response> res)-> void                
 {
-    //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movewait_cb() called and calling Drfl->mwait");
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movewait_cb() called and calling Drfl->mwait");
     res->success = Drfl->mwait();
 };
 

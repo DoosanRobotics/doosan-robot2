@@ -776,7 +776,7 @@ void DSRInterface::OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO)
 // }
 
 // M2.5 or higher
-void DSRInterface::OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO) 
+void DSRInterface::OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX_VERSION pCtrlIO) 
 {
     //RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"DSRInterface::OnMonitoringCtrlIOExCB");
 
