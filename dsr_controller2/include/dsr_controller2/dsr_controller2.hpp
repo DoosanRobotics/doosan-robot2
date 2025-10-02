@@ -200,7 +200,9 @@
 #include "dsr_msgs2/srv/stop_rt_control.hpp"
 #include "dsr_msgs2/srv/write_data_rt.hpp"
 
-#include <geometry_msgs/msg/wrench_stamped.hpp> //[modified]
+// #include <geometry_msgs/msg/wrench_stamped.hpp> //[modified]
+#include "std_msgs/msg/float32_multi_array.hpp" // [modified]
+
 
 #include "../../../dsr_common2/include/DRFLEx.h"
 
@@ -719,27 +721,58 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::ReadDataRt>::SharedPtr                    m_nh_read_data_rt;
   rclcpp::Service<dsr_msgs2::srv::WriteDataRt>::SharedPtr                   m_nh_write_data_rt;
 
+//   // [modified]
+//   // --- read_data_rt 기반 토픽 발행 제어 파라미터
+//   bool use_rt_data_pub_{false};
+
+//   // --- TCP Force frame_id 파라미터 (기본값 예: tool0)
+//   std::string tcp_force_frame_id_{"tool0"};
+
+//   // --- 퍼블리셔 & 타이머
+//   rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr tcp_force_pub_;
+//   rclcpp::TimerBase::SharedPtr rt_timer_;
+
+//   // --- 주기적으로 read_data_rt() 호출해 발행하는 멤버 함수 선언
+//   void publishRtData();
+
+// // [modified]
+// private:
+//   static constexpr const char* PARAM_USE_RT_DATA_PUB     = "use_rt_data_pub";
+//   static constexpr const char* PARAM_TCP_FORCE_FRAME_ID  = "tcp_force_frame_id";
+//   static constexpr const char* PARAM_RT_TIMER_MS         = "rt_timer_ms";
+
   // [modified]
-  // --- read_data_rt 기반 토픽 발행 제어 파라미터
-  bool use_rt_data_pub_{false};
+    // [추가] read_data_rt 기반 토픽 발행 on/off
+  bool use_rt_topic_pub_{false};
 
-  // --- TCP Force frame_id 파라미터 (기본값 예: tool0)
-  std::string tcp_force_frame_id_{"tool0"};
+  // [추가] 발행할 키 목록
+  std::vector<std::string> rt_topic_keys_;
 
-  // --- 퍼블리셔 & 타이머
-  rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr tcp_force_pub_;
+  // [추가] 토픽 네임스페이스 (기본: "read_data_rt")
+  std::string rt_topic_ns_{"read_data_rt"};
+
+  // [추가] 키별 퍼블리셔 (Float32MultiArray로 raw 값 그대로)
+  std::unordered_map<std::string,
+      rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr> rt_pub_map_;
+
+  // [추가] 주기 타이머
   rclcpp::TimerBase::SharedPtr rt_timer_;
 
-  // --- 주기적으로 read_data_rt() 호출해 발행하는 멤버 함수 선언
-  void publishRtData();
+  // [추가] 주기 퍼블리시 함수
+  void publish_read_data_rt_selected();
 
-// [modified]
+  // [추가] 필드 추출 유틸
+  static bool extract_field(LPRT_OUTPUT_DATA_LIST temp,
+                            const std::string& key,
+                            std::vector<float>& out);
+
 private:
-  static constexpr const char* PARAM_USE_RT_DATA_PUB     = "use_rt_data_pub";
-  static constexpr const char* PARAM_TCP_FORCE_FRAME_ID  = "tcp_force_frame_id";
-  static constexpr const char* PARAM_RT_TIMER_MS         = "rt_timer_ms";
+  // [추가] 파라미터 키 상수
+  static constexpr const char* PARAM_USE_RT_TOPIC_PUB = "use_rt_topic_pub";
+  static constexpr const char* PARAM_RT_TOPIC_KEYS    = "rt_topic_keys";
+  static constexpr const char* PARAM_RT_TOPIC_NS      = "rt_topic_ns";
+  static constexpr const char* PARAM_RT_TIMER_MS      = "rt_timer_ms";
 };
-
 }  // namespace dsr_controller2
 
 #endif  

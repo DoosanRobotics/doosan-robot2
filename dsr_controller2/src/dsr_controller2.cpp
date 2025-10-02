@@ -77,9 +77,21 @@ controller_interface::CallbackReturn RobotController::on_init()
     instance = this;
     m_model = g_model;
     // [modified]
-    use_rt_data_pub_    = auto_declare<bool>(PARAM_USE_RT_DATA_PUB, false);
-    tcp_force_frame_id_ = auto_declare<std::string>(PARAM_TCP_FORCE_FRAME_ID, "tool0");
-    const auto rt_ms    = auto_declare<int>(PARAM_RT_TIMER_MS, 5);
+    // use_rt_data_pub_    = auto_declare<bool>(PARAM_USE_RT_DATA_PUB, false);
+    // tcp_force_frame_id_ = auto_declare<std::string>(PARAM_TCP_FORCE_FRAME_ID, "tool0");
+    // const auto rt_ms    = auto_declare<int>(PARAM_RT_TIMER_MS, 5);
+
+    use_rt_topic_pub_ = auto_declare<bool>(PARAM_USE_RT_TOPIC_PUB, false);
+    rt_topic_ns_      = auto_declare<std::string>(PARAM_RT_TOPIC_NS, "read_data_rt");
+    auto rt_ms        = auto_declare<int>(PARAM_RT_TIMER_MS, 10);
+
+    // 문자열 배열 파라미터 선언
+    if (!get_node()->has_parameter(PARAM_RT_TOPIC_KEYS)) {
+        get_node()->declare_parameter<std::vector<std::string>>(PARAM_RT_TOPIC_KEYS,
+                                                                std::vector<std::string>{});
+    }
+    rt_topic_keys_ = get_node()->get_parameter(PARAM_RT_TOPIC_KEYS).as_string_array();
+
   return CallbackReturn::SUCCESS;
 }
 
@@ -112,43 +124,122 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 	Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
 	Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
 
-    tcp_force_pub_ = get_node()->create_publisher<geometry_msgs::msg::WrenchStamped>(
-    "~/tcp_force", rclcpp::SensorDataQoS());
+    // [modified]
+    // 선택 토픽 발행 설정
+    if (use_rt_topic_pub_) {
+        // 키별 퍼블리셔 준비
+        rt_pub_map_.clear();
+        for (const auto& key : rt_topic_keys_) {
+        // 토픽명: "~/<rt_topic_ns_>/<key>"  예) ~/read_data_rt/external_tcp_force
+        auto topic = std::string("~/") + rt_topic_ns_ + "/" + key;
+        rt_pub_map_[key] = get_node()->create_publisher<std_msgs::msg::Float32MultiArray>(
+            topic, rclcpp::SystemDefaultsQoS());
+        }
 
-    if (use_rt_data_pub_) {
-    auto period = std::chrono::milliseconds(get_node()->get_parameter(PARAM_RT_TIMER_MS).as_int());
-    rt_timer_ = get_node()->create_wall_timer(period, [this]{ publishRtData(); });
+        // 타이머 (주기 ms)
+        const int rt_ms = get_node()->get_parameter(PARAM_RT_TIMER_MS).as_int();
+        rt_timer_ = get_node()->create_wall_timer(
+            std::chrono::milliseconds(rt_ms),
+            std::bind(&RobotController::publish_read_data_rt_selected, this));
     }
 
   return CallbackReturn::SUCCESS;
 }
 
-// [modified]
-void RobotController::publishRtData()
-{
-  if (!use_rt_data_pub_) return;
+// // [modified]
+// void RobotController::publishRtData()
+// {
+//   if (!use_rt_data_pub_) return;
 
+//   LPRT_OUTPUT_DATA_LIST temp = Drfl->read_data_rt();
+//   if (temp == nullptr) {
+//     RCLCPP_WARN(get_node()->get_logger(), "read_data_rt() returned nullptr");
+//     return;
+//   }
+
+//   geometry_msgs::msg::WrenchStamped msg;
+//   msg.header.stamp = get_node()->now();
+//   msg.header.frame_id = tcp_force_frame_id_;
+
+//   // external_tcp_force 는 길이 6짜리 배열 (Fx, Fy, Fz, Tx, Ty, Tz)
+//   msg.wrench.force.x  = temp->external_tcp_force[0];
+//   msg.wrench.force.y  = temp->external_tcp_force[1];
+//   msg.wrench.force.z  = temp->external_tcp_force[2];
+//   msg.wrench.torque.x = temp->external_tcp_force[3];
+//   msg.wrench.torque.y = temp->external_tcp_force[4];
+//   msg.wrench.torque.z = temp->external_tcp_force[5];
+
+//   tcp_force_pub_->publish(msg);
+// }
+
+//[modified]
+void RobotController::publish_read_data_rt_selected() {
+  // read_data_rt() 로 raw 포인터 획득
   LPRT_OUTPUT_DATA_LIST temp = Drfl->read_data_rt();
-  if (temp == nullptr) {
-    RCLCPP_WARN(get_node()->get_logger(), "read_data_rt() returned nullptr");
+  if (!temp) {
+    RCLCPP_WARN_THROTTLE(get_node()->get_logger(), *get_node()->get_clock(),
+                         2000, "read_data_rt() returned nullptr");
     return;
   }
 
-  geometry_msgs::msg::WrenchStamped msg;
-  msg.header.stamp = get_node()->now();
-  msg.header.frame_id = tcp_force_frame_id_;
+  // 각 key마다 추출 → Float32MultiArray 발행
+  for (const auto& key : rt_topic_keys_) {
+    auto it = rt_pub_map_.find(key);
+    if (it == rt_pub_map_.end()) continue;
 
-  // external_tcp_force 는 길이 6짜리 배열 (Fx, Fy, Fz, Tx, Ty, Tz)
-  msg.wrench.force.x  = temp->external_tcp_force[0];
-  msg.wrench.force.y  = temp->external_tcp_force[1];
-  msg.wrench.force.z  = temp->external_tcp_force[2];
-  msg.wrench.torque.x = temp->external_tcp_force[3];
-  msg.wrench.torque.y = temp->external_tcp_force[4];
-  msg.wrench.torque.z = temp->external_tcp_force[5];
+    std::vector<float> vals;
+    if (!extract_field(temp, key, vals)) {
+      // 지원하지 않는 키면 경고(과도한 로그 방지하려면 throttle)
+      RCLCPP_WARN_THROTTLE(get_node()->get_logger(), *get_node()->get_clock(),
+                           5000, "read_data_rt(): unsupported key '%s'", key.c_str());
+      continue;
+    }
 
-  tcp_force_pub_->publish(msg);
+    std_msgs::msg::Float32MultiArray msg;
+    msg.data = std::move(vals); // raw값 그대로
+    it->second->publish(msg);
+  }
 }
 
+// [modified]
+bool RobotController::extract_field(LPRT_OUTPUT_DATA_LIST temp,
+                                    const std::string& key,
+                                    std::vector<float>& out) {
+  // 필요한 필드만 우선 지원 (요청 확장 시 여기에 추가)
+  // 모든 항목은 raw float 배열 그대로 복사
+  auto copy_arr = [&](const float* src, size_t n) {
+    out.assign(src, src + n);
+    return true;
+  };
+
+  if (key == "actual_joint_position")        return copy_arr(temp->actual_joint_position,        6);
+  if (key == "actual_joint_position_abs")    return copy_arr(temp->actual_joint_position_abs,    6);
+  if (key == "actual_joint_velocity")        return copy_arr(temp->actual_joint_velocity,        6);
+  if (key == "actual_joint_velocity_abs")    return copy_arr(temp->actual_joint_velocity_abs,    6);
+  if (key == "actual_tcp_position")          return copy_arr(temp->actual_tcp_position,          6);
+  if (key == "actual_tcp_velocity")          return copy_arr(temp->actual_tcp_velocity,          6);
+  if (key == "actual_flange_position")       return copy_arr(temp->actual_flange_position,       6);
+  if (key == "actual_flange_velocity")       return copy_arr(temp->actual_flange_velocity,       6);
+  if (key == "actual_motor_torque")          return copy_arr(temp->actual_motor_torque,          6);
+  if (key == "actual_joint_torque")          return copy_arr(temp->actual_joint_torque,          6);
+  if (key == "raw_joint_torque")             return copy_arr(temp->raw_joint_torque,             6);
+  if (key == "raw_force_torque")             return copy_arr(temp->raw_force_torque,             6);
+  if (key == "external_joint_torque")        return copy_arr(temp->external_joint_torque,        6);
+  if (key == "external_tcp_force")           return copy_arr(temp->external_tcp_force,           6);
+  if (key == "target_joint_position")        return copy_arr(temp->target_joint_position,        6);
+  if (key == "target_joint_velocity")        return copy_arr(temp->target_joint_velocity,        6);
+  if (key == "target_joint_acceleration")    return copy_arr(temp->target_joint_acceleration,    6);
+  if (key == "target_motor_torque")          return copy_arr(temp->target_motor_torque,          6);
+  if (key == "target_tcp_position")          return copy_arr(temp->target_tcp_position,          6);
+  if (key == "target_tcp_velocity")          return copy_arr(temp->target_tcp_velocity,          6);
+  if (key == "gravity_torque")               return copy_arr(temp->gravity_torque,               6);
+  if (key == "joint_temperature")            return copy_arr(temp->joint_temperature,            6);
+  if (key == "goal_joint_position")          return copy_arr(temp->goal_joint_position,          6);
+  if (key == "goal_tcp_position")            return copy_arr(temp->goal_tcp_position,            6);
+
+  // 필요 시 단일/기타 필드(예: time_stamp)는 별도 토픽으로 Float64 등으로 확장 가능
+  return false;
+}
 
 
 
