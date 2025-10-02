@@ -30,7 +30,10 @@
         - joint_4
         - joint_5
         - joint_6
-        
+      use_rt_data_pub: true          # true면 타이머로 주기적으로 read_data_rt 호출해서 토픽 발행
+      tcp_force_frame_id: tool0      # WrenchStamped.header.frame_id
+      rt_timer_ms: 5                 # read_data_rt 호출 주기(ms). 5~10 권장
+
   dsr_position_controller:
     ros__parameters:
       joints:

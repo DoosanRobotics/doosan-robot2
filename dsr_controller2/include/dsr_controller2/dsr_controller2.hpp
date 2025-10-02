@@ -200,6 +200,8 @@
 #include "dsr_msgs2/srv/stop_rt_control.hpp"
 #include "dsr_msgs2/srv/write_data_rt.hpp"
 
+#include <geometry_msgs/msg/wrench_stamped.hpp> //[modified]
+
 #include "../../../dsr_common2/include/DRFLEx.h"
 
 #define _DEBUG_DSR_CTL      0
@@ -501,7 +503,7 @@ namespace DRFL_CALLBACKS {
   void OnMonitoringStateCB(const ROBOT_STATE eState);
   void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl);
   void OnLogAlarm(LPLOG_ALARM pLogAlarm);
-  void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
+  // void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData); # [modified]
   void OnDisConnected();
 }
 
@@ -717,8 +719,27 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::ReadDataRt>::SharedPtr                    m_nh_read_data_rt;
   rclcpp::Service<dsr_msgs2::srv::WriteDataRt>::SharedPtr                   m_nh_write_data_rt;
 
+  // [modified]
+  // --- read_data_rt 기반 토픽 발행 제어 파라미터
+  bool use_rt_data_pub_{false};
+
+  // --- TCP Force frame_id 파라미터 (기본값 예: tool0)
+  std::string tcp_force_frame_id_{"tool0"};
+
+  // --- 퍼블리셔 & 타이머
+  rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr tcp_force_pub_;
+  rclcpp::TimerBase::SharedPtr rt_timer_;
+
+  // --- 주기적으로 read_data_rt() 호출해 발행하는 멤버 함수 선언
+  void publishRtData();
+
+// [modified]
+private:
+  static constexpr const char* PARAM_USE_RT_DATA_PUB     = "use_rt_data_pub";
+  static constexpr const char* PARAM_TCP_FORCE_FRAME_ID  = "tcp_force_frame_id";
+  static constexpr const char* PARAM_RT_TIMER_MS         = "rt_timer_ms";
 };
 
-}  // namespace dsr_control2
+}  // namespace dsr_controller2
 
 #endif  

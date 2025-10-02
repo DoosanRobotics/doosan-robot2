@@ -76,6 +76,10 @@ controller_interface::CallbackReturn RobotController::on_init()
 {
     instance = this;
     m_model = g_model;
+    // [modified]
+    use_rt_data_pub_    = auto_declare<bool>(PARAM_USE_RT_DATA_PUB, false);
+    tcp_force_frame_id_ = auto_declare<std::string>(PARAM_TCP_FORCE_FRAME_ID, "tool0");
+    const auto rt_ms    = auto_declare<int>(PARAM_RT_TIMER_MS, 5);
   return CallbackReturn::SUCCESS;
 }
 
@@ -108,8 +112,45 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 	Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
 	Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
 
+    tcp_force_pub_ = get_node()->create_publisher<geometry_msgs::msg::WrenchStamped>(
+    "~/tcp_force", rclcpp::SensorDataQoS());
+
+    if (use_rt_data_pub_) {
+    auto period = std::chrono::milliseconds(get_node()->get_parameter(PARAM_RT_TIMER_MS).as_int());
+    rt_timer_ = get_node()->create_wall_timer(period, [this]{ publishRtData(); });
+    }
+
   return CallbackReturn::SUCCESS;
 }
+
+// [modified]
+void RobotController::publishRtData()
+{
+  if (!use_rt_data_pub_) return;
+
+  LPRT_OUTPUT_DATA_LIST temp = Drfl->read_data_rt();
+  if (temp == nullptr) {
+    RCLCPP_WARN(get_node()->get_logger(), "read_data_rt() returned nullptr");
+    return;
+  }
+
+  geometry_msgs::msg::WrenchStamped msg;
+  msg.header.stamp = get_node()->now();
+  msg.header.frame_id = tcp_force_frame_id_;
+
+  // external_tcp_force 는 길이 6짜리 배열 (Fx, Fy, Fz, Tx, Ty, Tz)
+  msg.wrench.force.x  = temp->external_tcp_force[0];
+  msg.wrench.force.y  = temp->external_tcp_force[1];
+  msg.wrench.force.z  = temp->external_tcp_force[2];
+  msg.wrench.torque.x = temp->external_tcp_force[3];
+  msg.wrench.torque.y = temp->external_tcp_force[4];
+  msg.wrench.torque.z = temp->external_tcp_force[5];
+
+  tcp_force_pub_->publish(msg);
+}
+
+
+
 
 void check_dsr_model(std::array<float, NUM_JOINT>& target_joint){
     if (m_model == "p3020"){
