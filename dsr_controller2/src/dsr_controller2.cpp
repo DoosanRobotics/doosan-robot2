@@ -77,7 +77,6 @@ controller_interface::CallbackReturn RobotController::on_init()
     instance = this;
     m_model = g_model;
 
-    // [modified]
     use_rt_topic_pub_ = auto_declare<bool>(PARAM_USE_RT_TOPIC_PUB, false);
     auto rt_ms        = auto_declare<int>(PARAM_RT_TIMER_MS, 10);
 
@@ -116,7 +115,7 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 	Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
 	Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
 
-    // [modified] : create publishers by key
+    // create publishers by key
     if (use_rt_topic_pub_) {
         rt_pub_map_.clear();
         for (const auto& key : rt_topic_keys_) 
@@ -133,7 +132,7 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
   return CallbackReturn::SUCCESS;
 }
 
-//[modified]
+// Publishes selected real-time robot data fields as Float32MultiArray messages.
 void RobotController::publish_read_data_rt_selected() {
   LPRT_OUTPUT_DATA_LIST temp = Drfl->read_data_rt();
   if (!temp) {
@@ -157,7 +156,7 @@ void RobotController::publish_read_data_rt_selected() {
   }
 }
 
-// [modified] : Extracts a specific field from the real-time data structure (LPRT_OUTPUT_DATA_LIST)
+// Extracts a specific field from the real-time data structure (LPRT_OUTPUT_DATA_LIST)
 bool RobotController::extract_field(LPRT_OUTPUT_DATA_LIST temp, const std::string& key, std::vector<float>& out)
 {
     out.clear();

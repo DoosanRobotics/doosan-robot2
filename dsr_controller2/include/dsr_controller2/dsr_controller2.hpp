@@ -200,8 +200,7 @@
 #include "dsr_msgs2/srv/stop_rt_control.hpp"
 #include "dsr_msgs2/srv/write_data_rt.hpp"
 
-// #include <geometry_msgs/msg/wrench_stamped.hpp> //[modified]
-#include "std_msgs/msg/float32_multi_array.hpp" // [modified]
+#include "std_msgs/msg/float32_multi_array.hpp"
 
 
 #include "../../../dsr_common2/include/DRFLEx.h"
@@ -505,7 +504,6 @@ namespace DRFL_CALLBACKS {
   void OnMonitoringStateCB(const ROBOT_STATE eState);
   void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl);
   void OnLogAlarm(LPLOG_ALARM pLogAlarm);
-  // void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData); # [modified]
   void OnDisConnected();
 }
 
@@ -721,8 +719,7 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::ReadDataRt>::SharedPtr                    m_nh_read_data_rt;
   rclcpp::Service<dsr_msgs2::srv::WriteDataRt>::SharedPtr                   m_nh_write_data_rt;
 
-
-  // [modified]
+  // Real-time data publishing members and parameters for periodic Float32MultiArray topic output.
   bool use_rt_topic_pub_{false};
   std::vector<std::string> rt_topic_keys_;
   std::unordered_map<std::string,rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr> rt_pub_map_;
