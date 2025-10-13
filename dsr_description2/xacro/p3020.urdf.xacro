@@ -40,17 +40,17 @@
   </joint>
 
   <xacro:if value="${gz}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/m1509.gz_ros2_control.xacro" />
+    <xacro:include filename="$(find dsr_description2)/ros2_control/p3020.gz_ros2_control.xacro" />
     <xacro:m1509_gz_ros2_control namespace="$(arg namespace)"/>
   </xacro:if>
   <xacro:unless value="${gz}">
     <!-- for mujoco -->
     <xacro:if value="${mj}">
-      <xacro:include filename="$(find dsr_description2)/ros2_control/m1509.mj_ros2_control.xacro" />
+      <xacro:include filename="$(find dsr_description2)/ros2_control/p3020.mj_ros2_control.xacro" />
       <xacro:m1509_mj_ros2_control namespace="$(arg namespace)" gripper="$(arg gripper)"/>
     </xacro:if>
     <xacro:unless value="${mj}">
-      <xacro:include filename="$(find dsr_description2)/ros2_control/m1509.ros2_control.xacro" />
+      <xacro:include filename="$(find dsr_description2)/ros2_control/p3020.ros2_control.xacro" />
       <xacro:m1509_ros2_control 
         name="m1509"
         host="${host}"
