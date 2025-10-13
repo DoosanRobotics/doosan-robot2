@@ -41,18 +41,18 @@
 
   <xacro:if value="${gz}">
     <xacro:include filename="$(find dsr_description2)/ros2_control/p3020.gz_ros2_control.xacro" />
-    <xacro:m1509_gz_ros2_control namespace="$(arg namespace)"/>
+    <xacro:p3020_gz_ros2_control namespace="$(arg namespace)"/>
   </xacro:if>
   <xacro:unless value="${gz}">
     <!-- for mujoco -->
     <xacro:if value="${mj}">
       <xacro:include filename="$(find dsr_description2)/ros2_control/p3020.mj_ros2_control.xacro" />
-      <xacro:m1509_mj_ros2_control namespace="$(arg namespace)" gripper="$(arg gripper)"/>
+      <xacro:p3020_mj_ros2_control namespace="$(arg namespace)" gripper="$(arg gripper)"/>
     </xacro:if>
     <xacro:unless value="${mj}">
       <xacro:include filename="$(find dsr_description2)/ros2_control/p3020.ros2_control.xacro" />
-      <xacro:m1509_ros2_control 
-        name="m1509"
+      <xacro:p3020_ros2_control 
+        name="p3020"
         host="${host}"
         rt_host="${rt_host}"
         port="${port}"
