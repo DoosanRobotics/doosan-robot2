@@ -32,12 +32,11 @@
         - joint_6
 
       # [modified]  
-      use_rt_topic_pub: true
-      rt_topic_ns: "read_data_rt"          # 토픽 네임스페이스 (결과: ~/read_data_rt/<key>)
+      use_rt_topic_pub: false
       rt_timer_ms: 10                      # 주기(ms)
-      rt_topic_keys:                       # 발행할 필드 이름(원하는 것만 선택)
+      rt_topic_keys:                       # 발행할 필드 이름 -> dsr_controller2.hpp -> extract_filed 함수 참고
         - actual_joint_position
-        - external_tcp_force
+
 
   dsr_position_controller:
     ros__parameters:
