@@ -76,6 +76,13 @@ controller_interface::CallbackReturn RobotController::on_init()
 {
     instance = this;
     m_model = g_model;
+
+    use_rt_topic_pub_ = auto_declare<bool>(PARAM_USE_RT_TOPIC_PUB, false);
+    auto rt_ms        = auto_declare<int>(PARAM_RT_TIMER_MS, 10);
+
+    if (!get_node()->has_parameter(PARAM_RT_TOPIC_KEYS)) {get_node()->declare_parameter<std::vector<std::string>>(PARAM_RT_TOPIC_KEYS,std::vector<std::string>{});}
+    rt_topic_keys_ = get_node()->get_parameter(PARAM_RT_TOPIC_KEYS).as_string_array();
+
   return CallbackReturn::SUCCESS;
 }
 
@@ -108,7 +115,168 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 	Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
 	Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
 
+    // create publishers by key
+    if (use_rt_topic_pub_) {
+        rt_pub_map_.clear();
+        for (const auto& key : rt_topic_keys_) 
+        {
+        auto topic = "/rt_topic/" + key; // topic name
+        rt_pub_map_[key] = get_node()->create_publisher<std_msgs::msg::Float32MultiArray>(topic, rclcpp::SystemDefaultsQoS());
+        }
+
+        // timer
+        const int rt_ms = get_node()->get_parameter(PARAM_RT_TIMER_MS).as_int();
+        rt_timer_ = get_node()->create_wall_timer(std::chrono::milliseconds(rt_ms),std::bind(&RobotController::publish_read_data_rt_selected, this));
+    }
+
   return CallbackReturn::SUCCESS;
+}
+
+// Publishes selected real-time robot data fields as Float32MultiArray messages.
+void RobotController::publish_read_data_rt_selected() {
+  LPRT_OUTPUT_DATA_LIST temp = Drfl->read_data_rt();
+  if (!temp) {
+    RCLCPP_WARN_THROTTLE(get_node()->get_logger(), *get_node()->get_clock(), 2000, "read_data_rt() returned nullptr");
+    return;
+  }
+
+  for (const auto& key : rt_topic_keys_) {
+    auto it = rt_pub_map_.find(key);
+    if (it == rt_pub_map_.end()) continue;
+
+    std::vector<float> vals;
+    if (!extract_field(temp, key, vals)) {
+      RCLCPP_WARN_THROTTLE(get_node()->get_logger(), *get_node()->get_clock(), 5000, "read_data_rt(): unsupported key '%s'", key.c_str());
+      continue;
+    }
+
+    std_msgs::msg::Float32MultiArray msg;
+    msg.data = std::move(vals); // using raw data
+    it->second->publish(msg);
+  }
+}
+
+// Extracts a specific field from the real-time data structure (LPRT_OUTPUT_DATA_LIST)
+bool RobotController::extract_field(LPRT_OUTPUT_DATA_LIST temp, const std::string& key, std::vector<float>& out)
+{
+    out.clear();
+
+    // Helper lambdas for copying arrays and scalars of various data types
+    auto copy_arr_f = [&](const float* src, size_t n) {
+        out.assign(src, src + n);
+        return true;
+    };
+    auto copy_arr_d = [&](const double* src, size_t n) {
+        out.resize(n);
+        for (size_t i = 0; i < n; ++i)
+            out[i] = static_cast<float>(src[i]);
+        return true;
+    };
+    auto copy_arr_i32 = [&](const int32_t* src, size_t n) {
+        out.resize(n);
+        for (size_t i = 0; i < n; ++i)
+            out[i] = static_cast<float>(src[i]);
+        return true;
+    };
+    auto copy_arr_u32 = [&](const uint32_t* src, size_t n) {
+        out.resize(n);
+        for (size_t i = 0; i < n; ++i)
+            out[i] = static_cast<float>(src[i]);
+        return true;
+    };
+    auto copy_arr_u8 = [&](const unsigned char* src, size_t n) {
+        out.resize(n);
+        for (size_t i = 0; i < n; ++i)
+            out[i] = static_cast<float>(src[i]);
+        return true;
+    };
+
+    auto copy_scalar_d = [&](double v) {
+        out = { static_cast<float>(v) };
+        return true;
+    };
+    auto copy_scalar_i32 = [&](int32_t v) {
+        out = { static_cast<float>(v) };
+        return true;
+    };
+    auto copy_scalar_u32 = [&](uint32_t v) {
+        out = { static_cast<float>(v) };
+        return true;
+    };
+
+    auto copy_mat6x6_f = [&](const float m[6][6]) {
+        out.resize(36);
+        size_t k = 0;
+        for (int i = 0; i < 6; ++i)
+            for (int j = 0; j < 6; ++j)
+                out[k++] = m[i][j];
+        return true;
+    };
+    auto copy_mat6x6_d = [&](const double m[6][6]) {
+        out.resize(36);
+        size_t k = 0;
+        for (int i = 0; i < 6; ++i)
+            for (int j = 0; j < 6; ++j)
+                out[k++] = static_cast<float>(m[i][j]);
+        return true;
+    };
+
+    // 6-element float array fields ---
+    if (key == "actual_joint_position")        return copy_arr_f(temp->actual_joint_position, 6);
+    if (key == "actual_joint_position_abs")    return copy_arr_f(temp->actual_joint_position_abs, 6);
+    if (key == "actual_joint_velocity")        return copy_arr_f(temp->actual_joint_velocity, 6);
+    if (key == "actual_joint_velocity_abs")    return copy_arr_f(temp->actual_joint_velocity_abs, 6);
+    if (key == "actual_tcp_position")          return copy_arr_f(temp->actual_tcp_position, 6);
+    if (key == "actual_tcp_velocity")          return copy_arr_f(temp->actual_tcp_velocity, 6);
+    if (key == "actual_flange_position")       return copy_arr_f(temp->actual_flange_position, 6);
+    if (key == "actual_flange_velocity")       return copy_arr_f(temp->actual_flange_velocity, 6);
+    if (key == "actual_motor_torque")          return copy_arr_f(temp->actual_motor_torque, 6);
+    if (key == "actual_joint_torque")          return copy_arr_f(temp->actual_joint_torque, 6);
+    if (key == "raw_joint_torque")             return copy_arr_f(temp->raw_joint_torque, 6);
+    if (key == "raw_force_torque")             return copy_arr_f(temp->raw_force_torque, 6);
+    if (key == "external_joint_torque")        return copy_arr_f(temp->external_joint_torque, 6);
+    if (key == "external_tcp_force")           return copy_arr_f(temp->external_tcp_force, 6);
+    if (key == "target_joint_position")        return copy_arr_f(temp->target_joint_position, 6);
+    if (key == "target_joint_velocity")        return copy_arr_f(temp->target_joint_velocity, 6);
+    if (key == "target_joint_acceleration")    return copy_arr_f(temp->target_joint_acceleration, 6);
+    if (key == "target_motor_torque")          return copy_arr_f(temp->target_motor_torque, 6);
+    if (key == "target_tcp_position")          return copy_arr_f(temp->target_tcp_position, 6);
+    if (key == "target_tcp_velocity")          return copy_arr_f(temp->target_tcp_velocity, 6);
+    if (key == "gravity_torque")               return copy_arr_f(temp->gravity_torque, 6);
+    if (key == "joint_temperature")            return copy_arr_f(temp->joint_temperature, 6);
+    if (key == "goal_joint_position")          return copy_arr_f(temp->goal_joint_position, 6);
+    if (key == "goal_tcp_position")            return copy_arr_f(temp->goal_tcp_position, 6);
+
+    // 6x6 matrix fields
+    if (key == "coriolis_matrix")  return copy_mat6x6_f(temp->coriolis_matrix);
+    if (key == "mass_matrix")      return copy_mat6x6_f(temp->mass_matrix);
+    if (key == "jacobian_matrix")  return copy_mat6x6_f(temp->jacobian_matrix);
+
+    // 2-element fields (controller and encoder info)
+    if (key == "controller_analog_input_type")   return copy_arr_u8(temp->controller_analog_input_type,   2);
+    if (key == "controller_analog_input")        return copy_arr_f (temp->controller_analog_input,        2);
+    if (key == "controller_analog_output_type")  return copy_arr_u8(temp->controller_analog_output_type,  2);
+    if (key == "controller_analog_output")       return copy_arr_f (temp->controller_analog_output,       2);
+    if (key == "external_encoder_strobe_count")  return copy_arr_u8(temp->external_encoder_strobe_count,  2);
+    if (key == "external_encoder_count")         return copy_arr_u32(temp->external_encoder_count,        2);
+
+    // 4-element fields (flange analog input)
+    if (key == "flange_analog_input")            return copy_arr_f (temp->flange_analog_input, 4);
+
+    // Single scalar values
+    if (key == "time_stamp")               return copy_scalar_d  (temp->time_stamp);
+    if (key == "solution_space")           return copy_scalar_i32(temp->solution_space);
+    if (key == "singularity")              return copy_scalar_i32(temp->singularity);
+    if (key == "operation_speed_rate")     return copy_scalar_d  (temp->operation_speed_rate);
+    if (key == "controller_digital_input") return copy_scalar_u32(temp->controller_digital_input);
+    if (key == "controller_digital_output")return copy_scalar_u32(temp->controller_digital_output);
+    if (key == "flange_digital_input")     return copy_scalar_u32(temp->flange_digital_input);
+    if (key == "flange_digital_output")    return copy_scalar_u32(temp->flange_digital_output);
+    if (key == "robot_mode")               return copy_scalar_i32(temp->robot_mode);
+    if (key == "robot_state")              return copy_scalar_i32(temp->robot_state);
+    if (key == "control_mode")             return copy_scalar_i32(temp->control_mode);
+
+    return false;
 }
 
 void check_dsr_model(std::array<float, NUM_JOINT>& target_joint){

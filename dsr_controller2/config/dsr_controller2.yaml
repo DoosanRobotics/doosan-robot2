@@ -30,7 +30,13 @@
         - joint_4
         - joint_5
         - joint_6
-        
+
+      # rt_data topic argument
+      use_rt_topic_pub: false
+      rt_timer_ms: 10                      # ms
+      rt_topic_keys:                       # Field names available for RT publishing (see extract_field() in dsr_controller2.cpp)
+        - actual_joint_position
+
   dsr_position_controller:
     ros__parameters:
       joints:
