@@ -21,7 +21,7 @@ from launch.actions import IncludeLaunchDescription
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
-
+import yaml
 
 def print_launch_configuration_value(context, *args, **kwargs):
     # LaunchConfiguration 값을 평가합니다.
@@ -29,6 +29,18 @@ def print_launch_configuration_value(context, *args, **kwargs):
     # 평가된 값을 콘솔에 출력합니다.
     print(f'LaunchConfiguration gz: {gz_value}')
     return gz_value
+
+def read_update_rate():
+    pkg_share = get_package_share_directory("dsr_controller2")
+    yaml_path = os.path.join(pkg_share, "config", "dsr_update_rate.yaml")
+    with open(yaml_path, "r") as f:
+        yaml_data = yaml.safe_load(f)
+    try:
+        update_rate = yaml_data["controller_manager"]["ros__parameters"]["update_rate"]
+    except Exception:
+        update_rate = 100  # fallback default
+    print(f"[dsr_controller2] Loaded update_rate from YAML: {update_rate}")
+    return update_rate
 
 def generate_launch_description():
     ARGUMENTS =[ 
@@ -41,12 +53,14 @@ def generate_launch_description():
         DeclareLaunchArgument('gui',        default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',         default_value = 'false',     description = 'USE GAZEBO SIM'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
-        DeclareLaunchArgument('remap_tf',   default_value = 'false',     description = 'REMAP TF'    )
+        DeclareLaunchArgument('remap_tf',   default_value = 'false',     description = 'REMAP TF'    ),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # gui = LaunchConfiguration("gui")
     mode = LaunchConfiguration("mode")
     
+    update_rate = str(read_update_rate()) # get update_rate from yaml
+
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -66,18 +80,25 @@ def generate_launch_description():
             " port:=", LaunchConfiguration('port'),
             " mode:=", LaunchConfiguration('mode'),
             " model:=", LaunchConfiguration('model'),
+            " update_rate:=", update_rate,
         ]
     )
 
     robot_description = {"robot_description": robot_description_content}
 
-    robot_controllers = PathJoinSubstitution(
-        [
+    robot_controllers = [
+        PathJoinSubstitution([
+            FindPackageShare("dsr_controller2"),
+            "config",
+            "dsr_update_rate.yaml",
+        ]),
+        PathJoinSubstitution([
             FindPackageShare("dsr_controller2"),
             "config",
             "dsr_controller2.yaml",
-        ]
-    )
+        ])
+    ]
+
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
     )
@@ -108,7 +129,7 @@ def generate_launch_description():
         package="controller_manager",
         executable="ros2_control_node",
         namespace=LaunchConfiguration('name'),
-        parameters=[robot_description, robot_controllers],
+        parameters=[robot_description] + robot_controllers,
         output="both",
     )
 
@@ -128,6 +149,7 @@ def generate_launch_description():
                 " port:=", LaunchConfiguration('port'),
                 " mode:=", LaunchConfiguration('mode'),
                 " model:=", LaunchConfiguration('model'),
+                " update_rate:=", update_rate,
                 ]),         
         }]
     )

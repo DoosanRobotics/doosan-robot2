@@ -65,12 +65,15 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "model : %s", parameter.second.c_str());
 			model = parameter.second;
 			g_model = model;
+		} else if ("update_rate" == parameter.first) {
+			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"update_rate : %s", parameter.second.c_str());
+			update_rate = std::stoi(parameter.second);
 		} else {
 			RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter....\
 			 	key : %s, value : %s",parameter.first.c_str(), parameter.second.c_str());
 		}
 	}
-	if(info.hardware_parameters.size() != 5) {
+	if(info.hardware_parameters.size() != 6) {
 		RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter Size ...");
 		return CallbackReturn::ERROR;
 	}
@@ -356,57 +359,95 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
 }
 
 vector<vector<float>> joint_position_commands;
-return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
+return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &)
 {
-	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] dt  : %.3f", float(dt.seconds()) );
-	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_position_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-	//         ,joint_position_command_[0]
-	//         ,joint_position_command_[1]
-	//         ,joint_position_command_[2]
-	//         ,joint_position_command_[3]
-	//         ,joint_position_command_[4]
-	//         ,joint_position_command_[5]);
-	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_velocities_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-	//         ,joint_velocities_command_[0]
-	//         ,joint_velocities_command_[1]
-	//         ,joint_velocities_command_[2]
-	//         ,joint_velocities_command_[3]
-	//         ,joint_velocities_command_[4]
-	//         ,joint_velocities_command_[5]);
-	static bool idle = false;
-	// TODO: this seems to be a workaround. refer to hardware design of 'prepare_command_mode_switch'
-	if(positionCommandRunning(pre_joint_position_command_, joint_position_command_)) {
-		if(true == idle) {
-			// This is workaround to overcome issues :
-			// move_joint (drfl) API internally sent safety_off right after moving. 
-			// which occurs problems like :
-			// "move_joint service command -> trajectory command => error ! "
-			Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
-			idle = false;
-		}
+    // CPU 기준 시간 측정
+    static auto last_time = std::chrono::steady_clock::now();
+    auto now = std::chrono::steady_clock::now();
+    double elapsed = std::chrono::duration<double>(now - last_time).count();
 
-		float pos[6];
-		float targetVel[6];
-		for(int i=0;i<6;i++) {
-			pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
-			targetVel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
-		}
-		if(mode == "real") {
-			float margin = 1.5; // Setted margin since most host aren't RT. 
-			float acc[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}; // Complied with internal profile.
-			Drfl.servoj_rt(pos, targetVel, acc, float(dt.seconds() * margin));
-		}
-		else { // "virtual"
-			float target_vel_acc[6] = {70.0f, 70.0f, 70.0f, 70.0f, 70.0f, 70.0f};
-			Drfl.amovej(pos, target_vel_acc, target_vel_acc); // Workaround. needed updated.
-		}
-		pre_joint_position_command_ = joint_position_command_;
-		return return_type::OK;
-	}
-	idle = true;
-	pre_joint_position_command_ = joint_position_command_;
-	return return_type::OK;
+    // update_rate → 제어 주기
+    double period = 1.0 / update_rate;
+
+    // virtual 모드 최대 10Hz
+    const double virtual_period = 0.10;
+
+    // 로그 출력 (요청된 형식)
+    RCLCPP_INFO(
+        rclcpp::get_logger("dsr_hw_interface2"),
+        "[WRITE] elapsed=%.4f s | update_rate=%d | pos:{%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}",
+        elapsed,
+        update_rate,
+        joint_position_command_[0], joint_position_command_[1], joint_position_command_[2],
+        joint_position_command_[3], joint_position_command_[4], joint_position_command_[5]
+    );
+
+    // REAL 모드: elapsed 기반 주기 제어
+    if (mode == "real")
+    {
+        if (elapsed < period * 0.5 || elapsed > period * 2.0)
+            return return_type::OK;
+
+        last_time = now;
+    }
+    // VIRTUAL 모드: 기존 10Hz 로직 유지
+    else if (mode == "virtual")
+    {
+        if (elapsed < virtual_period)
+            return return_type::OK;
+
+        last_time = now;
+    }
+
+    // REAL 모드의 servo_time
+    float servo_time = 0.0f;
+    if (mode == "real")
+    {
+        double min_t = period * 0.05;   // 최소 5%
+        double max_t = period * 2.0;    // 최대 200%
+        servo_time = static_cast<float>(std::clamp(elapsed, min_t, max_t));
+    }
+
+    // joint 명령 처리
+    static bool idle = false;
+
+    if (positionCommandRunning(pre_joint_position_command_, joint_position_command_))
+    {
+        if (idle)
+        {
+            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE);
+            idle = false;
+        }
+
+        float pos[6];
+        float vel[6];
+
+        for (int i = 0; i < 6; i++)
+        {
+            pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
+            vel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
+        }
+
+        if (mode == "real")
+        {
+            float acc[6] = {0, 0, 0, 0, 0, 0};
+            Drfl.servoj_rt(pos, vel, acc, servo_time);
+        }
+        else
+        {
+            float target_vel_acc[6] = {70, 70, 70, 70, 70, 70};
+            Drfl.amovej(pos, target_vel_acc, target_vel_acc);
+        }
+
+        pre_joint_position_command_ = joint_position_command_;
+        return return_type::OK;
+    }
+
+    idle = true;
+    pre_joint_position_command_ = joint_position_command_;
+    return return_type::OK;
 }
+
 
 DRHWInterface::~DRHWInterface()
 {
