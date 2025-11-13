@@ -359,56 +359,210 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
 }
 
 vector<vector<float>> joint_position_commands;
-return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &)
+// return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
+// {
+//     // ============================================================
+//     // ① CSV logging setup
+//     // ============================================================
+//     static std::ofstream csv_log;
+//     static bool file_opened = false;
+
+//     if (!file_opened)
+//     {
+//         const char *home_dir = std::getenv("HOME");
+//         std::string base_dir = (home_dir ? std::string(home_dir) : "/home/unknown");
+//         std::string log_dir = base_dir + "/forked_humble/dsr_logs";
+
+//         rcpputils::fs::path log_path(log_dir);
+//         rcpputils::fs::create_directories(log_path);
+
+//         auto t = std::time(nullptr);
+//         std::tm tm = *std::localtime(&t);
+//         std::ostringstream filename;
+
+//         filename << log_dir << "/dsr_hw_write_dt_"
+//                  << std::put_time(&tm, "%Y%m%d_%H%M%S")
+//                  << ".csv";
+
+//         csv_log.open(filename.str(), std::ios::out | std::ios::trunc);
+
+//         if (csv_log.is_open())
+//         {
+//             csv_log << "dt,"
+//                     << "j1,j2,j3,j4,j5,j6,"
+//                     << "v1,v2,v3,v4,v5,v6"
+//                     << std::endl;
+
+//             file_opened = true;
+
+//             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+//                         "CSV created: %s", filename.str().c_str());
+//         }
+//     }
+
+//     // ============================================================
+//     // ② dt filtering ONLY
+//     // ============================================================
+//     const double desired_period = 0.02;  // 100 Hz 기준
+//     const double dt_sec = dt.seconds();
+
+//     // 유효 범위: 0.005 ~ 0.020
+//     if (dt_sec < desired_period * 0.5 || dt_sec > desired_period * 2.0)
+//     {
+//         RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+//                     "[FILTER] skip due to abnormal dt (dt=%.6f)", dt_sec);
+//         return return_type::OK;
+//     }
+
+//     // ============================================================
+//     // ③ CSV logging
+//     // ============================================================
+//     if (csv_log.is_open())
+//     {
+//         csv_log << std::fixed << std::setprecision(6)
+//                 << dt_sec << ","
+//                 << joint_position_command_[0] << "," << joint_position_command_[1] << ","
+//                 << joint_position_command_[2] << "," << joint_position_command_[3] << ","
+//                 << joint_position_command_[4] << "," << joint_position_command_[5] << ","
+//                 << joint_velocities_command_[0] << "," << joint_velocities_command_[1] << ","
+//                 << joint_velocities_command_[2] << "," << joint_velocities_command_[3] << ","
+//                 << joint_velocities_command_[4] << "," << joint_velocities_command_[5]
+//                 << std::endl;
+
+//         csv_log.flush();
+//     }
+
+//     // ============================================================
+//     // ④ 원본 로직 동일
+//     // ============================================================
+//     static bool idle = false;
+
+//     if(positionCommandRunning(pre_joint_position_command_, joint_position_command_))
+//     {
+//         if(idle)
+//         {
+//             Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE);
+//             idle = false;
+//         }
+
+//         float pos[6];
+//         float targetVel[6];
+//         for(int i=0;i<6;i++)
+//         {
+//             pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
+//             targetVel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
+//         }
+
+//         if(mode == "real")
+//         {
+//             float margin = 5.0f;
+//             float acc[6] = {0.0f};
+//             Drfl.servoj_rt(pos, targetVel, acc, float(dt_sec * margin));
+//         }
+//         else // virtual
+//         {
+//             float target_vel_acc[6] = {70,70,70,70,70,70};
+//             Drfl.amovej(pos, target_vel_acc, target_vel_acc);
+//         }
+
+//         pre_joint_position_command_ = joint_position_command_;
+//         return return_type::OK;
+//     }
+
+//     idle = true;
+//     pre_joint_position_command_ = joint_position_command_;
+//     return return_type::OK;
+// }
+
+
+
+return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
 {
-    // CPU 기준 시간 측정
-    static auto last_time = std::chrono::steady_clock::now();
-    auto now = std::chrono::steady_clock::now();
-    double elapsed = std::chrono::duration<double>(now - last_time).count();
+    // dt 기반 필터링 (컨트롤러 update_rate 기준)
+    //    - 너무 빠르거나(0.5배 미만) 너무 느린(2배 초과) 루프는 스킵
+    const double dt_sec = dt.seconds();
 
-    // update_rate → 제어 주기
-    double period = 1.0 / update_rate;
-
-    // virtual 모드 최대 10Hz
-    const double virtual_period = 0.10;
-
-    // 로그 출력 (요청된 형식)
-    RCLCPP_INFO(
-        rclcpp::get_logger("dsr_hw_interface2"),
-        "[WRITE] elapsed=%.4f s | update_rate=%d | pos:{%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}",
-        elapsed,
-        update_rate,
-        joint_position_command_[0], joint_position_command_[1], joint_position_command_[2],
-        joint_position_command_[3], joint_position_command_[4], joint_position_command_[5]
-    );
-
-    // REAL 모드: elapsed 기반 주기 제어
-    if (mode == "real")
+    double desired_period = 0.0;
+    if (update_rate > 0)
     {
-        if (elapsed < period * 0.5 || elapsed > period * 2.0)
+        desired_period = 1.0 / static_cast<double>(update_rate);
+    }
+
+    if (desired_period > 0.0)
+    {
+        const double min_dt = desired_period * 0.5;  // 50% of target period
+        const double max_dt = desired_period * 2.0;  // 200% of target period
+
+        if (dt_sec < min_dt || dt_sec > max_dt)
+        {
+            RCLCPP_WARN(
+                rclcpp::get_logger("dsr_hw_interface2"),
+                "[WRITE] skip due to abnormal dt (dt=%.6f, desired=%.6f, min=%.6f, max=%.6f)",
+                dt_sec, desired_period, min_dt, max_dt
+            );
+            // 잘못된 주기에서는 하드웨어 명령을 보내지 않음
             return return_type::OK;
-
-        last_time = now;
+        }
     }
-    // VIRTUAL 모드: 기존 10Hz 로직 유지
-    else if (mode == "virtual")
+
+    // CSV 로깅 설정 (~/forked_humble/dsr_logs/)
+    static std::ofstream csv_log;
+    static bool file_opened = false;
+
+    if (!file_opened)
     {
-        if (elapsed < virtual_period)
-            return return_type::OK;
+        const char *home_dir = std::getenv("HOME");
+        std::string base_dir = (home_dir ? std::string(home_dir) : "/home/unknown");
+        std::string log_dir = base_dir + "/forked_humble/dsr_logs";
 
-        last_time = now;
+        rcpputils::fs::path log_path(log_dir);
+        rcpputils::fs::create_directories(log_path);
+
+        auto t = std::time(nullptr);
+        std::tm tm = *std::localtime(&t);
+        std::ostringstream filename;
+        filename << log_dir << "/dsr_hw_write_dt_"
+                 << std::put_time(&tm, "%Y%m%d_%H%M%S")
+                 << ".csv";
+
+        csv_log.open(filename.str(), std::ios::out | std::ios::trunc);
+        if (csv_log.is_open())
+        {
+            csv_log << "dt,"
+                    << "j1,j2,j3,j4,j5,j6,"
+                    << "v1,v2,v3,v4,v5,v6"
+                    << std::endl;
+
+            file_opened = true;
+
+            RCLCPP_INFO(
+                rclcpp::get_logger("dsr_hw_interface2"),
+                "CSV created: %s", filename.str().c_str());
+        }
+        else
+        {
+            RCLCPP_ERROR(
+                rclcpp::get_logger("dsr_hw_interface2"),
+                "Failed to open CSV log file for write()");
+        }
     }
 
-    // REAL 모드의 servo_time
-    float servo_time = 0.0f;
-    if (mode == "real")
+    // CSV 로깅 (dt + joint commands)
+    if (csv_log.is_open())
     {
-        double min_t = period * 0.05;   // 최소 5%
-        double max_t = period * 2.0;    // 최대 200%
-        servo_time = static_cast<float>(std::clamp(elapsed, min_t, max_t));
+        csv_log << std::fixed << std::setprecision(6)
+                << dt_sec << ","
+                << joint_position_command_[0] << "," << joint_position_command_[1] << ","
+                << joint_position_command_[2] << "," << joint_position_command_[3] << ","
+                << joint_position_command_[4] << "," << joint_position_command_[5] << ","
+                << joint_velocities_command_[0] << "," << joint_velocities_command_[1] << ","
+                << joint_velocities_command_[2] << "," << joint_velocities_command_[3] << ","
+                << joint_velocities_command_[4] << "," << joint_velocities_command_[5]
+                << std::endl;
+
+        csv_log.flush();
     }
 
-    // joint 명령 처리
     static bool idle = false;
 
     if (positionCommandRunning(pre_joint_position_command_, joint_position_command_))
@@ -420,22 +574,24 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &)
         }
 
         float pos[6];
-        float vel[6];
-
+        float targetVel[6];
         for (int i = 0; i < 6; i++)
         {
-            pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
-            vel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
+            pos[i]       = static_cast<float>(joint_position_command_[i]   * (180.0f / static_cast<float>(M_PI)));
+            targetVel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / static_cast<float>(M_PI)));
         }
 
         if (mode == "real")
         {
-            float acc[6] = {0, 0, 0, 0, 0, 0};
-            Drfl.servoj_rt(pos, vel, acc, servo_time);
+            float margin = 2.0f;
+            const float servo_time = desired_period*margin;
+            float acc[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+            Drfl.servoj_rt(pos, targetVel, acc, servo_time);
         }
-        else
+        else  // "virtual"
         {
-            float target_vel_acc[6] = {70, 70, 70, 70, 70, 70};
+            float target_vel_acc[6] = {70.0f, 70.0f, 70.0f, 70.0f, 70.0f, 70.0f};
             Drfl.amovej(pos, target_vel_acc, target_vel_acc);
         }
 
@@ -447,6 +603,9 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &)
     pre_joint_position_command_ = joint_position_command_;
     return return_type::OK;
 }
+
+
+
 
 
 DRHWInterface::~DRHWInterface()
@@ -467,4 +626,3 @@ DRHWInterface::~DRHWInterface()
 
 PLUGINLIB_EXPORT_CLASS(
   dsr_hardware2::DRHWInterface, hardware_interface::SystemInterface)
-
