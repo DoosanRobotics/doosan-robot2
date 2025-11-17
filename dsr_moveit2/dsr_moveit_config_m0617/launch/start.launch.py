@@ -7,6 +7,7 @@
 # 
 
 import os
+import yaml
 
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument, TimerAction
@@ -24,7 +25,7 @@ from launch.actions import OpaqueFunction
 
 # Moveit2
 from moveit_configs_utils import MoveItConfigsBuilder
-
+from dsr_bringup2.utils import read_update_rate
 
 def rviz_node_function(context):
     """Evaluate the model value at launch time, find the package path, and then execute the launch file"""
@@ -95,6 +96,8 @@ def generate_launch_description():
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # gui = LaunchConfiguration("gui")
     
+    update_rate = str(read_update_rate()) # get update_rate from yaml
+
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -114,19 +117,20 @@ def generate_launch_description():
             " port:=", LaunchConfiguration('port'),
             " mode:=", LaunchConfiguration('mode'),
             " model:=", LaunchConfiguration('model'),
+            " update_rate:=", update_rate,
         ]
     )
 
     robot_description = {"robot_description": robot_description_content}
 
-    robot_controllers = PathJoinSubstitution(
-        [
+    robot_controllers = [
+        PathJoinSubstitution([
             FindPackageShare("dsr_controller2"),
             "config",
             "dsr_controller2.yaml",
-        ]
-    )
-
+        ])
+    ]
+ 
     run_emulator_node = Node(
         package="dsr_bringup2",
         executable="run_emulator",
@@ -153,7 +157,6 @@ def generate_launch_description():
         executable="ros2_control_node",
         namespace=LaunchConfiguration('name'),
         parameters=[robot_description, robot_controllers],
-        
         output="both",
     )
 
@@ -220,7 +223,6 @@ def generate_launch_description():
             on_exit=[robot_controller_spawner],
         )
     )
-    
 
     nodes = [
         run_emulator_node,

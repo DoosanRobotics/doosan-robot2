@@ -7,6 +7,7 @@
 # 
 
 import os
+import yaml
 
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument, TimerAction
@@ -24,19 +25,7 @@ from launch.actions import OpaqueFunction
 
 # Moveit2
 from moveit_configs_utils import MoveItConfigsBuilder
-import yaml
-
-def read_update_rate():
-    pkg_share = get_package_share_directory("dsr_controller2")
-    yaml_path = os.path.join(pkg_share, "config", "dsr_update_rate.yaml")
-    with open(yaml_path, "r") as f:
-        yaml_data = yaml.safe_load(f)
-    try:
-        update_rate = yaml_data["controller_manager"]["ros__parameters"]["update_rate"]
-    except Exception:
-        update_rate = 100  # fallback default
-    print(f"[dsr_controller2] Loaded update_rate from YAML: {update_rate}")
-    return update_rate
+from dsr_bringup2.utils import read_update_rate
 
 def rviz_node_function(context):
     """Evaluate the model value at launch time, find the package path, and then execute the launch file"""
@@ -138,11 +127,6 @@ def generate_launch_description():
         PathJoinSubstitution([
             FindPackageShare("dsr_controller2"),
             "config",
-            "dsr_update_rate.yaml",
-        ]),
-        PathJoinSubstitution([
-            FindPackageShare("dsr_controller2"),
-            "config",
             "dsr_controller2.yaml",
         ])
     ]
@@ -172,7 +156,7 @@ def generate_launch_description():
         package="controller_manager",
         executable="ros2_control_node",
         namespace=LaunchConfiguration('name'),
-        parameters=[robot_description] + robot_controllers,
+        parameters=[robot_description, robot_controllers],
         output="both",
     )
 
