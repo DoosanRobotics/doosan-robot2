@@ -47,6 +47,10 @@ def rviz_node_function(context):
         .robot_description(file_path=f"config/{model_value}.urdf.xacro")
         .robot_description_semantic(file_path="config/dsr.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
+        .planning_pipelines(pipelines=["ompl", "chomp", "pilz_industrial_motion_planner"],      # List of planning pipelines to load (each loaded from config/<name>_planning.yaml)
+                            default_planning_pipeline="ompl", # Name of the default planning pipeline (used if none is explicitly selected)
+                            load_all= False                   # If pipelines is None: True loads all from config/default packages; False loads only from config package
+                            )
         .to_moveit_configs()
     )
     run_move_group_node = Node(
@@ -54,7 +58,7 @@ def rviz_node_function(context):
         executable="move_group",
         # namespace=LaunchConfiguration('name'),
         output="screen",
-        parameters=[moveit_config.to_dict()],
+        parameters=[moveit_config.to_dict(), ],
     )
 
     # RViz
