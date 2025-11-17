@@ -359,231 +359,84 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
 }
 
 vector<vector<float>> joint_position_commands;
-// return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
-// {
-//     // ============================================================
-//     // ① CSV logging setup
-//     // ============================================================
-//     static std::ofstream csv_log;
-//     static bool file_opened = false;
-
-//     if (!file_opened)
-//     {
-//         const char *home_dir = std::getenv("HOME");
-//         std::string base_dir = (home_dir ? std::string(home_dir) : "/home/unknown");
-//         std::string log_dir = base_dir + "/forked_humble/dsr_logs";
-
-//         rcpputils::fs::path log_path(log_dir);
-//         rcpputils::fs::create_directories(log_path);
-
-//         auto t = std::time(nullptr);
-//         std::tm tm = *std::localtime(&t);
-//         std::ostringstream filename;
-
-//         filename << log_dir << "/dsr_hw_write_dt_"
-//                  << std::put_time(&tm, "%Y%m%d_%H%M%S")
-//                  << ".csv";
-
-//         csv_log.open(filename.str(), std::ios::out | std::ios::trunc);
-
-//         if (csv_log.is_open())
-//         {
-//             csv_log << "dt,"
-//                     << "j1,j2,j3,j4,j5,j6,"
-//                     << "v1,v2,v3,v4,v5,v6"
-//                     << std::endl;
-
-//             file_opened = true;
-
-//             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
-//                         "CSV created: %s", filename.str().c_str());
-//         }
-//     }
-
-//     // ============================================================
-//     // ② dt filtering ONLY
-//     // ============================================================
-//     const double desired_period = 0.02;  // 100 Hz 기준
-//     const double dt_sec = dt.seconds();
-
-//     // 유효 범위: 0.005 ~ 0.020
-//     if (dt_sec < desired_period * 0.5 || dt_sec > desired_period * 2.0)
-//     {
-//         RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
-//                     "[FILTER] skip due to abnormal dt (dt=%.6f)", dt_sec);
-//         return return_type::OK;
-//     }
-
-//     // ============================================================
-//     // ③ CSV logging
-//     // ============================================================
-//     if (csv_log.is_open())
-//     {
-//         csv_log << std::fixed << std::setprecision(6)
-//                 << dt_sec << ","
-//                 << joint_position_command_[0] << "," << joint_position_command_[1] << ","
-//                 << joint_position_command_[2] << "," << joint_position_command_[3] << ","
-//                 << joint_position_command_[4] << "," << joint_position_command_[5] << ","
-//                 << joint_velocities_command_[0] << "," << joint_velocities_command_[1] << ","
-//                 << joint_velocities_command_[2] << "," << joint_velocities_command_[3] << ","
-//                 << joint_velocities_command_[4] << "," << joint_velocities_command_[5]
-//                 << std::endl;
-
-//         csv_log.flush();
-//     }
-
-//     // ============================================================
-//     // ④ 원본 로직 동일
-//     // ============================================================
-//     static bool idle = false;
-
-//     if(positionCommandRunning(pre_joint_position_command_, joint_position_command_))
-//     {
-//         if(idle)
-//         {
-//             Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE);
-//             idle = false;
-//         }
-
-//         float pos[6];
-//         float targetVel[6];
-//         for(int i=0;i<6;i++)
-//         {
-//             pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
-//             targetVel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
-//         }
-
-//         if(mode == "real")
-//         {
-//             float margin = 5.0f;
-//             float acc[6] = {0.0f};
-//             Drfl.servoj_rt(pos, targetVel, acc, float(dt_sec * margin));
-//         }
-//         else // virtual
-//         {
-//             float target_vel_acc[6] = {70,70,70,70,70,70};
-//             Drfl.amovej(pos, target_vel_acc, target_vel_acc);
-//         }
-
-//         pre_joint_position_command_ = joint_position_command_;
-//         return return_type::OK;
-//     }
-
-//     idle = true;
-//     pre_joint_position_command_ = joint_position_command_;
-//     return return_type::OK;
-// }
-
-
 
 return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
 {
-    static auto last_tick = std::chrono::steady_clock::now();  // 이전 루프 시각 저장
-    auto now_cpu = std::chrono::steady_clock::now();           // 현재 시각
-    double real_loop_dt = std::chrono::duration<double>(now_cpu - last_tick).count();
-    last_tick = now_cpu;   // 다음 루프 계산을 위해 갱신
+	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] dt  : %.3f", float(dt.seconds()) );
+	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_position_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+	//         ,joint_position_command_[0]
+	//         ,joint_position_command_[1]
+	//         ,joint_position_command_[2]
+	//         ,joint_position_command_[3]
+	//         ,joint_position_command_[4]
+	//         ,joint_position_command_[5]);
+	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_velocities_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+	//         ,joint_velocities_command_[0]
+	//         ,joint_velocities_command_[1]
+	//         ,joint_velocities_command_[2]
+	//         ,joint_velocities_command_[3]
+	//         ,joint_velocities_command_[4]
+	//         ,joint_velocities_command_[5]);
 
+    // Measure CPU loop duration for REAL servo timing
+    static auto last_tick = std::chrono::steady_clock::now();
+    auto now_cpu = std::chrono::steady_clock::now();
+    double real_loop_dt = std::chrono::duration<double>(now_cpu - last_tick).count();
+    last_tick = now_cpu;
+
+    // dt provided by controller_manager
     const double dt_sec = dt.seconds();
 
-    // REAL mode: dt filtering (50% ~ 150%)
+    // Expected control period from update_rate (Hz → seconds)
     double desired_period = 0.0;
     if (update_rate > 0)
         desired_period = 1.0 / static_cast<double>(update_rate);
 
+    // REAL mode: filter unstable dt cycles
     if (mode == "real" && desired_period > 0.0)
     {
-        const double min_dt = desired_period * 0.3;
-        const double max_dt = desired_period * 1.5;
+        double min_dt = desired_period * 0.3;
+        double max_dt = desired_period * 1.5;
 
         if (dt_sec < min_dt || dt_sec > max_dt)
-        // if (dt_sec < min_dt)
-        // if (dt_sec > max_dt)
         {
             RCLCPP_WARN(
                 rclcpp::get_logger("dsr_hw_interface2"),
-                "[WRITE][REAL] Skip dt=%.6f (expected=%.6f, range=[%.6f, %.6f])",
+                "[REAL] Skip dt=%.6f (expected=%.6f, allowed=[%.6f, %.6f])",
                 dt_sec, desired_period, min_dt, max_dt
             );
             return return_type::OK;
         }
     }
 
-    // VIRTUAL mode: Max 10Hz (min period = 0.1 sec)
     double effective_dt = dt_sec;
-    bool dt_clamped = false;
-
     if (mode == "virtual")
     {
-        const double virtual_period = 0.10;  // 10Hz
-
-        if (dt_sec < virtual_period)
+        if (update_rate > 10)
         {
-            effective_dt = virtual_period;
-            dt_clamped = true;
+            RCLCPP_DEBUG(rclcpp::get_logger("dsr_hw_interface2"),"[DEBUG] update_rate=%d Hz exceeds recommended 10 Hz",update_rate);
         }
+
+        double desired_period_virtual = (update_rate > 0) ? desired_period : 0.1;        // If update_rate is invalid, fallback to 10Hz (0.1s)
+        double min_dt = desired_period_virtual * 0.3;
+        double max_dt = desired_period_virtual * 1.5;
+
+        if (dt_sec < min_dt || dt_sec > max_dt)
+        {
+            RCLCPP_DEBUG(
+                rclcpp::get_logger("dsr_hw_interface2"),
+                "[VIRTUAL] Skip dt=%.6f (expected=%.6f, allowed=[%.6f, %.6f])",
+                dt_sec, desired_period_virtual, min_dt, max_dt
+            );
+            return return_type::OK;
+        }
+        effective_dt = dt_sec;
     }
 
-    // ACCUMULATED TIME CALCULATION
+    // Accumulate simulated time
     static double total_time_sec = 0.0;
     total_time_sec += effective_dt;
 
-
-    // CSV LOGGING (updated with time header)
-
-	static std::ofstream csv_log;
-	static bool file_opened = false;
-
-	if (!file_opened)
-	{
-		const char *home_dir = std::getenv("HOME");
-		std::string base_dir = home_dir ? home_dir : "/home/unknown";
-		std::string log_dir = base_dir + "/forked_humble/dsr_logs";
-
-		rcpputils::fs::path log_path(log_dir);
-		rcpputils::fs::create_directories(log_path);
-
-		auto t = std::time(nullptr);
-		std::tm tm = *std::localtime(&t);
-
-		std::ostringstream filename;
-		filename << log_dir << "/dsr_hw_write_dt_"
-				<< std::put_time(&tm, "%Y%m%d_%H%M%S") << ".csv";
-
-		csv_log.open(filename.str(), std::ios::out | std::ios::trunc);
-		if (csv_log.is_open())
-		{
-			csv_log << "time,dt,real_dt,effective_dt,"
-					<< "j1,j2,j3,j4,j5,j6,"
-					<< "v1,v2,v3,v4,v5,v6"
-					<< std::endl;
-
-			file_opened = true;
-		}
-	}
-
-	if (csv_log.is_open())
-	{
-		csv_log << std::fixed << std::setprecision(6);
-
-		// time, dt, real_dt, effective_dt
-		csv_log << total_time_sec << ","
-				<< dt_sec << ","
-				<< real_loop_dt << ","
-				<< effective_dt;
-
-		// positions
-		for (int i = 0; i < 6; i++)
-			csv_log << "," << joint_position_command_[i];
-
-		// velocities
-		for (int i = 0; i < 6; i++)
-			csv_log << "," << joint_velocities_command_[i];
-
-		csv_log << "\n" << std::flush;  // flush MUST be used
-	}
-
-
-    // POSITION COMMAND EXECUTION
     static bool idle = false;
 
     if (positionCommandRunning(pre_joint_position_command_, joint_position_command_))
@@ -594,60 +447,58 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
             idle = false;
         }
 
+        // Convert rad → deg
         float pos[6];
         float vel[6];
-
         for (int i = 0; i < 6; i++)
         {
             pos[i] = static_cast<float>(joint_position_command_[i] * (180.0 / M_PI));
             vel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0 / M_PI));
         }
 
-        // SERVO / MOVE EXECUTION
+        // Select control API
         std::string cmd_type;
-
         if (mode == "real")
         {
             float acc[6] = {0,0,0,0,0,0};
             const float margin = 20.0f;
-            const float servo_time = static_cast<float>(real_loop_dt * margin);
+            float servo_time = static_cast<float>(real_loop_dt * margin);
 
             Drfl.servoj_rt(pos, vel, acc, servo_time);
             cmd_type = "servoj_rt";
         }
-        else
+        else  // virtual
         {
             float target_vel_acc[6] = {70,70,70,70,70,70};
             Drfl.amovej(pos, target_vel_acc, target_vel_acc);
             cmd_type = "amovej";
         }
 
-        // WRITE LOG OUTPUT
-        RCLCPP_INFO(
-            rclcpp::get_logger("dsr_hw_interface2"),
-            "[WRITE] time=%.6f | mode=%s | dt=%.6f -> effective=%.6f %s\n"
-            "        update_rate=%d (period=%.6f)\n"
-            "        pos={%.3f %.3f %.3f %.3f %.3f %.3f} deg\n"
-            "        vel={%.3f %.3f %.3f %.3f %.3f %.3f} deg/s\n"
-            "        cmd=%s",
-            total_time_sec,
-            mode.c_str(),
-            dt_sec, effective_dt,
-            dt_clamped ? "(CLAMPED 10Hz)" : "",
-            update_rate, desired_period,
-            pos[0], pos[1], pos[2], pos[3], pos[4], pos[5],
-            vel[0], vel[1], vel[2], vel[3], vel[4], vel[5],
-            cmd_type.c_str()
-        );
+        // Debug logging
+        // RCLCPP_INFO(
+        //     rclcpp::get_logger("dsr_hw_interface2"),
+        //     "[WRITE] t=%.6f | mode=%s | dt=%.6f → eff=%.6f\n"
+        //     "        update_rate=%d (period=%.6f)\n"
+        //     "        pos={%.3f %.3f %.3f %.3f %.3f %.3f} deg\n"
+        //     "        vel={%.3f %.3f %.3f %.3f %.3f %.3f} deg/s\n"
+        //     "        cmd=%s",
+        //     total_time_sec,
+        //     mode.c_str(),
+        //     dt_sec, effective_dt,
+        //     update_rate, desired_period,
+        //     pos[0], pos[1], pos[2], pos[3], pos[4], pos[5],
+        //     vel[0], vel[1], vel[2], vel[3], vel[4], vel[5],
+        //     cmd_type.c_str()
+        // );
 
         pre_joint_position_command_ = joint_position_command_;
         return return_type::OK;
     }
-
     idle = true;
     pre_joint_position_command_ = joint_position_command_;
     return return_type::OK;
 }
+
 
 DRHWInterface::~DRHWInterface()
 {

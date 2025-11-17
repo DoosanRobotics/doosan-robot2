@@ -21,6 +21,7 @@ from launch.actions import IncludeLaunchDescription
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
+from dsr_bringup2.utils import read_update_rate, show_git_info
 import yaml
 
 def print_launch_configuration_value(context, *args, **kwargs):
@@ -29,18 +30,6 @@ def print_launch_configuration_value(context, *args, **kwargs):
     # 평가된 값을 콘솔에 출력합니다.
     print(f'LaunchConfiguration gz: {gz_value}')
     return gz_value
-
-def read_update_rate():
-    pkg_share = get_package_share_directory("dsr_controller2")
-    yaml_path = os.path.join(pkg_share, "config", "dsr_update_rate.yaml")
-    with open(yaml_path, "r") as f:
-        yaml_data = yaml.safe_load(f)
-    try:
-        update_rate = yaml_data["controller_manager"]["ros__parameters"]["update_rate"]
-    except Exception:
-        update_rate = 100  # fallback default
-    print(f"[dsr_controller2] Loaded update_rate from YAML: {update_rate}")
-    return update_rate
 
 def generate_launch_description():
     ARGUMENTS =[ 
@@ -60,7 +49,8 @@ def generate_launch_description():
     mode = LaunchConfiguration("mode")
     
     update_rate = str(read_update_rate()) # get update_rate from yaml
-
+    show_git_info() # print git info
+    
     # Get URDF via xacro
     robot_description_content = Command(
         [

@@ -5,9 +5,11 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Opaq
 from launch.substitutions import LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from dsr_bringup2.utils import show_git_info
 
 def include_launch_description(context):
     """Evaluate the model value at launch time, find the package path, and then execute the launch file"""
+    show_git_info() # print git info
     model_value = LaunchConfiguration('model').perform(context)
 
     # Create package name
@@ -50,5 +52,4 @@ def generate_launch_description():
 
     # Use OpaqueFunction to dynamically calculate the path and include the launch file at launch time    
     included_launch = OpaqueFunction(function=include_launch_description)
-
     return LaunchDescription(ARGUMENTS + [included_launch])

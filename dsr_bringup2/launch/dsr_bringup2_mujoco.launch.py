@@ -17,7 +17,7 @@ from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from dsr_bringup2.utils import read_update_rate
+from dsr_bringup2.utils import read_update_rate, show_git_info
 
 def generate_launch_description():
     ARGUMENTS = [ 
@@ -41,6 +41,8 @@ def generate_launch_description():
     gui = LaunchConfiguration("gui")
     # mode = LaunchConfiguration("mode")
     update_rate = str(read_update_rate()) # get update_rate from yaml
+    show_git_info() # print git info
+
     # Get URDF via xacro
     robot_description_content = Command(
         [
