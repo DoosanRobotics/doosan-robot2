@@ -47,7 +47,10 @@
   <!-- Gazebo -->
   <xacro:if value="${gz}">
     <xacro:include filename="$(find dsr_description2)/ros2_control/m1013.gz_ros2_control.xacro"/>
-    <xacro:m1013_gz_ros2_control namespace="$(arg namespace)"/>
+    <xacro:m1013_gz_ros2_control 
+      namespace="$(arg namespace)"
+      update_rate="${update_rate}"
+    />
   </xacro:if>
 
   <!-- Mujoco -->

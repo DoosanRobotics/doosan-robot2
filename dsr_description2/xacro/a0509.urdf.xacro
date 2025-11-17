@@ -28,13 +28,13 @@
 
   <!-- Visual -->
   <xacro:if value="${cr == 'white'}">
-    <xacro:include filename="$(find dsr_description2)/xacro/macro.m1013.white.xacro"/>
+    <xacro:include filename="$(find dsr_description2)/xacro/macro.a0509.white.xacro"/>
   </xacro:if>
   <xacro:if value="${cr == 'blue'}">
-    <xacro:include filename="$(find dsr_description2)/xacro/macro.m1013.blue.xacro"/>
+    <xacro:include filename="$(find dsr_description2)/xacro/macro.a0509.blue.xacro"/>
   </xacro:if>
 
-  <xacro:m1013 namespace="$(arg namespace)"/>
+  <xacro:a0509 namespace="$(arg namespace)"/>
 
   <!-- World -->
   <link name="world"/>
@@ -46,14 +46,14 @@
 
   <!-- Gazebo -->
   <xacro:if value="${gz}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/m1013.gz_ros2_control.xacro"/>
-    <xacro:m1013_gz_ros2_control namespace="$(arg namespace)"/>
+    <xacro:include filename="$(find dsr_description2)/ros2_control/a0509.gz_ros2_control.xacro"/>
+    <xacro:a0509_gz_ros2_control namespace="$(arg namespace)"/>
   </xacro:if>
 
   <!-- Mujoco -->
   <xacro:if value="${mj and not gz}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/m1013.mj_ros2_control.xacro"/>
-    <xacro:m1013_mj_ros2_control
+    <xacro:include filename="$(find dsr_description2)/ros2_control/a0509.mj_ros2_control.xacro"/>
+    <xacro:a0509_mj_ros2_control
       namespace="$(arg namespace)"
       gripper="$(arg gripper)"
       update_rate="${update_rate}"
@@ -62,8 +62,8 @@
 
   <!-- Default ros2_control -->
   <xacro:unless value="${gz or mj}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/m1013.ros2_control.xacro"/>
-    <xacro:m1013_ros2_control
+    <xacro:include filename="$(find dsr_description2)/ros2_control/a0509.ros2_control.xacro"/>
+    <xacro:a0509_ros2_control
       name="${model}"
       host="${host}"
       rt_host="${rt_host}"
