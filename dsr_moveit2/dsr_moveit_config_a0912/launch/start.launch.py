@@ -29,6 +29,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from moveit_configs_utils import MoveItConfigsBuilder
 from dsr_bringup2.controller_config import adjust_dsr_controller_yaml, parse_joints_from_urdf
+from dsr_bringup2.utils import read_update_rate
 
 # Generate robot_description and select controller YAML based on the URDF model.
 def generate_robot_description_action(context, *args, **kwargs):
@@ -173,6 +174,7 @@ def generate_launch_description():
 
     # Build robot_description and select controller YAML
     robot_description_action = OpaqueFunction(function=generate_robot_description_action)
+    update_rate = read_update_rate() # get update_rate from yaml
 
     # Run set_config
     set_config_node = Node(
@@ -191,6 +193,7 @@ def generate_launch_description():
             "gripper": LaunchConfiguration('gripper'),
             "mobile": "none",
             "rt_host": LaunchConfiguration('rt_host'),
+            "update_rate": update_rate,
         }],
         output="screen",
     )
