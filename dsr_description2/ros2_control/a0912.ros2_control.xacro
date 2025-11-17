@@ -8,9 +8,8 @@
   port:=12345
   mode:=real
   model:=a0912
-
+  update_rate
   ">
-
     <ros2_control name="${name}" type="system">
 
       <hardware>
@@ -20,6 +19,7 @@
         <param name="port">${port}</param>
         <param name="mode">${mode}</param>
         <param name="model">${model}</param>
+        <param name="update_rate">${update_rate}</param>
       </hardware>
 
       <joint name="joint_1">

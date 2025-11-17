@@ -1,64 +1,77 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="m0609" >
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="m0609">
 
-  <xacro:arg name="color"   default="white"/>
-  <xacro:arg name="gripper" default="none"/>
-  <xacro:arg name="namespace" default=""/>
-  <xacro:arg name="use_gazebo" default="false"/>
-  <xacro:arg name="use_mujoco" default="false"/>
-  <xacro:arg name="host" default=""/>
-  <xacro:arg name="port" default=""/>
-  <xacro:arg name="rt_host" default=""/>
-  <xacro:arg name="mode" default=""/>
-  <xacro:arg name="model" default=""/>
-  
-  <xacro:property name="cr" value="$(arg color)"/>
-  <xacro:property name="gr" value="$(arg gripper)"/>
-  <xacro:property name="gz" value="$(arg use_gazebo)"/>
-  <xacro:property name="mj" value="$(arg use_mujoco)"/>
-  <xacro:property name="host" value="$(arg host)"/>
-  <xacro:property name="rt_host" value="$(arg rt_host)"/>
-  <xacro:property name="port" value="$(arg port)"/>
-  <xacro:property name="mode" value="$(arg mode)"/>
-  <xacro:property name="model" value="$(arg model)"/>
+  <!-- Args -->
+  <xacro:arg name="color"        default="white"/>
+  <xacro:arg name="gripper"      default="none"/>
+  <xacro:arg name="namespace"    default=""/>
+  <xacro:arg name="use_gazebo"   default="false"/>
+  <xacro:arg name="use_mujoco"   default="false"/>
+  <xacro:arg name="host"         default=""/>
+  <xacro:arg name="port"         default=""/>
+  <xacro:arg name="rt_host"      default=""/>
+  <xacro:arg name="mode"         default=""/>
+  <xacro:arg name="model"        default=""/>
+  <xacro:arg name="update_rate"  default=""/>
 
+  <!-- Local properties -->
+  <xacro:property name="cr"          value="$(arg color)"/>
+  <xacro:property name="gr"          value="$(arg gripper)"/>
+  <xacro:property name="gz"          value="$(arg use_gazebo)"/>
+  <xacro:property name="mj"          value="$(arg use_mujoco)"/>
+  <xacro:property name="host"        value="$(arg host)"/>
+  <xacro:property name="rt_host"     value="$(arg rt_host)"/>
+  <xacro:property name="port"        value="$(arg port)"/>
+  <xacro:property name="mode"        value="$(arg mode)"/>
+  <xacro:property name="model"       value="$(arg model)"/>
+  <xacro:property name="update_rate" value="$(arg update_rate)"/>
+
+  <!-- Visual -->
   <xacro:if value="${cr == 'white'}">
-     <xacro:include filename="$(find dsr_description2)/xacro/macro.m0609.white.xacro" />
+    <xacro:include filename="$(find dsr_description2)/xacro/macro.m1013.white.xacro"/>
   </xacro:if>
   <xacro:if value="${cr == 'blue'}">
-     <xacro:include filename="$(find dsr_description2)/xacro/macro.m0609.blue.xacro" />
+    <xacro:include filename="$(find dsr_description2)/xacro/macro.m1013.blue.xacro"/>
   </xacro:if>
 
-  <xacro:m0609 namespace="$(arg namespace)"/>
+  <xacro:m1013 namespace="$(arg namespace)"/>
 
-  <link name="world" />
-  <!-- World fixed joint-->
+  <!-- World -->
+  <link name="world"/>
   <joint name="world_fixed" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <parent link="world"/>
     <child link="base_link"/>
   </joint>
+
+  <!-- Gazebo -->
   <xacro:if value="${gz}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/m0609.gz_ros2_control.xacro" />
-    <xacro:m0609_gz_ros2_control namespace="$(arg namespace)"/>
+    <xacro:include filename="$(find dsr_description2)/ros2_control/m1013.gz_ros2_control.xacro"/>
+    <xacro:m1013_gz_ros2_control namespace="$(arg namespace)"/>
   </xacro:if>
-  <xacro:unless value="${gz}">
-    <!-- For mujoco -->
-    <xacro:if value="${mj}">
-      <xacro:include filename="$(find dsr_description2)/ros2_control/m0609.mj_ros2_control.xacro" />
-      <xacro:m0609_mj_ros2_control  namespace="$(arg namespace)" gripper="$(arg gripper)"/>
-    </xacro:if>
-    <xacro:unless value="${mj}">
-      <xacro:include filename="$(find dsr_description2)/ros2_control/m0609.ros2_control.xacro" />
-      <xacro:m0609_ros2_control
-        name="m0609"
-        host="${host}"
-        rt_host="${rt_host}"
-        port="${port}"
-        mode="${mode}"
-        model="${model}"
-      />
-    </xacro:unless>
+
+  <!-- Mujoco -->
+  <xacro:if value="${mj and not gz}">
+    <xacro:include filename="$(find dsr_description2)/ros2_control/m1013.mj_ros2_control.xacro"/>
+    <xacro:m1013_mj_ros2_control
+      namespace="$(arg namespace)"
+      gripper="$(arg gripper)"
+      update_rate="${update_rate}"
+    />
+  </xacro:if>
+
+  <!-- Default ros2_control -->
+  <xacro:unless value="${gz or mj}">
+    <xacro:include filename="$(find dsr_description2)/ros2_control/m1013.ros2_control.xacro"/>
+    <xacro:m1013_ros2_control
+      name="${model}"
+      host="${host}"
+      rt_host="${rt_host}"
+      port="${port}"
+      mode="${mode}"
+      model="${model}"
+      update_rate="${update_rate}"
+    />
   </xacro:unless>
-  
+
 </robot>
