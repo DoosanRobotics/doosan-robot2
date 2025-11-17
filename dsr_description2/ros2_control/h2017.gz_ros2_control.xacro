@@ -14,6 +14,7 @@
   gripper:=none
   mobile:=none
   use_gazebo:=false
+  update_rate
   ">
 
     <ros2_control name="${name}" type="system">

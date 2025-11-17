@@ -22,11 +22,10 @@ from launch.actions import IncludeLaunchDescription, SetLaunchConfiguration, Gro
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
 from launch.launch_context import LaunchContext
+from dsr_bringup2.utils import read_update_rate, show_git_info
 
 def print_launch_configuration_value(context, *args, **kwargs):
-    # LaunchConfiguration 값을 평가합니다.
     gz_value = LaunchConfiguration('gz').perform(context)
-    # 평가된 값을 콘솔에 출력합니다.
     print(f'LaunchConfiguration gz: {gz_value}')
     return gz_value
 
@@ -56,6 +55,8 @@ def generate_launch_description():
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
     mode = LaunchConfiguration("mode")
+    update_rate = str(read_update_rate()) # get update_rate from yaml
+    show_git_info() # print git info
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -75,6 +76,7 @@ def generate_launch_description():
             " port:=", LaunchConfiguration('port'),
             " mode:=", LaunchConfiguration('mode'),
             " model:=", LaunchConfiguration('model'),
+            " update_rate:=", update_rate,
         ]
     )
 
