@@ -7,6 +7,7 @@
 # 
 
 import os
+import yaml
 
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument, TimerAction
@@ -24,7 +25,7 @@ from launch.actions import OpaqueFunction
 
 # Moveit2
 from moveit_configs_utils import MoveItConfigsBuilder
-
+from dsr_bringup2.utils import read_update_rate
 
 def rviz_node_function(context):
     """Evaluate the model value at launch time, find the package path, and then execute the launch file"""
@@ -46,6 +47,10 @@ def rviz_node_function(context):
         .robot_description(file_path=f"config/{model_value}.urdf.xacro")
         .robot_description_semantic(file_path="config/dsr.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
+        .planning_pipelines(pipelines=["ompl", "chomp", "pilz_industrial_motion_planner"],      # List of planning pipelines to load (each loaded from config/<name>_planning.yaml)
+                            default_planning_pipeline="ompl", # Name of the default planning pipeline (used if none is explicitly selected)
+                            load_all= False                   # If pipelines is None: True loads all from config/default packages; False loads only from config package
+                            )
         .to_moveit_configs()
     )
     run_move_group_node = Node(
@@ -53,7 +58,7 @@ def rviz_node_function(context):
         executable="move_group",
         # namespace=LaunchConfiguration('name'),
         output="screen",
-        parameters=[moveit_config.to_dict()],
+        parameters=[moveit_config.to_dict(), ],
     )
 
     # RViz
@@ -85,7 +90,7 @@ def generate_launch_description():
         DeclareLaunchArgument('host',  default_value = '127.0.0.1', description = 'ROBOT_IP'       ),
         DeclareLaunchArgument('port',  default_value = '12345',     description = 'ROBOT_PORT'     ),
         DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
-        DeclareLaunchArgument('model', default_value = 'h2515',     description = 'ROBOT_MODEL'    ),
+        DeclareLaunchArgument('model', default_value = 'm0617',     description = 'ROBOT_MODEL'    ),
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('gui',   default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
@@ -95,6 +100,8 @@ def generate_launch_description():
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # gui = LaunchConfiguration("gui")
     
+    update_rate = str(read_update_rate()) # get update_rate from yaml
+
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -114,19 +121,20 @@ def generate_launch_description():
             " port:=", LaunchConfiguration('port'),
             " mode:=", LaunchConfiguration('mode'),
             " model:=", LaunchConfiguration('model'),
+            " update_rate:=", update_rate,
         ]
     )
 
     robot_description = {"robot_description": robot_description_content}
 
-    robot_controllers = PathJoinSubstitution(
-        [
+    robot_controllers = [
+        PathJoinSubstitution([
             FindPackageShare("dsr_controller2"),
             "config",
             "dsr_controller2.yaml",
-        ]
-    )
-
+        ])
+    ]
+ 
     run_emulator_node = Node(
         package="dsr_bringup2",
         executable="run_emulator",
@@ -153,7 +161,6 @@ def generate_launch_description():
         executable="ros2_control_node",
         namespace=LaunchConfiguration('name'),
         parameters=[robot_description, robot_controllers],
-        
         output="both",
     )
 
@@ -221,7 +228,6 @@ def generate_launch_description():
         )
     )
 
-    
     nodes = [
         run_emulator_node,
         robot_state_pub_node,

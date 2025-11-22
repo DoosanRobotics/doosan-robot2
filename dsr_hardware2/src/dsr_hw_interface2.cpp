@@ -65,12 +65,15 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "model : %s", parameter.second.c_str());
 			model = parameter.second;
 			g_model = model;
+		} else if ("update_rate" == parameter.first) {
+			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"update_rate : %s", parameter.second.c_str());
+			update_rate = std::stoi(parameter.second);
 		} else {
 			RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter....\
 			 	key : %s, value : %s",parameter.first.c_str(), parameter.second.c_str());
 		}
 	}
-	if(info.hardware_parameters.size() != 5) {
+	if(info.hardware_parameters.size() != 6) {
 		RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter Size ...");
 		return CallbackReturn::ERROR;
 	}
@@ -356,6 +359,7 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
 }
 
 vector<vector<float>> joint_position_commands;
+
 return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
 {
 	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] dt  : %.3f", float(dt.seconds()) );
@@ -373,40 +377,128 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 	//         ,joint_velocities_command_[3]
 	//         ,joint_velocities_command_[4]
 	//         ,joint_velocities_command_[5]);
-	static bool idle = false;
-	// TODO: this seems to be a workaround. refer to hardware design of 'prepare_command_mode_switch'
-	if(positionCommandRunning(pre_joint_position_command_, joint_position_command_)) {
-		if(true == idle) {
-			// This is workaround to overcome issues :
-			// move_joint (drfl) API internally sent safety_off right after moving. 
-			// which occurs problems like :
-			// "move_joint service command -> trajectory command => error ! "
-			Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
-			idle = false;
-		}
 
-		float pos[6];
-		float targetVel[6];
-		for(int i=0;i<6;i++) {
-			pos[i] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
-			targetVel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
-		}
-		if(mode == "real") {
-			float margin = 1.5; // Setted margin since most host aren't RT. 
-			float acc[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}; // Complied with internal profile.
-			Drfl.servoj_rt(pos, targetVel, acc, float(dt.seconds() * margin));
-		}
-		else { // "virtual"
-			float target_vel_acc[6] = {70.0f, 70.0f, 70.0f, 70.0f, 70.0f, 70.0f};
-			Drfl.amovej(pos, target_vel_acc, target_vel_acc); // Workaround. needed updated.
-		}
-		pre_joint_position_command_ = joint_position_command_;
-		return return_type::OK;
-	}
-	idle = true;
-	pre_joint_position_command_ = joint_position_command_;
-	return return_type::OK;
+    // Measure CPU loop duration for REAL servo timing
+    static auto last_tick = std::chrono::steady_clock::now();
+    auto now_cpu = std::chrono::steady_clock::now();
+    double real_loop_dt = std::chrono::duration<double>(now_cpu - last_tick).count();
+    last_tick = now_cpu;
+
+    // dt provided by controller_manager
+    const double dt_sec = dt.seconds();
+
+    // Expected control period from update_rate (Hz → seconds)
+    double desired_period = 0.0;
+    if (update_rate > 0)
+        desired_period = 1.0 / static_cast<double>(update_rate);
+
+    // REAL mode: filter unstable dt cycles
+    if (mode == "real" && desired_period > 0.0)
+    {
+        double min_dt = desired_period * 0.3;
+        double max_dt = desired_period * 1.5;
+
+        if (dt_sec < min_dt || dt_sec > max_dt)
+        {
+            RCLCPP_WARN(
+                rclcpp::get_logger("dsr_hw_interface2"),
+                "[REAL] Skip dt=%.6f (expected=%.6f, allowed=[%.6f, %.6f])",
+                dt_sec, desired_period, min_dt, max_dt
+            );
+            return return_type::OK;
+        }
+    }
+
+    double effective_dt = dt_sec;
+    if (mode == "virtual")
+    {
+        if (update_rate > 10)
+        {
+            RCLCPP_DEBUG(rclcpp::get_logger("dsr_hw_interface2"),"[DEBUG] update_rate=%d Hz exceeds recommended 10 Hz",update_rate);
+        }
+
+        double desired_period_virtual = (update_rate > 0) ? desired_period : 0.1;        // If update_rate is invalid, fallback to 10Hz (0.1s)
+        double min_dt = desired_period_virtual * 0.3;
+        double max_dt = desired_period_virtual * 1.5;
+
+        if (dt_sec < min_dt || dt_sec > max_dt)
+        {
+            RCLCPP_DEBUG(
+                rclcpp::get_logger("dsr_hw_interface2"),
+                "[VIRTUAL] Skip dt=%.6f (expected=%.6f, allowed=[%.6f, %.6f])",
+                dt_sec, desired_period_virtual, min_dt, max_dt
+            );
+            return return_type::OK;
+        }
+        effective_dt = dt_sec;
+    }
+
+    // Accumulate simulated time
+    static double total_time_sec = 0.0;
+    total_time_sec += effective_dt;
+
+    static bool idle = false;
+
+    if (positionCommandRunning(pre_joint_position_command_, joint_position_command_))
+    {
+        if (idle)
+        {
+            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE);
+            idle = false;
+        }
+
+        // Convert rad → deg
+        float pos[6];
+        float vel[6];
+        for (int i = 0; i < 6; i++)
+        {
+            pos[i] = static_cast<float>(joint_position_command_[i] * (180.0 / M_PI));
+            vel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0 / M_PI));
+        }
+
+        // Select control API
+        std::string cmd_type;
+        if (mode == "real")
+        {
+            float acc[6] = {0,0,0,0,0,0};
+            const float margin = 20.0f;
+            float servo_time = static_cast<float>(real_loop_dt * margin);
+
+            Drfl.servoj_rt(pos, vel, acc, servo_time);
+            cmd_type = "servoj_rt";
+        }
+        else  // virtual
+        {
+            float target_vel_acc[6] = {70,70,70,70,70,70};
+            Drfl.amovej(pos, target_vel_acc, target_vel_acc);
+            cmd_type = "amovej";
+        }
+
+        // Debug logging
+        // RCLCPP_INFO(
+        //     rclcpp::get_logger("dsr_hw_interface2"),
+        //     "[WRITE] t=%.6f | mode=%s | dt=%.6f → eff=%.6f\n"
+        //     "        update_rate=%d (period=%.6f)\n"
+        //     "        pos={%.3f %.3f %.3f %.3f %.3f %.3f} deg\n"
+        //     "        vel={%.3f %.3f %.3f %.3f %.3f %.3f} deg/s\n"
+        //     "        cmd=%s",
+        //     total_time_sec,
+        //     mode.c_str(),
+        //     dt_sec, effective_dt,
+        //     update_rate, desired_period,
+        //     pos[0], pos[1], pos[2], pos[3], pos[4], pos[5],
+        //     vel[0], vel[1], vel[2], vel[3], vel[4], vel[5],
+        //     cmd_type.c_str()
+        // );
+
+        pre_joint_position_command_ = joint_position_command_;
+        return return_type::OK;
+    }
+    idle = true;
+    pre_joint_position_command_ = joint_position_command_;
+    return return_type::OK;
 }
+
 
 DRHWInterface::~DRHWInterface()
 {
@@ -426,4 +518,3 @@ DRHWInterface::~DRHWInterface()
 
 PLUGINLIB_EXPORT_CLASS(
   dsr_hardware2::DRHWInterface, hardware_interface::SystemInterface)
-

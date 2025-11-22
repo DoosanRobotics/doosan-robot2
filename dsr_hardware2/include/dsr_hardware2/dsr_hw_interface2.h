@@ -94,6 +94,7 @@ private:
 		std::string mode;
 		std::string model;
 		int drcf_port;
+		int update_rate;
 };
 
 }
