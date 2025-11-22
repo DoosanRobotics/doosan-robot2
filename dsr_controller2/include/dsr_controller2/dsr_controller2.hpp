@@ -689,6 +689,19 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::ReadDataRt>::SharedPtr                    m_nh_read_data_rt;
   rclcpp::Service<dsr_msgs2::srv::WriteDataRt>::SharedPtr                   m_nh_write_data_rt;
 
+  // Real-time data publishing members and parameters for periodic Float32MultiArray topic output.
+  bool use_rt_topic_pub_{false};
+  std::vector<std::string> rt_topic_keys_;
+  std::unordered_map<std::string,
+      rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr>
+      rt_pub_map_;  rclcpp::TimerBase::SharedPtr rt_timer_;
+  void publish_read_data_rt_selected();
+  static bool extract_field(LPRT_OUTPUT_DATA_LIST temp,const std::string& key,std::vector<float>& out);
+
+private:
+  static constexpr const char* PARAM_USE_RT_TOPIC_PUB = "use_rt_topic_pub";
+  static constexpr const char* PARAM_RT_TOPIC_KEYS    = "rt_topic_keys";
+  static constexpr const char* PARAM_RT_TIMER_MS      = "rt_timer_ms";
 };
 
 }  // namespace dsr_control2

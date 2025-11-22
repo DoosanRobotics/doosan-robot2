@@ -133,6 +133,11 @@ void threadFunction() {
         m_rt_host = yaml_node["rt_host"].as<std::string>();
         RCLCPP_INFO(s_node_->get_logger(), "rt_host: %s", m_rt_host.c_str());
     }
+    if (yaml_node["update_rate"]) {
+        m_update_rate = yaml_node["update_rate"].as<int>();
+        RCLCPP_INFO(s_node_->get_logger(),
+                    "update_rate: %d", m_update_rate);
+    }
 }
 
 namespace dsr_hardware2{
@@ -560,39 +565,94 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
 vector<vector<float>> joint_position_commands;
 return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &dt)
 {
-    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] dt  : %.3f", float(dt.seconds()) );
-    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_position_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-    //         ,joint_position_command_[0]
-    //         ,joint_position_command_[1]
-    //         ,joint_position_command_[2]
-    //         ,joint_position_command_[3]
-    //         ,joint_position_command_[4]
-    //         ,joint_position_command_[5]);
-    // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_velocities_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
-    //         ,joint_velocities_command_[0]
-    //         ,joint_velocities_command_[1]
-    //         ,joint_velocities_command_[2]
-    //         ,joint_velocities_command_[3]
-    //         ,joint_velocities_command_[4]
-    //         ,joint_velocities_command_[5]);
+	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] dt  : %.3f", float(dt.seconds()) );
+	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_position_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+	//         ,joint_position_command_[0]
+	//         ,joint_position_command_[1]
+	//         ,joint_position_command_[2]
+	//         ,joint_position_command_[3]
+	//         ,joint_position_command_[4]
+	//         ,joint_position_command_[5]);
+	// RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "[WRITE] joint_velocities_command_  : {%.3f, %.3f, %.3f, %.3f, %.3f, %.3f}"
+	//         ,joint_velocities_command_[0]
+	//         ,joint_velocities_command_[1]
+	//         ,joint_velocities_command_[2]
+	//         ,joint_velocities_command_[3]
+	//         ,joint_velocities_command_[4]
+	//         ,joint_velocities_command_[5]);
+
+    // Measure CPU loop duration for REAL servo timing
+    static auto last_tick = std::chrono::steady_clock::now();
+    auto now_cpu = std::chrono::steady_clock::now();
+    double real_loop_dt = std::chrono::duration<double>(now_cpu - last_tick).count();
+    last_tick = now_cpu;
+
+    // dt provided by controller_manager
+    const double dt_sec = dt.seconds();
+
+    // Expected control period from update_rate (Hz → seconds)
+    double desired_period = 0.0;
+    if (m_update_rate > 0)
+        desired_period = 1.0 / static_cast<double>(m_update_rate);
+
+    // REAL mode: filter unstable dt cycles
+    if (m_mode == "real" && desired_period > 0.0)
+    {
+        double min_dt = desired_period * 0.3;
+        double max_dt = desired_period * 1.5;
+
+        if (dt_sec < min_dt || dt_sec > max_dt)
+        {
+            RCLCPP_WARN(
+                rclcpp::get_logger("dsr_hw_interface2"),
+                "[REAL] Skip dt=%.6f (expected=%.6f, allowed=[%.6f, %.6f])",
+                dt_sec, desired_period, min_dt, max_dt
+            );
+            return return_type::OK;
+        }
+    }
+
+    double effective_dt = dt_sec;
+    if (m_mode == "virtual")
+    {
+        if (m_update_rate > 10)
+        {
+            RCLCPP_DEBUG(rclcpp::get_logger("dsr_hw_interface2"),"[DEBUG] update_rate=%d Hz exceeds recommended 10 Hz", m_update_rate);
+        }
+
+        double desired_period_virtual = (m_update_rate > 0) ? desired_period : 0.1;        // If update_rate is invalid, fallback to 10Hz (0.1s)
+        double min_dt = desired_period_virtual * 0.3;
+        double max_dt = desired_period_virtual * 1.5;
+
+        if (dt_sec < min_dt || dt_sec > max_dt)
+        {
+            RCLCPP_DEBUG(
+                rclcpp::get_logger("dsr_hw_interface2"),
+                "[VIRTUAL] Skip dt=%.6f (expected=%.6f, allowed=[%.6f, %.6f])",
+                dt_sec, desired_period_virtual, min_dt, max_dt
+            );
+            return return_type::OK;
+        }
+        effective_dt = dt_sec;
+    }
+
+    // Accumulate simulated time
+    static double total_time_sec = 0.0;
+    total_time_sec += effective_dt;
 
     static bool idle = false;
-    size_t dof = joint_position_command_.size(); // [modified] Get current DOF dynamically
+    size_t dof = joint_position_command_.size(); // Get current DOF dynamically
 
     // TODO: this seems to be a workaround. refer to hardware design of 'prepare_command_mode_switch'
     // [note] Check if joint position command has changed significantly
-    if(positionCommandRunning(pre_joint_position_command_, joint_position_command_)) {
-        if(true == idle) 
+    if (positionCommandRunning(pre_joint_position_command_, joint_position_command_))
+    {
+        if (idle)
         {
-            // This is workaround to overcome issues :
-            // move_joint (drfl) API internally sent safety_off right after moving. 
-            // which occurs problems like :
-            // "move_joint service command -> trajectory command => error ! "
-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE);
             idle = false;
         }
-
-        // [modified] Use fixed-size array for compatibility with DRFL API
+        //  Use fixed-size array for compatibility with DRFL API
         float pos[6] = {0.0f};
         float targetVel[6] = {0.0f};
 
@@ -600,7 +660,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         for (size_t i = 0; i < dof; i++) 
         {
             int hw_idx = hw_mapping_[i];
-            pos[hw_idx]      = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
+            pos[hw_idx] = static_cast<float>(joint_position_command_[i] * (180.0f / M_PI));
             targetVel[hw_idx] = static_cast<float>(joint_velocities_command_[i] * (180.0f / M_PI));
         
             // [DEBUG] Print joint name with its command
@@ -614,35 +674,41 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
             // );
         }
 
-        // if (m_mode == "real") {
-        //     float margin = 1.5f;
-        //     std::vector<float> acc(dof, 0.0f);
-        //     Drfl.servoj_rt(pos.data(), targetVel.data(), acc.data(), float(dt.seconds() * margin));
-        // } else { // virtual
-        //     std::vector<float> target_vel_acc(dof, 70.0f);
-        //     Drfl.amovej(pos.data(), target_vel_acc.data(), target_vel_acc.data());
-        // }
-
+        // Select control API
+        std::string cmd_type;
         if (m_mode == "real")
         {
-            float acc[6] = {0};
-            float margin = 1.5f;
-            Drfl.servoj_rt(pos, targetVel, acc, float(dt.seconds() * margin));
+            float acc[6] = {0,0,0,0,0,0};
+            const float margin = 20.0f;
+            float servo_time = static_cast<float>(real_loop_dt * margin);
+
+            Drfl.servoj_rt(pos, targetVel, acc, servo_time);
+            cmd_type = "servoj_rt";
         }
-        else {
-            float target_vel_acc[6] = {70, 70, 70, 70, 70, 70};
+        else  // virtual
+        {
+            float target_vel_acc[6] = {70,70,70,70,70,70};
             Drfl.amovej(pos, target_vel_acc, target_vel_acc);
+            cmd_type = "amovej";
         }
-        // // [added] Log the sent command
-        // std::ostringstream log_msg;
-        // log_msg << "[write] Sent joint commands (dof=" << dof << ") pos: {";
-        // for (size_t i = 0; i < dof; ++i) {
-        //     log_msg << pos[i] << (i < dof - 1 ? ", " : "}, vel: {");
-        // }
-        // for (size_t i = 0; i < dof; ++i) {
-        //     log_msg << targetVel[i] << (i < dof - 1 ? ", " : "}");
-        // }
-        // RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "%s", log_msg.str().c_str());
+
+        // Debug logging
+        // RCLCPP_INFO(
+        //     rclcpp::get_logger("dsr_hw_interface2"),
+        //     "[WRITE] t=%.6f | mode=%s | dt=%.6f → eff=%.6f\n"
+        //     "        update_rate=%d (period=%.6f)\n"
+        //     "        pos={%.3f %.3f %.3f %.3f %.3f %.3f} deg\n"
+        //     "        vel={%.3f %.3f %.3f %.3f %.3f %.3f} deg/s\n"
+        //     "        cmd=%s",
+        //     total_time_sec,
+        //     mode.c_str(),
+        //     dt_sec, effective_dt,
+        //     update_rate, desired_period,
+        //     pos[0], pos[1], pos[2], pos[3], pos[4], pos[5],
+        //     vel[0], vel[1], vel[2], vel[3], vel[4], vel[5],
+        //     cmd_type.c_str()
+        // );
+
         pre_joint_position_command_ = joint_position_command_;
         return return_type::OK;
     }
@@ -650,6 +716,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     pre_joint_position_command_ = joint_position_command_;
     return return_type::OK;
 }
+
 
 DRHWInterface::~DRHWInterface()
 {

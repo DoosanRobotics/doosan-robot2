@@ -149,5 +149,6 @@
         ".vscode",
         ".vscode-insiders",
         ".devcontainer/devcontainer.json"
-    ]
+    ],
+    "ros.distro": "jazzy"
 }

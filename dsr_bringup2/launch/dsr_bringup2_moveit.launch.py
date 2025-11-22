@@ -23,10 +23,11 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Opaq
 from launch.substitutions import LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from dsr_bringup2.utils import show_git_info
 
 def include_launch_description(context):
     model_value = LaunchConfiguration('model').perform(context)
-
+    show_git_info() # print git info
     # Make pacakage name
     package_name_str = f"dsr_moveit_config_{model_value}"
 
