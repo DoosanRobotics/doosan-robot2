@@ -11,6 +11,7 @@
   <xacro:arg name="rt_host" default=""/>
   <xacro:arg name="mode" default=""/>
   <xacro:arg name="model" default=""/>
+  <xacro:arg name="update_rate" default=""/>
 
   <xacro:property name="cr" value="$(arg color)"/>
   <xacro:property name="gr" value="$(arg gripper)"/>
@@ -21,6 +22,7 @@
   <xacro:property name="port" value="$(arg port)"/>
   <xacro:property name="mode" value="$(arg mode)"/>
   <xacro:property name="model" value="$(arg model)"/>
+  <xacro:property name="update_rate" value="$(arg update_rate)"/>
 
   <xacro:if value="${cr == 'white'}">
      <xacro:include filename="$(find dsr_description2)/xacro/macro.p3020.white.xacro" />
@@ -58,6 +60,7 @@
         port="${port}"
         mode="${mode}"
         model="${model}"
+        update_rate="${update_rate}"
       />
     </xacro:unless>
   </xacro:unless>
