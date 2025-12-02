@@ -31,7 +31,7 @@ from launch.actions import IncludeLaunchDescription
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
-from dsr_bringup2.utils import read_update_rate, show_git_info
+
 
 def print_launch_configuration_value(context, *args, **kwargs):
     # LaunchConfiguration 값을 평가합니다.
@@ -56,8 +56,7 @@ def generate_launch_description():
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # gui = LaunchConfiguration("gui")
     mode = LaunchConfiguration("mode")
-    update_rate = str(read_update_rate()) # get update_rate from yaml
-    show_git_info() # print git info
+    
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -103,7 +102,6 @@ def generate_launch_description():
             {"gripper": "none"      },
             {"mobile":  "none"      },
             {"rt_host":  LaunchConfiguration('rt_host')      },
-            {"update_rate": update_rate        },
             #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
         ],
         output="screen",

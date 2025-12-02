@@ -478,8 +478,6 @@ unsigned int m_rate;
 unsigned int m_standby;
 bool m_command;
 unsigned int m_port;
-unsigned int m_update_rate;   // controller manager update_rate
-
 rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr m_joint_state_pub_;
 typedef struct _ROBOT_JOINT_DATA
 {

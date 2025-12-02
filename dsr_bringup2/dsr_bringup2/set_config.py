@@ -40,7 +40,6 @@ class ConnectionNode(Node):
         self.declare_parameter('gripper', 'none')
         self.declare_parameter('mobile', 'none')
         self.declare_parameter('rt_host', '192.168.137.50')
-        self.declare_parameter('update_rate', 100)
 
         parameters = {}
         parameters['name'] = self.get_parameter('name').get_parameter_value().string_value
@@ -54,7 +53,6 @@ class ConnectionNode(Node):
         parameters['gripper'] = self.get_parameter('gripper').get_parameter_value().string_value
         parameters['mobile'] = self.get_parameter('mobile').get_parameter_value().string_value
         parameters['rt_host'] = self.get_parameter('rt_host').get_parameter_value().string_value
-        parameters['update_rate'] = self.get_parameter('update_rate').get_parameter_value().integer_value
 
         current_file_path = os.path.join(
             get_package_share_directory("dsr_hardware2"), "config"
