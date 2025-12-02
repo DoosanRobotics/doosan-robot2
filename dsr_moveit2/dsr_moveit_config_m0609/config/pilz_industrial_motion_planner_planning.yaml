@@ -1,12 +1,10 @@
 planning_plugin: pilz_industrial_motion_planner/CommandPlanner
-request_adapters: ""
+request_adapters: >-
+  default_planner_request_adapters/FixWorkspaceBounds
+  default_planner_request_adapters/FixStartStateBounds
+  default_planner_request_adapters/FixStartStateCollision
+  default_planner_request_adapters/FixStartStatePathConstraints
 default_planner_config: PTP
 capabilities: >-
-    pilz_industrial_motion_planner/MoveGroupSequenceAction
-    pilz_industrial_motion_planner/MoveGroupSequenceService
-
-cartesian_limits:
-  max_trans_vel: 1.0
-  max_trans_acc: 2.25
-  max_trans_dec: -5.0
-  max_rot_vel: 1.57
+  pilz_industrial_motion_planner/MoveGroupSequenceAction
+  pilz_industrial_motion_planner/MoveGroupSequenceService

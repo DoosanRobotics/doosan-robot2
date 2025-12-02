@@ -5415,14 +5415,14 @@ def check_force_condition(axis, min=DR_COND_NONE, max=DR_COND_NONE, ref=None):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value: min({0}), max({1})".format(min, max))
 
     # min check : min 설정되어 있는데 0보다 작은 경우 에러 처리 2017/12/07
-    if min != DR_COND_NONE:
-        if min < 0:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value: min (Ranges: min({0}) >= 0)".format(min))
+    # if min != DR_COND_NONE:
+    #     if min < 0:
+    #         raise DR_Error(DR_ERROR_VALUE, "Invalid value: min (Ranges: min({0}) >= 0)".format(min))
 
     # max check : max 설정되어 있는데 0보다 작은 경우 에러 처리 2017/12/07
-    if max != DR_COND_NONE:
-        if max < 0:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value: max (Ranges: max({0}) >= 0)".format(max))
+    # if max != DR_COND_NONE:
+    #     if max < 0:
+    #         raise DR_Error(DR_ERROR_VALUE, "Invalid value: max (Ranges: max({0}) >= 0)".format(max))
 
     # min < max check
     if min != DR_COND_NONE and max != DR_COND_NONE: #min, max 값이 둘다 설정된 경우에만 검사 실시 2017/08/23

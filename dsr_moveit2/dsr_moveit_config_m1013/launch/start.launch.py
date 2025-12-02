@@ -84,7 +84,7 @@ def generate_launch_description():
         DeclareLaunchArgument('host',  default_value='127.0.0.1', description='ROBOT_IP'),
         DeclareLaunchArgument('port',  default_value='12345', description='ROBOT_PORT'),
         DeclareLaunchArgument('mode',  default_value='virtual', description='OPERATION MODE'),
-        DeclareLaunchArgument('model', default_value='m0617', description='ROBOT_MODEL'),
+        DeclareLaunchArgument('model', default_value='m1013', description='ROBOT_MODEL'),
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
         DeclareLaunchArgument('gui',   default_value='false', description='Start RViz2'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
@@ -190,7 +190,8 @@ def generate_launch_description():
         arguments=[
             "dsr_controller2",
             "-c", "controller_manager",
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--ros-args", "--log-level", "info"
         ],
     )
 
