@@ -8,7 +8,7 @@
   port:=12345
   mode:=real
   model:=p3020
-  update_rate
+  update_rate:=100
   ">
 
     <ros2_control name="${name}" type="system">
