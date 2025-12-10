@@ -64,7 +64,7 @@ def bringUp():
 	# Assume if spawners are successfully loaded, Prerequisite done.
 	try:
 		(stdout, _ ) = spawner_script.communicate(timeout=30)
-		if 2 != stdout.count('\033[92m'+"Configured and activated"):
+		if 2 != stdout.count("Configured and activated"):
 			bringup_script.send_signal(signal.SIGINT)
 			spawner_script.send_signal(signal.SIGINT)
 			raise Exception('Failed Loading Spawner. stdout : {}, \nAll tests will be failed !!!'
