@@ -255,7 +255,11 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["joint_state_broadcaster", "-c", "controller_manager"],
+        arguments=[
+            "joint_state_broadcaster",
+            "-c", "controller_manager",
+            "--controller-manager-timeout", "120"
+        ],
     )
 
     # Spawn dsr_controller2
@@ -263,7 +267,11 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=[
+            "dsr_controller2",
+            "-c", "controller_manager",
+            "--controller-manager-timeout", "120"
+        ],
     )
 
     # Spawn dsr_moveit_controller
@@ -271,7 +279,11 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         namespace=LaunchConfiguration('name'),
-        arguments=["dsr_moveit_controller", "-c", "controller_manager"],
+        arguments=[
+            "dsr_moveit_controller",
+            "-c", "controller_manager",
+            "--controller-manager-timeout", "120"
+        ],
     )
 
     # MoveGroup + (optional) RViz
