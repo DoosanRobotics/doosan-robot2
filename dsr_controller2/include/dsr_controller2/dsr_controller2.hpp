@@ -205,7 +205,7 @@
 
 #include "../../../dsr_common2/include/DRFLEx.h"
 
-#define _DEBUG_DSR_CTL      0
+#define _DEBUG_DSR_CTL      1
 
 #ifndef PI
 #define PI 3.14159265359

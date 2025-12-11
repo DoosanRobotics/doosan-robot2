@@ -1501,7 +1501,23 @@ auto check_force_condition_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Che
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    max  = %f", req->max);
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    ref  = %d", req->ref);
 #endif
-    res->success = Drfl->check_force_condition((FORCE_AXIS)req->axis, req->min, req->max, (COORDINATE_SYSTEM)req->ref);
+
+    // ✅ 1. 결과를 먼저 변수로 받는다
+    bool result = Drfl->check_force_condition(
+        (FORCE_AXIS)req->axis,
+        req->min,
+        req->max,
+        (COORDINATE_SYSTEM)req->ref
+    );
+
+    // ✅ 2. 결과를 로그로 찍는다
+    RCLCPP_WARN(
+        rclcpp::get_logger("dsr_controller2"),
+        "check_force_condition result = %d", result
+    );
+
+    // ✅ 3. 그 결과를 응답에 넣는다
+    res->success = result;
 };
 
 auto check_orientation_condition1_cb = [this](const std::shared_ptr<dsr_msgs2::srv::CheckOrientationCondition1::Request> req, std::shared_ptr<dsr_msgs2::srv::CheckOrientationCondition1::Response> res)-> void       
