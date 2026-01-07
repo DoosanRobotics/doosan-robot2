@@ -107,6 +107,7 @@
 #include "dsr_msgs2/srv/alter_motion.hpp"
 #include "dsr_msgs2/srv/disable_alter_motion.hpp"
 #include "dsr_msgs2/srv/set_singularity_handling.hpp"
+#include "dsr_msgs2/srv/set_singularity_handling_force.hpp"
 
 //----- auxiliary_control
 #include "dsr_msgs2/srv/get_control_mode.hpp"          
@@ -127,6 +128,7 @@
 #include "dsr_msgs2/srv/get_tool_force.hpp"            
 #include "dsr_msgs2/srv/get_solution_space.hpp"
 #include "dsr_msgs2/srv/get_orientation_error.hpp"
+#include "dsr_msgs2/srv/get_robot_link_info.hpp"
 
 //----- force/stiffness
 #include "dsr_msgs2/srv/parallel_axis1.hpp"
@@ -619,6 +621,7 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::AlterMotion>::SharedPtr             m_nh_srv_alter_motion;
   rclcpp::Service<dsr_msgs2::srv::DisableAlterMotion>::SharedPtr      m_nh_srv_disable_alter_motion;
   rclcpp::Service<dsr_msgs2::srv::SetSingularityHandling>::SharedPtr  m_nh_srv_set_singularity_handling;
+  rclcpp::Service<dsr_msgs2::srv::SetSingularityHandlingForce>::SharedPtr m_nh_srv_set_singularity_handling_force;
   
   rclcpp::Service<dsr_msgs2::srv::GetControlMode>::SharedPtr               m_nh_srv_get_control_mode;          
   rclcpp::Service<dsr_msgs2::srv::GetControlSpace>::SharedPtr              m_nh_srv_get_control_space;         
@@ -638,6 +641,7 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::GetToolForce>::SharedPtr                 m_nh_srv_get_tool_force;            
   rclcpp::Service<dsr_msgs2::srv::GetSolutionSpace>::SharedPtr             m_nh_srv_get_solution_space;
   rclcpp::Service<dsr_msgs2::srv::GetOrientationError>::SharedPtr          m_nh_srv_get_orientation_error;
+  rclcpp::Service<dsr_msgs2::srv::GetRobotLinkInfo>::SharedPtr             m_nh_srv_get_robot_link_info;
 
   rclcpp::Service<dsr_msgs2::srv::ParallelAxis1>::SharedPtr                m_nh_srv_parallel_axis1;
   rclcpp::Service<dsr_msgs2::srv::ParallelAxis2>::SharedPtr                m_nh_srv_parallel_axis2;

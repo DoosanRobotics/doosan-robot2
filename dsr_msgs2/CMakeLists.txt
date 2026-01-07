@@ -50,6 +50,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetRobotControl.srv"
   "srv/ChangeCollisionSensitivity.srv"
   "srv/SetSafetyMode.srv"
+  "srv/GetRobotLinkInfo.srv"
 
   "srv/MoveJoint.srv"
   "srv/MoveLine.srv"
@@ -77,6 +78,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/AlterMotion.srv"
   "srv/DisableAlterMotion.srv"
   "srv/SetSingularityHandling.srv"
+  "srv/SetSingularityHandlingForce.srv"
 
   "srv/GetControlMode.srv"              
   "srv/GetControlSpace.srv"             
