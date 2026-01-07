@@ -21,6 +21,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp_components
   ament_index_cpp
   yaml-cpp
+  dsr_common2
 )
 
 find_package(ament_cmake REQUIRED)
@@ -34,28 +35,11 @@ if(NOT DEFINED DRCF_VER)
 endif()
 message(DRCF_VERSION : ${DRCF_VER})
 
-
-SET( COMMON_INC_FILES
-  ../dsr_common2/include
-)
-SET( COMMON_LIB_FILES
-  ../dsr_common2/lib
-)
-
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
-  ${COMMON_INC_FILES}
 )
 
-LINK_LIBRARIES(DRFL PocoFoundation PocoNet)
-
-if($ENV{ROS_DISTRO} STREQUAL "jazzy")                          
-  LINK_DIRECTORIES ("${COMMON_LIB_FILES}/$ENV{ROS_DISTRO}/x86_64")
-else()
-  message("Unknown ROS distro:")
-  message($ENV{ROS_DISTRO})
-endif()
 # add_executable(dsr_control_node2 src/dsr_control_node2.cpp)
 # ament_target_dependencies(
 #   dsr_control_node2 PUBLIC
@@ -74,6 +58,7 @@ target_include_directories(dsr_controller2 PUBLIC
   $<INSTALL_INTERFACE:include/dsr_controller2>
 )
 ament_target_dependencies(dsr_controller2 PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+target_link_libraries(dsr_controller2 PUBLIC dsr_common2::drfl)
 
 # add_library(dsr_joint_trajectory SHARED
 #   # src/joint_group_velocity_controller.cpp
@@ -84,7 +69,7 @@ ament_target_dependencies(dsr_controller2 PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
 #   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 #   $<INSTALL_INTERFACE:include/dsr_joint_trajectory>
 # )
-# ament_target_dependencies(dsr_joint_trajectory PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+# ament_target_dependencies(dsr_joint_trajectory PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS} dsr_common2::drfl)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
