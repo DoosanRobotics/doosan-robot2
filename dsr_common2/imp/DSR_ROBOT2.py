@@ -49,16 +49,17 @@ print("_topic_name_prefix ={0}".format(_topic_name_prefix))
 ############### connect to dsr_control2 (ros2 service) ####################################################################### 
 
 #  system Operations
-_ros2_set_robot_mode             = g_node.create_client(SetRobotMode,           _srv_name_prefix +"system/set_robot_mode")
-_ros2_get_robot_mode             = g_node.create_client(GetRobotMode,           _srv_name_prefix +"system/get_robot_mode")
-_ros2_set_robot_system           = g_node.create_client(SetRobotSystem,         _srv_name_prefix +"system/set_robot_system")
-_ros2_get_robot_system           = g_node.create_client(GetRobotSystem,         _srv_name_prefix +"system/get_robot_system")
-_ros2_get_robot_state            = g_node.create_client(GetRobotState,          _srv_name_prefix +"system/get_robot_state")
-_ros2_set_robot_speed_mode       = g_node.create_client(SetRobotSpeedMode,      _srv_name_prefix +"system/set_robot_speed_mode")
-_ros2_get_robot_speed_mode       = g_node.create_client(GetRobotSpeedMode,      _srv_name_prefix +"system/get_robot_speed_mode")
-_ros2_set_safe_stop_reset_type   = g_node.create_client(SetSafeStopResetType,   _srv_name_prefix +"system/set_safe_stop_reset_type")
-_ros2_get_last_alarm             = g_node.create_client(GetLastAlarm,           _srv_name_prefix +"system/get_last_alarm")
-_ros2_get_current_pose           = g_node.create_client(GetCurrentPose,         _srv_name_prefix +"system/get_current_pose")
+_ros2_set_robot_mode               = g_node.create_client(SetRobotMode,           _srv_name_prefix +"system/set_robot_mode")
+_ros2_get_robot_mode               = g_node.create_client(GetRobotMode,           _srv_name_prefix +"system/get_robot_mode")
+_ros2_set_robot_system             = g_node.create_client(SetRobotSystem,         _srv_name_prefix +"system/set_robot_system")
+_ros2_get_robot_system             = g_node.create_client(GetRobotSystem,         _srv_name_prefix +"system/get_robot_system")
+_ros2_get_robot_state              = g_node.create_client(GetRobotState,          _srv_name_prefix +"system/get_robot_state")
+_ros2_set_robot_speed_mode         = g_node.create_client(SetRobotSpeedMode,      _srv_name_prefix +"system/set_robot_speed_mode")
+_ros2_get_robot_speed_mode         = g_node.create_client(GetRobotSpeedMode,      _srv_name_prefix +"system/get_robot_speed_mode")
+_ros2_set_safe_stop_reset_type     = g_node.create_client(SetSafeStopResetType,   _srv_name_prefix +"system/set_safe_stop_reset_type")
+_ros2_get_last_alarm               = g_node.create_client(GetLastAlarm,           _srv_name_prefix +"system/get_last_alarm")
+_ros2_change_collision_sensitivity = g_node.create_client(ChangeCollisionSensitivity, _srv_name_prefix +"system/change_collision_sensitivity")
+_ros2_get_current_pose             = g_node.create_client(GetCurrentPose,         _srv_name_prefix +"system/get_current_pose")
 
 #  motion Operations
 _ros2_servoj_stream_pub          = g_node.create_publisher(ServojStream,        _topic_name_prefix + "servoj_stream", 10)
@@ -832,6 +833,29 @@ def get_last_alarm():
                 ret = -1    
             else:        
                 ret = result.log_alarm            
+    return ret
+
+def change_collision_sensitivity(sensitivity):
+    if type(sensitivity) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : sensitivity")
+    
+    # ROS2 service call
+    if __ROS2__:
+        req = ChangeCollisionSensitivity.Request()
+        req.sensitivity = sensitivity
+
+        future = _ros2_change_collision_sensitivity.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().info('change_collision_sensitivity Service call failed %r' % (e,))
+        else:
+            if result == None:
+                ret = -1
+            else:
+                ret = 0 if (result.success == True) else -1
     return ret
 
 ##### Auxiliary Control ##############################################################################################################################
@@ -6590,16 +6614,17 @@ class CDsrRobot:
         #rospy.wait_for_service(self._srv_name_prefix +"/motion/move_joint")
         
         # system Operations
-        self._ros2_set_robot_mode             = g_node.create_client(SetRobotMode, self._srv_name_prefix +"/system/set_robot_mode") ; self.req_SetRobotMode = SetRobotMode.Request()
-        self._ros2_get_robot_mode             = g_node.create_client(GetRobotMode, self._srv_name_prefix +"/system/get_robot_mode") ; self.req_GetRobotMode = GetRobotMode.Request()
-        self._ros2_set_robot_system           = g_node.create_client(SetRobotSystem, self._srv_name_prefix +"/system/set_robot_system") ; self.req_SetRobotSystem = SetRobotSystem.Request()
-        self._ros2_get_robot_system           = g_node.create_client(GetRobotSystem, self._srv_name_prefix +"/system/get_robot_system") ; self.req_GetRobotSystem = GetRobotSystem.Request()
-        self._ros2_get_robot_state            = g_node.create_client(GetRobotState, self._srv_name_prefix +"/system/get_robot_state") ; self.req_GetRobotState = GetRobotState.Request()
-        self._ros2_set_robot_speed_mode       = g_node.create_client(SetRobotSpeedMode, self._srv_name_prefix +"/system/set_robot_speed_mode") ; self.req_SetRobotSpeedMode = SetRobotSpeedMode.Request()
-        self._ros2_get_robot_speed_mode       = g_node.create_client(GetRobotSpeedMode, self._srv_name_prefix +"/system/get_robot_speed_mode") ; self.req_GetRobotSpeedMode = GetRobotSpeedMode.Request()
-        self._ros2_set_safe_stop_reset_type   = g_node.create_client(SetSafeStopResetType, self._srv_name_prefix +"/system/set_safe_stop_reset_type") ; self.req_SetSafeStopResetType = SetSafeStopResetType.Request()
-        self._ros2_get_last_alarm             = g_node.create_client(GetLastAlarm, self._srv_name_prefix +"/system/get_last_alarm") ; self.req_GetLastAlarm = GetLastAlarm.Request()
-        self._ros2_get_current_pose           = g_node.create_client(GetCurrentPose, self._srv_name_prefix +"/system/get_current_pose") ; self.req_GetCurrentPose = GetCurrentPose.Request()
+        self._ros2_set_robot_mode               = g_node.create_client(SetRobotMode, self._srv_name_prefix +"/system/set_robot_mode") ; self.req_SetRobotMode = SetRobotMode.Request()
+        self._ros2_get_robot_mode               = g_node.create_client(GetRobotMode, self._srv_name_prefix +"/system/get_robot_mode") ; self.req_GetRobotMode = GetRobotMode.Request()
+        self._ros2_set_robot_system             = g_node.create_client(SetRobotSystem, self._srv_name_prefix +"/system/set_robot_system") ; self.req_SetRobotSystem = SetRobotSystem.Request()
+        self._ros2_get_robot_system             = g_node.create_client(GetRobotSystem, self._srv_name_prefix +"/system/get_robot_system") ; self.req_GetRobotSystem = GetRobotSystem.Request()
+        self._ros2_get_robot_state              = g_node.create_client(GetRobotState, self._srv_name_prefix +"/system/get_robot_state") ; self.req_GetRobotState = GetRobotState.Request()
+        self._ros2_set_robot_speed_mode         = g_node.create_client(SetRobotSpeedMode, self._srv_name_prefix +"/system/set_robot_speed_mode") ; self.req_SetRobotSpeedMode = SetRobotSpeedMode.Request()
+        self._ros2_get_robot_speed_mode         = g_node.create_client(GetRobotSpeedMode, self._srv_name_prefix +"/system/get_robot_speed_mode") ; self.req_GetRobotSpeedMode = GetRobotSpeedMode.Request()
+        self._ros2_set_safe_stop_reset_type     = g_node.create_client(SetSafeStopResetType, self._srv_name_prefix +"/system/set_safe_stop_reset_type") ; self.req_SetSafeStopResetType = SetSafeStopResetType.Request()
+        self._ros2_get_last_alarm               = g_node.create_client(GetLastAlarm, self._srv_name_prefix +"/system/get_last_alarm") ; self.req_GetLastAlarm = GetLastAlarm.Request()
+        self._ros2_change_collision_sensitivity = g_node.create_client(ChangeCollisionSensitivity, self._srv_name_prefix +"/system/change_collision_sensitivity") ; self.req_ChangeCollisionSensitivity = ChangeCollisionSensitivity.Request()
+        self._ros2_get_current_pose             = g_node.create_client(GetCurrentPose, self._srv_name_prefix +"/system/get_current_pose") ; self.req_GetCurrentPose = GetCurrentPose.Request()
 
     
         #  motion Operations
@@ -6975,6 +7000,29 @@ class CDsrRobot:
                     ret = -1    
                 else:        
                     ret = result.log_alarm            
+        return ret
+
+    def change_collision_sensitivity(self, sensitivity):
+        if type(sensitivity) != int:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : sensitivity")
+        
+        # ROS2 service call
+        if __ROS2__:
+            req = self.req_ChangeCollisionSensitivity
+            req.sensitivity = sensitivity
+
+            future = self._ros2_change_collision_sensitivity.call_async(req)
+            rclpy.spin_until_future_complete(g_node, future)
+
+            try:
+                result = future.result()
+            except Exception as e:
+                g_node.get_logger().info('change_collision_sensitivity Service call failed %r' % (e,))
+            else:
+                if result == None:
+                    ret = -1
+                else:
+                    ret = 0 if (result.success == True) else -1
         return ret
 
 ##### Auxiliary Control ##############################################################################################################################
