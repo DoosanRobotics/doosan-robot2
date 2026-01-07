@@ -146,6 +146,15 @@ SAFETY_MODE_EVENT_LAST                = 3
 DR_SERVO_OVERRIDE = 0
 DR_SERVO_QUEUE = 1
 
+# SINGULARITY_AVOIDANCE
+SINGULARITY_AVOIDANCE_AVOID           = 0
+SINGULARITY_AVOIDANCE_STOP            = 1
+SINGULARITY_AVOIDANCE_VEL             = 2
+
+# Singularty_force_handling enum
+SINGULARITY_ERROR                     = 0
+SINGULARITY_IGNORE                    = 1
+
 ### End of change  
 
 #                                     
