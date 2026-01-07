@@ -27,6 +27,7 @@
   <depend>moveit_msgs</depend> 
   <depend>yaml-cpp</depend> 
   <depend>libpoco-dev</depend>
+  <depend>dsr_common2</depend>
   
   <build_depend>dsr_msgs2</build_depend>
 
