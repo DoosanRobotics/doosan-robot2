@@ -6,11 +6,17 @@
 	"postCreateCommand": ".devcontainer/post-command.sh",
 	"runArgs": [
 		"--network=host",
-		"--volume=/var/run/docker.sock:/var/run/docker.sock",
 		"--volume=/tmp/.X11-unix:/tmp/.X11-unix",
 		"--ipc=host",
 		"--privileged"
 	],
+	"features": {
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+			"installDockerBuildx": true,
+			"version": "latest",
+			"dockerDashComposeVersion": "v2"
+		}
+	},
 	"containerEnv": {
 		"DISPLAY": "${localEnv:DISPLAY}",
 		"LIBGL_ALWAYS_SOFTWARE": "1",
