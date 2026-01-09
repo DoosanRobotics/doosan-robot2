@@ -16,6 +16,7 @@ from launch_ros.substitutions import FindPackageShare
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument, TimerAction
 from launch.event_handlers import OnProcessExit
 from launch.conditions import IfCondition
+from dsr_bringup2.utils import read_update_rate
 
 def generate_launch_description():
     ARGUMENTS =[ 
@@ -33,6 +34,8 @@ def generate_launch_description():
     rviz = LaunchConfiguration("rviz")
     start_emulator = LaunchConfiguration("start_emulator")
     
+    update_rate = str(read_update_rate())
+
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -51,6 +54,7 @@ def generate_launch_description():
             " port:=", LaunchConfiguration('port'),
             " mode:=", LaunchConfiguration('mode'),
             " model:=", LaunchConfiguration('model'),
+            " update_rate:=", update_rate,
         ]
     )
 
