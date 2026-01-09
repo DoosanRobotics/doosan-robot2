@@ -874,6 +874,15 @@ auto set_singularity_handling_cb = [this](const std::shared_ptr<dsr_msgs2::srv::
     res->success = Drfl->set_singularity_handling((SINGULARITY_AVOIDANCE)req->mode);      
 };
 
+auto set_singularity_handling_force_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetSingularityHandlingForce::Request> req, std::shared_ptr<dsr_msgs2::srv::SetSingularityHandlingForce::Response> res) -> void
+{
+#if (_DEBUG_DSR_CTL)
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"< set_singularity_handling_force_cb >");
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    mode = %d",req->mode);
+#endif
+    res->success = Drfl->set_singular_handling_force((SINGULARITY_FORCE_HANDLING)req->mode);      
+};
+
 
 
 //----- AUXILIARY_CONTROL Service Call-back functions ------------------------------------------------------------
@@ -1157,6 +1166,28 @@ auto get_orientation_error_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Get
 #endif
     res->ori_error = Drfl->get_orientation_error(task_pos1.data(), task_pos2.data(), (TASK_AXIS)req->axis);     //check 040404
     res->success = true;
+};
+
+auto get_robot_link_info_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetRobotLinkInfo::Request> /*req*/, std::shared_ptr<dsr_msgs2::srv::GetRobotLinkInfo::Response> res) -> void
+{
+#if (_DEBUG_DSR_CTL)
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"< get_robot_link_info_cb >");
+#endif
+    ROBOT_LINK_INFO link_info;
+    if(Drfl->get_robot_link_info(link_info)){
+        for(int i=0; i<6; i++){
+            res->d[i] = link_info.d[i];
+            res->a[i] = link_info.a[i];
+            res->alpha[i] = link_info.alpha[i];
+            res->theta[i] = link_info.theta[i];
+            res->offset[i] = link_info.offset[i];
+        }
+        res->gradient = link_info.gradient;
+        res->rotation = link_info.rotation;
+        res->success = true;
+    } else {
+        res->success = false;
+    }
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2321,6 +2352,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_srv_alter_motion               = get_node()->create_service<dsr_msgs2::srv::AlterMotion>("motion/alter_motion", alter_motion_cb);              
   m_nh_srv_disable_alter_motion       = get_node()->create_service<dsr_msgs2::srv::DisableAlterMotion>("motion/disable_alter_motion", disable_alter_motion_cb);                  
   m_nh_srv_set_singularity_handling   = get_node()->create_service<dsr_msgs2::srv::SetSingularityHandling>("motion/set_singularity_handling", set_singularity_handling_cb);                      
+  m_nh_srv_set_singularity_handling_force = get_node()->create_service<dsr_msgs2::srv::SetSingularityHandlingForce>("motion/set_singularity_handling_force", set_singularity_handling_force_cb);
 
   //  auxiliary_control
   m_nh_srv_get_control_mode               = get_node()->create_service<dsr_msgs2::srv::GetControlMode>("aux_control/get_control_mode", get_control_mode_cb);                           
@@ -2341,7 +2373,8 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_srv_get_tool_force                 = get_node()->create_service<dsr_msgs2::srv::GetToolForce>("aux_control/get_tool_force", get_tool_force_cb);                               
   m_nh_srv_get_solution_space             = get_node()->create_service<dsr_msgs2::srv::GetSolutionSpace>("aux_control/get_solution_space", get_solution_space_cb);       
   m_nh_srv_get_orientation_error          = get_node()->create_service<dsr_msgs2::srv::GetOrientationError>("aux_control/get_orientation_error", get_orientation_error_cb);              
-  
+  m_nh_srv_get_robot_link_info            = get_node()->create_service<dsr_msgs2::srv::GetRobotLinkInfo>("aux_control/get_robot_link_info", get_robot_link_info_cb);
+
   //  force/stiffness
   m_nh_srv_parallel_axis1                 = get_node()->create_service<dsr_msgs2::srv::ParallelAxis1>("force/parallel_axis1", parallel_axis1_cb);  
   m_nh_srv_parallel_axis2                 = get_node()->create_service<dsr_msgs2::srv::ParallelAxis2>("force/parallel_axis2", parallel_axis2_cb);  

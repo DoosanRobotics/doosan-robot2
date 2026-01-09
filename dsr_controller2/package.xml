@@ -26,6 +26,7 @@
   <depend>control_msgs</depend>
   <depend>std_msgs</depend>
   <depend>dsr_hardware2</depend>
+  <depend>dsr_common2</depend>
   <depend>yaml-cpp</depend> 
   <depend>ament_index_cpp</depend>
   <depend>libpoco-dev</depend>

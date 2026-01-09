@@ -63,7 +63,8 @@ def bringUp():
 
 	# Assume if spawners are successfully loaded, Prerequisite done.
 	try:
-		(stdout, _ ) = spawner_script.communicate(timeout=30)
+		(stdout, _ ) = spawner_script.communicate(timeout=10)
+		spawner_script.wait(timeout=10)
 		if 2 != stdout.count("Configured and activated"):
 			bringup_script.send_signal(signal.SIGINT)
 			spawner_script.send_signal(signal.SIGINT)
@@ -72,7 +73,14 @@ def bringUp():
 	except subprocess.TimeoutExpired as e:
 		bringup_script.send_signal(signal.SIGINT)
 		spawner_script.send_signal(signal.SIGINT)
-		raise Exception('Spawner Time out !!, All tests will be failed !!!!')
+		
+		spawner_stdout = e.stdout.decode('utf-8') if e.stdout else "No spawner output captured"
+		
+		# Capture bringup output
+		bringup_out, bringup_err = bringup_script.communicate()
+		bringup_log = "Bringup Output:\n" + (bringup_out if bringup_out else "None")
+
+		raise Exception('Spawner Time out !!, Spawner stdout: {}, Bringup Log: {}, All tests will be failed !!!!'.format(spawner_stdout, bringup_log))
 	
 	print("Bringup successfully done.")
 	yield 
@@ -96,20 +104,28 @@ class TestDsrMoveCli(unittest.TestCase):
 	def tearDownClass(cls):
 		print("======= DooSan Motion Tests Finished ====")
 		print("=========================================")
+		cls.node.destroy_node()
 
 	def setUp(self):
 		TestDsrMoveCli._lock.acquire()
 		print("Ready For Motion Test!!")
-		self._set_ready_pose()
+		try:
+			self._set_ready_pose()
+		except:
+			TestDsrMoveCli._lock.release()
+			raise
 		
 	def tearDown(self):
 		print("Clear For Motion Test!!")
-		self._set_home_pose() # to avoid singularity
-		TestDsrMoveCli._lock.release()
+		try:
+			self._set_home_pose() # to avoid singularity
+		finally:
+			TestDsrMoveCli._lock.release()
 
 	def _set_ready_pose(self):
 		""" Move Joint to Ready Position """
 		cli = self.node.create_client(MoveJoint, "motion/move_joint")
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		target_pos = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]
 		req = MoveJoint.Request()
 		req.pos = target_pos
@@ -123,6 +139,7 @@ class TestDsrMoveCli(unittest.TestCase):
 
 		## READY CHECK
 		cli = self.node.create_client(GetCurrentPose, "system/get_current_pose")
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		## TODO: fix hard code section 
 		# (replace 'space_type=0' with 'space_type=Request.ROBOT_SPACE_JOINT')
 		req = GetCurrentPose.Request(space_type=0)
@@ -136,6 +153,7 @@ class TestDsrMoveCli(unittest.TestCase):
 	def _set_home_pose(self):
 		""" Move Joint to Ready Position """
 		cli = self.node.create_client(MoveJoint, "motion/move_joint")
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		target_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		req = MoveJoint.Request()
 		req.pos = target_pos
@@ -149,6 +167,7 @@ class TestDsrMoveCli(unittest.TestCase):
 
 		## READY CHECK
 		cli = self.node.create_client(GetCurrentPose, "system/get_current_pose")
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		## TODO: fix hard code section 
 		# (replace 'space_type=0' with 'space_type=Request.ROBOT_SPACE_JOINT')
 		req = GetCurrentPose.Request(space_type=0)
@@ -334,7 +353,7 @@ class TestDsrMoveCli(unittest.TestCase):
 	def test_move_line_cli(self):
 		print("Move Line Client Test are starting...") # Debug
 		cli = self.node.create_client(MoveJoint, "motion/move_joint")
-		target_pos = [0, 0, 90, 0, 90, 0]
+		target_pos = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]
 		req = MoveJoint.Request(pos=target_pos, vel=30., acc=30.)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
@@ -365,7 +384,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		self.assertAlmostEqual(target_pos[5], resp.pos[5], delta=0.001)
 
 		cli = self.node.create_client(MoveLine, "motion/move_line")
-		target_pos = [400, 500, 800, 0, 180, 0]
+		target_pos = [400.0, 500.0, 800.0, 0.0, 180.0, 0.0]
 		req = MoveLine.Request(pos=target_pos, time=5.0)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
@@ -396,7 +415,7 @@ class TestDsrMoveCli(unittest.TestCase):
 	def test_move_circle_cli(self):
 		print("Move Circle Client Test are starting...") # Debug
 		cli = self.node.create_client(MoveJoint, "motion/move_joint")
-		target_pos = [0, 0, 90, 0, 90, 0]
+		target_pos = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]
 		req = MoveJoint.Request(pos=target_pos, vel=30., acc=30.)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
@@ -546,7 +565,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		print("Move Spline Task Client Test are starting...") # Debug
 		""" Move Line """
 		cli = self.node.create_client(MoveLine, "motion/move_line")
-		target_pos = [600, 43, 500, 0, 180, 0]
+		target_pos = [600.0, 43.0, 500.0, 0.0, 180.0, 0.0]
 		req = MoveLine.Request(pos=target_pos, time=5.0)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
@@ -643,6 +662,7 @@ class TestDsrMoveCli(unittest.TestCase):
 
 	""" TODO : How can check the motion correct?"""
 	# Move Spiral Test
+	@unittest.skip("Skipping Move Spiral Test due to emulator version limitation.")
 	def test_move_spiral_cli(self):
 		print("Move Spiral Client Test are starting...") # Debug
 		""" Move Spiral """
@@ -728,6 +748,7 @@ class TestDsrMoveCli(unittest.TestCase):
 
 		""" Move Joint """
 		move_cli = self.node.create_client(MoveJoint, "motion/move_joint")
+		move_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		target_pos = [0.0, 0.0, 45.0, 0.0, 45.0, 0.0]
 		move_req = MoveJoint.Request()
 		move_req.pos = target_pos
@@ -735,25 +756,41 @@ class TestDsrMoveCli(unittest.TestCase):
 		move_req.sync_type = 1
 		move_future = move_cli.call_async(move_req)
 
+		# Give the robot some time to actually start moving
+		time.sleep(1.0)
+
 		""" Motion Stop """
 		stop_cli = self.node.create_client(MoveStop, "motion/move_stop")
+		stop_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		stop_req = MoveStop.Request()
-		stop_req.stop_mode = 0
+		stop_req.stop_mode = 2 # Soft Stop
 		stop_future = stop_cli.call_async(stop_req)
 		rclpy.spin_until_future_complete(self.node, stop_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(stop_future.done(), "motion/move_stop future task")
 		pause_resp = stop_future.result()
 		self.assertTrue(pause_resp.success == True, "motion/move_stop response")
-		self.node.destroy_client(stop_future)
+		self.node.destroy_client(stop_cli)
 
 		""" Check Motion """
 		check_cli = self.node.create_client(CheckMotion, "motion/check_motion")
-		check_req = CheckMotion.Request()
-		check_future = check_cli.call_async(check_req)
-		rclpy.spin_until_future_complete(self.node, check_future, timeout_sec=SRV_CALL_TIMEOUT)
+		check_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
+		
+		# Wait for motion to stop (status 0)
+		start_wait = time.time()
+		while (time.time() - start_wait) < 5.0:
+			check_req = CheckMotion.Request()
+			check_future = check_cli.call_async(check_req)
+			rclpy.spin_until_future_complete(self.node, check_future, timeout_sec=SRV_CALL_TIMEOUT)
+			if check_future.done():
+				check_resp = check_future.result()
+				if check_resp.status == 0:
+					break
+			time.sleep(0.5)
+
 		self.assertTrue(check_future.done(), "motion/check_motion future task")
 		check_resp = check_future.result()
 		# Motion Status is 0
+		print(f"CheckMotion status: {check_resp.status}")
 		self.assertTrue((check_resp.status == 0) and (check_resp.success == True) ,"motion/check_motion response")
 		self.node.destroy_client(check_cli)
 
@@ -1057,6 +1094,7 @@ class TestDsrSetCli(unittest.TestCase):
 	def tearDownClass(cls):
 		print("==== DooSan Settings Tests Finished!! ===")
 		print("=========================================")
+		cls.node.destroy_node()
 
 	def setUp(self):
 		print("Ready For Settings test!!")
@@ -1150,6 +1188,7 @@ class TestDsrSetCli(unittest.TestCase):
 	def test_alter_motion_cli(self):
 		print("Alter Motion Client Test are starting...") # Debug
 		alter_motion_cli = self.node.create_client(AlterMotion, "motion/alter_motion")
+		alter_motion_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		alter_motion_req = AlterMotion.Request()
 		alter_motion_req.pos = [10.0, 0.0, 0.0, 10.0, 0.0, 0.0]
 		alter_motion_future = alter_motion_cli.call_async(alter_motion_req)
@@ -1226,6 +1265,7 @@ class TestDsrSysCli(unittest.TestCase):
 	def tearDownClass(cls):
 		print("===== DooSanSystem System Settings Tests Ends =======")
 		print("====================================================")
+		cls.node.destroy_node()
 
 	def setUp(self):
 		print("Ready For System Settings Test!!")
@@ -1430,6 +1470,7 @@ class TestDsrSysCli(unittest.TestCase):
 	def test_change_collision_sensitivity_cli(self):
 		print("Change Collision Sensitivity Client Test are starting...") # Debug
 		change_collision_sense_cli = self.node.create_client(ChangeCollisionSensitivity, "system/change_collision_sensitivity")
+		change_collision_sense_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		change_collision_sense_req = ChangeCollisionSensitivity.Request()
 		change_collision_sense_req.sensitivity = 50
 		change_collision_sense_future = change_collision_sense_cli.call_async(change_collision_sense_req)
@@ -1466,6 +1507,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 	def tearDownClass(cls):
 		print("===== DooSanSystem Aux Ctrl Tests Ends =======")
 		print("====================================================")
+		cls.node.destroy_node()
 	
 	def setUp(self):
 		print("Ready For Aux Ctrl Tests!!")
@@ -1480,6 +1522,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Control Mode Client Test are starting...") # Debug
 		""" Get Control Mode """
 		get_control_mode_cli = self.node.create_client(GetControlMode, "aux_control/get_control_mode")
+		get_control_mode_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_control_mode_future = get_control_mode_cli.call_async(GetControlMode.Request())
 		rclpy.spin_until_future_complete(self.node, get_control_mode_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_control_mode_future.done(), "aux_control/get_control_mode service working is not done.")
@@ -1707,6 +1750,7 @@ class TestDsrToolCli(unittest.TestCase):
 	def tearDownClass(cls):
 		print("===== DooSanSystem Tool Tests Ends ================")
 		print("====================================================")
+		cls.node.destroy_node()
 
 	def setUp(self):
 		print("Ready For Tool Test!!")
@@ -1722,6 +1766,7 @@ class TestDsrToolCli(unittest.TestCase):
   
 		""" Set Robot Mode """
 		set_mode_cli = self.node.create_client(SetRobotMode, "system/set_robot_mode")
+		set_mode_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_mode_req = SetRobotMode.Request()
 		set_mode_req.robot_mode = 0
 		set_mode_future = set_mode_cli.call_async(set_mode_req)
@@ -1732,6 +1777,7 @@ class TestDsrToolCli(unittest.TestCase):
   
 		""" Get Current Tool """
 		get_current_tool_cli = self.node.create_client(GetCurrentTool, "tool/get_current_tool")
+		get_current_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_current_tool_future = get_current_tool_cli.call_async(GetCurrentTool.Request())
 		rclpy.spin_until_future_complete(self.node, get_current_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_current_tool_future.done(), "tool/get_current_tool service working is not done.")
@@ -1746,6 +1792,7 @@ class TestDsrToolCli(unittest.TestCase):
 
 		""" Set Tool Shape """
 		set_tool_shape_cli = self.node.create_client(SetToolShape, "tool/set_tool_shape")
+		set_tool_shape_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_tool_shape_future = set_tool_shape_cli.call_async(SetToolShape.Request(name="tool_shape1"))
 		rclpy.spin_until_future_complete(self.node, set_tool_shape_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_tool_shape_future.done(), "tool/set_tool_shape service working is not done.")
@@ -2469,6 +2516,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 	def tearDownClass(cls):
 		print("===== DooSanSystem IO Tests Ends ================")
 		print("====================================================")
+		cls.node.destroy_node()
 
 	def setUp(self):
 		print("Ready For IO Test!!")
@@ -2501,6 +2549,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 
 		""" Set Control Box Analog Input Type """
 		set_crtl_box_analog_input_type_cli = self.node.create_client(SetCtrlBoxAnalogInputType, "io/set_ctrl_box_analog_input_type")
+		set_crtl_box_analog_input_type_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_crtl_box_analog_input_type_req = SetCtrlBoxAnalogInputType.Request()
 		set_crtl_box_analog_input_type_req.channel = 1
 		set_crtl_box_analog_input_type_req.mode = 0

@@ -1,0 +1,9 @@
+---
+float32[6] d
+float32[6] a
+float32[6] alpha
+float32[6] theta
+float32[6] offset
+float32 gradient
+float32 rotation
+bool success

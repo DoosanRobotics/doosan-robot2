@@ -16,7 +16,6 @@
 		"--security-opt=seccomp:unconfined",
 		"--security-opt=apparmor:unconfined",
 		"--volume=/tmp/.X11-unix:/tmp/.X11-unix",
-		"--volume=/var/run/docker.sock:/var/run/docker.sock", // Docker in docker for emulator
 		// we don't need to take care uid binding. 
 		// https://github.com/microsoft/vscode-remote-release/issues/4946#issuecomment-1348583560
 		"--volume=/run/user:/run/user",
@@ -25,6 +24,13 @@
 		// uncomment to use intel iGPU
 		// "--device=/dev/dri"
 	],
+	"features": {
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+			"installDockerBuildx": true,
+			"version": "latest",
+			"dockerDashComposeVersion": "v2"
+		}
+	},
 	"containerEnv": {
 		"DISPLAY": "${localEnv:DISPLAY}", // Needed for GUI try ":0" for windows
 		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
