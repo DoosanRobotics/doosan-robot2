@@ -97,7 +97,7 @@ _ros2_enable_alter_motion            = g_node.create_client(EnableAlterMotion,  
 _ros2_alter_motion                   = g_node.create_client(AlterMotion,            _srv_name_prefix +"motion/alter_motion")
 _ros2_disable_alter_motion           = g_node.create_client(DisableAlterMotion,     _srv_name_prefix +"motion/disable_alter_motion")
 _ros2_set_singularity_handling       = g_node.create_client(SetSingularityHandling,_srv_name_prefix +"motion/set_singularity_handling")
-_ros2_set_singularity_handling_force = g_node.create_client(SetSingularityHandlingForce, _srv_name_prefix +"motion/set_singularity_handling_force")
+_ros2_set_singular_handling_force = g_node.create_client(SetSingularHandlingForce, _srv_name_prefix +"motion/set_singular_handling_force")
 
 
 # Auxiliary Control Operations
@@ -3999,21 +3999,21 @@ def set_singularity_handling(mode = DR_AVOID):
     ret = set_singular_handling(mode)
     return ret
 
-def set_singularity_handling_force(mode = SINGULARITY_ERROR):
+def set_singular_handling_force(mode = SINGULARITY_ERROR):
     if type(mode) != int:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : mode")
 
     if __ROS2__:
-        req = SetSingularityHandlingForce.Request()  
+        req = SetSingularHandlingForce.Request()  
         req.mode = mode
 
-        future = _ros2_set_singularity_handling_force.call_async(req)
+        future = _ros2_set_singular_handling_force.call_async(req)
         rclpy.spin_until_future_complete(g_node, future)
 
         try:
             result = future.result()
         except Exception as e:
-            g_node.get_logger().info('set_singularity_handling_force Service call failed %r' % (e,))
+            g_node.get_logger().info('set_singular_handling_force Service call failed %r' % (e,))
             ret = -1
         else:
             if result == None:
@@ -6652,7 +6652,7 @@ class CDsrRobot:
         self._ros2_alter_motion                   = g_node.create_client(AlterMotion,            self._srv_name_prefix +"/motion/alter_motion") ; self.req_AlterMotion = AlterMotion.Request()
         self._ros2_disable_alter_motion           = g_node.create_client(DisableAlterMotion,     self._srv_name_prefix +"/motion/disable_alter_motion") ; self.req_DisableAlterMotion = DisableAlterMotion.Request()
         self._ros2_set_singularity_handling       = g_node.create_client(SetSingularityHandling, self._srv_name_prefix +"/motion/set_singularity_handling") ; self.req_SetSingularityHandling = SetSingularityHandling.Request()
-        self._ros2_set_singularity_handling_force = g_node.create_client(SetSingularityHandlingForce, self._srv_name_prefix +"/motion/set_singularity_handling_force") ; self.req_SetSingularityHandlingForce = SetSingularityHandlingForce.Request()
+        self._ros2_set_singular_handling_force = g_node.create_client(SetSingularHandlingForce, self._srv_name_prefix +"/motion/set_singular_handling_force") ; self.req_SetSingularHandlingForce = SetSingularHandlingForce.Request()
 
 
         # Auxiliary Control Operations
@@ -9133,21 +9133,21 @@ class CDsrRobot:
         ret = set_singular_handling(mode)
         return ret
 
-    def set_singularity_handling_force(self, mode = SINGULARITY_ERROR):
+    def set_singular_handling_force(self, mode = SINGULARITY_ERROR):
         if type(mode) != int:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : mode")
 
         if __ROS2__:
-            req = self.req_SetSingularityHandlingForce  
+            req = self.req_SetSingularHandlingForce  
             req.mode = mode
 
-            future = self._ros2_set_singularity_handling_force.call_async(req)
+            future = self._ros2_set_singular_handling_force.call_async(req)
             rclpy.spin_until_future_complete(g_node, future)
 
             try:
                 result = future.result()
             except Exception as e:
-                g_node.get_logger().info('set_singularity_handling_force Service call failed %r' % (e,))
+                g_node.get_logger().info('set_singular_handling_force Service call failed %r' % (e,))
                 ret = -1
             else:
                 if result == None:

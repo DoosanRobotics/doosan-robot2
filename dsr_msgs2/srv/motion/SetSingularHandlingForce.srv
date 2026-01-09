@@ -1,0 +1,10 @@
+#____________________________________________________________________________________________
+# set_singular_handling_force
+# 
+#____________________________________________________________________________________________
+
+int8 mode     # DR_SINGULARITY_ERROR(0)  : Return error when force control/compliance control is used
+              #                            within singularity area
+              # DR_SINGULARITY_IGNORE(1) : Ignore error processing
+---
+bool success
