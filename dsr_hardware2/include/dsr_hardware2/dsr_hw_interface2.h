@@ -25,6 +25,7 @@
 #include <boost/thread/thread.hpp>
 #include <array>
 #include <algorithm>  // std::copy
+#include <unordered_map>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -82,5 +83,6 @@ private:
     std::string model_;
     int drcf_port_;
     int update_rate_;
+    std::unordered_set<size_t> ignored_joints_;
 };
 }

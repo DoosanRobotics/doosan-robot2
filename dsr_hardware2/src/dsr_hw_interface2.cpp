@@ -44,6 +44,9 @@ CDRFLEx Drfl;
 bool g_bIsEmulatorMode = FALSE;
 std::string g_model;
 int m_nVersionDRCF;
+constexpr size_t g_k_default_num_joint = 6;
+constexpr size_t g_k_p3020_num_joint = 5;
+constexpr size_t g_k_p3020_fixed_joint_index = 3;
 
 void* get_drfl(){
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"[DRFL address] %p", &Drfl);
@@ -75,6 +78,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         } else if("model" == parameter.first) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "model : %s", parameter.second.c_str());
             model_ = parameter.second;
+            std::transform(model_.begin(), model_.end(), model_.begin(), ::tolower);
             g_model = model_;
         } else if ("update_rate" == parameter.first) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"update_rate : %s", parameter.second.c_str());
@@ -84,20 +88,26 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
                  key : %s, value : %s",parameter.first.c_str(), parameter.second.c_str());
         }
     }
+    const size_t expected_num_joints = (model_ == "p3020") ? g_k_p3020_num_joint : g_k_default_num_joint;
+    if (model_ == "p3020") {
+        ignored_joints_.insert(g_k_p3020_fixed_joint_index); // ignore joint 4 for p3020
+    }
+
+    // host, rt_host, port, mode, model, update_rate
     if(info.hardware_parameters.size() != 6) {
         RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter Size ...");
         return CallbackReturn::ERROR;
     }
 
-    // robot has 6 joints and 2 interfaces
-    joint_position_.assign(6, 0);
-    joint_velocities_.assign(6, 0);
-    joint_position_command_.assign(6, 0);
-    joint_velocities_command_.assign(6, 0);
+    // robot has 6 (or 5) joints and 2 interfaces
+    joint_position_.assign(expected_num_joints, 0);
+    joint_velocities_.assign(expected_num_joints, 0);
+    joint_position_command_.assign(expected_num_joints, 0);
+    joint_velocities_command_.assign(expected_num_joints, 0);
 
-    if(6 != info_.joints.size()) {
+    if(expected_num_joints != info_.joints.size()) {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), 
-                "[on_init] Hardware joint size : %zu, expected : 6", info.joints.size());
+                "[on_init] Hardware joint size : %zu, expected : %zu", info.joints.size(), expected_num_joints);
         return CallbackReturn::ERROR;
     }
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), 
@@ -333,11 +343,21 @@ std::vector<hardware_interface::CommandInterface> DRHWInterface::export_command_
 
 return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+    const size_t expected_num_joints = joint_position_.size();
     if(mode_ == "real") {
         const LPRT_OUTPUT_DATA_LIST data = Drfl.read_data_rt();
-        for(int i=0;i<6;i++) {
-            joint_position_[i] = static_cast<float>(data->actual_joint_position[i] * (M_PI / 180.0f));
-            joint_velocities_[i] = static_cast<float>(data->actual_joint_velocity[i] * (M_PI / 180.0f));
+        if(nullptr == data) {
+            RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+                                    "[read] read_data_rt retrieves nullptr");
+            return return_type::ERROR;
+        }
+        for(size_t idx_control=0, idx_ros=0; idx_control < g_k_default_num_joint; idx_control++) {
+            if (ignored_joints_.find(idx_control) != ignored_joints_.end()) {
+                continue;
+            }
+            joint_position_[idx_ros] = static_cast<float>(data->actual_joint_position[idx_control] * (M_PI / 180.0f));
+            joint_velocities_[idx_ros] = static_cast<float>(data->actual_joint_velocity[idx_control] * (M_PI / 180.0f));
+            idx_ros++;
         }
     }else if(mode_ == "virtual") {
         LPROBOT_POSE pose = Drfl.GetCurrentPose();
@@ -346,8 +366,11 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
                                     "[read] GetCurrentPose retrieves nullptr");
             return return_type::ERROR; //? what effection of this to control node 
         }
-        for(int i=0;i<6;i++){
-            joint_position_[i] = deg2rad(pose->_fPosition[i]);
+        for(size_t idx_control=0, idx_ros=0; idx_control < g_k_default_num_joint; idx_control++) {
+            if (ignored_joints_.find(idx_control) != ignored_joints_.end()) {
+                continue;
+            }
+            joint_position_[idx_ros++] = deg2rad(pose->_fPosition[idx_control]);
         }
     }else {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), 
@@ -461,19 +484,26 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         }
 
         // Convert rad → deg
-        float pos[6];
-        float vel[6];
-        for (int i = 0; i < 6; i++)
+        float pos[g_k_default_num_joint];
+        float vel[g_k_default_num_joint];
+        for (size_t idx_control = 0, idx_ros = 0; idx_control < g_k_default_num_joint; idx_control++)
         {
-            pos[i] = static_cast<float>(joint_position_command_[i] * (180.0 / M_PI));
-            vel[i] = static_cast<float>(joint_velocities_command_[i] * (180.0 / M_PI));
+            if (ignored_joints_.find(idx_control) != ignored_joints_.end()) {
+                pos[idx_control] = 0.0f;
+                vel[idx_control] = 0.0f;
+            }
+            else {
+                pos[idx_control] = static_cast<float>(joint_position_command_[idx_ros] * (180.0 / M_PI));
+                vel[idx_control] = static_cast<float>(joint_velocities_command_[idx_ros] * (180.0 / M_PI));
+                idx_ros++;
+            }
         }
 
         // Select control API
         std::string cmd_type;
         if (mode_ == "real")
         {
-            float acc[6] = {0,0,0,0,0,0};
+            float acc[g_k_default_num_joint] = {0,0,0,0,0,0};
             const float margin = 20.0f;
             float servo_time = static_cast<float>(real_loop_dt * margin);
 
@@ -482,7 +512,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         }
         else  // virtual
         {
-            float target_vel_acc[6] = {70,70,70,70,70,70};
+            float target_vel_acc[g_k_default_num_joint] = {70,70,70,70,70,70};
             Drfl.amovej(pos, target_vel_acc, target_vel_acc);
             cmd_type = "amovej";
         }
