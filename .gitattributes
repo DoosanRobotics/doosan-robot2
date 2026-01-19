@@ -1,0 +1,21 @@
+# Set the default behavior:
+# Auto-detect text files and ensure they are stored as LF in the repo.
+# On Windows checkout, Git might convert them to CRLF locally (if core.autocrlf=true),
+# but they will always be committed as LF.
+* text=auto
+
+# Force Python, C++, and Shell scripts to always be LF (even on Windows)
+*.py text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.h text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.launch text eol=lf
+
+# Force Batch files to strictly use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
