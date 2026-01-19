@@ -32,6 +32,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
 from dsr_bringup2.utils import read_update_rate, show_git_info
+import yaml
 
 def print_launch_configuration_value(context, *args, **kwargs):
     # LaunchConfiguration 값을 평가합니다.
@@ -51,13 +52,15 @@ def generate_launch_description():
         DeclareLaunchArgument('gui',        default_value = 'false',          description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',         default_value = 'false',          description = 'USE GAZEBO SIM' ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50', description = 'ROBOT_RT_IP'    ),
-        DeclareLaunchArgument('remap_tf',   default_value = 'false',          description = 'REMAP TF'       )
+        DeclareLaunchArgument('remap_tf',   default_value = 'false',          description = 'REMAP TF'       ),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # gui = LaunchConfiguration("gui")
     mode = LaunchConfiguration("mode")
+    
     update_rate = str(read_update_rate()) # get update_rate from yaml
     show_git_info() # print git info
+    
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -71,42 +74,33 @@ def generate_launch_description():
                 ]
             ),
             ".urdf.xacro",
+            " name:=", LaunchConfiguration('name'),
+            " host:=", LaunchConfiguration('host'),
+            " rt_host:=", LaunchConfiguration('rt_host'),
+            " port:=", LaunchConfiguration('port'),
+            " mode:=", LaunchConfiguration('mode'),
+            " model:=", LaunchConfiguration('model'),
+            " update_rate:=", update_rate,
         ]
     )
 
     robot_description = {"robot_description": robot_description_content}
 
-    robot_controllers = PathJoinSubstitution(
-        [
+    robot_controllers = [
+        PathJoinSubstitution([
+            FindPackageShare("dsr_controller2"),
+            "config",
+            "dsr_update_rate.yaml",
+        ]),
+        PathJoinSubstitution([
             FindPackageShare("dsr_controller2"),
             "config",
             "dsr_controller2.yaml",
-        ]
-    )
+        ])
+    ]
+
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
-    )
-    
-    set_config_node = Node(
-        package="dsr_bringup2",
-        executable="set_config",
-        namespace=LaunchConfiguration('name'),
-        parameters=[
-            {"name":    LaunchConfiguration('name')  }, 
-            {"rate":    100         },
-            {"standby": 5000        },
-            {"command": True        },
-            {"host":    LaunchConfiguration('host')  },
-            {"port":    LaunchConfiguration('port')  },
-            {"mode":    LaunchConfiguration('mode')  },
-            {"model":   LaunchConfiguration('model') },
-            {"gripper": "none"      },
-            {"mobile":  "none"      },
-            {"rt_host":  LaunchConfiguration('rt_host')      },
-            {"update_rate": update_rate        },
-            #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
-        ],
-        output="screen",
     )
     
     run_emulator_node = Node(
@@ -135,7 +129,7 @@ def generate_launch_description():
         package="controller_manager",
         executable="ros2_control_node",
         namespace=LaunchConfiguration('name'),
-        parameters=[robot_description, robot_controllers],
+        parameters=[robot_description] + robot_controllers,
         output="both",
     )
 
@@ -145,15 +139,19 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        # remappings=[
-        #     (
-        #         "/joint_states",
-        #         "/dsr/joint_states",
-        #     ),
-        # ],
         parameters=[{
-            'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])
-        }],
+            'robot_description': Command([
+                'xacro', ' ', xacro_path, '/', LaunchConfiguration('model'),
+                '.urdf.xacro color:=', LaunchConfiguration('color'),
+                " name:=", LaunchConfiguration('name'),
+                " host:=", LaunchConfiguration('host'),
+                " rt_host:=", LaunchConfiguration('rt_host'),
+                " port:=", LaunchConfiguration('port'),
+                " mode:=", LaunchConfiguration('mode'),
+                " model:=", LaunchConfiguration('model'),
+                " update_rate:=", update_rate,
+            ]),
+        }]
     )
     
     rviz_node = Node(
@@ -205,15 +203,6 @@ def generate_launch_description():
     #     arguments=["dsr_joint_trajectory", "-c", "dsr/controller_manager", "-n", "dsr"],
     # )
 
-
-    # Delay rviz start after `joint_state_broadcaster`
-    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=robot_controller_spawner,
-            on_exit=[rviz_node],
-        )
-    )
-
     # Delay start of robot_controller after `joint_state_broadcaster`
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -222,22 +211,13 @@ def generate_launch_description():
         )
     )
     
-    # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_control_node_after_connection_node = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=set_config_node,
-            on_exit=[control_node],
-        )
-    )
-    
     nodes = [
-        set_config_node,
         run_emulator_node,
         original_tf_nodes,
         remapped_tf_nodes,
-        robot_controller_spawner,
+        delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         joint_state_broadcaster_spawner,
-        delay_control_node_after_connection_node,
+        control_node,
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

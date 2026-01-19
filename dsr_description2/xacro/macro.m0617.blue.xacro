@@ -31,7 +31,7 @@
 		<joint name="joint_1" type="revolute">
 			<parent link="base_link" />
 			<child link="link_1" />
-			<origin rpy="0 0 0" xyz="0 0 0.1525" />
+			<origin rpy="0 0 0" xyz="0 0 0.1530" />
 			<axis xyz="0 0 1" />
 			<limit effort="346" lower="-6.2832" upper="6.2832" velocity="1.7453"/>
 			<dynamics friction="0" />

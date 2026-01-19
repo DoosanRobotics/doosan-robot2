@@ -3,15 +3,12 @@
 
   <xacro:macro name="e0509_ros2_control" params="
   name
-  rate:=100
-  standby:=true
-  command:=none
   host:=0.0.0.0
+  rt_host:=0.0.0.0
   port:=12345
   mode:=real
   model:=e0509
-  gripper:=none
-  mobile:=none
+  update_rate
   ">
   
     <xacro:property name="double_pi" value="${2.0 * pi}"/>
@@ -22,16 +19,12 @@
 
       <hardware>
         <plugin>dsr_hardware2/DRHWInterface</plugin>
-        <param name="name">${name}</param>
-        <param name="rate">${rate}</param>
-        <param name="standby">${standby}</param>
-        <param name="command">${command}</param>
         <param name="host">${host}</param>
+        <param name="rt_host">${rt_host}</param>
         <param name="port">${port}</param>
         <param name="mode">${mode}</param>
         <param name="model">${model}</param>
-        <param name="gripper">${gripper}</param>
-        <param name="mobile">${mobile}</param>
+        <param name="update_rate">${update_rate}</param>
       </hardware>
 
       <joint name="joint_1">

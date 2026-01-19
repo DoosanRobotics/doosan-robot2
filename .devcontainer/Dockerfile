@@ -4,7 +4,7 @@ FROM osrf/ros:jazzy-desktop
 ARG USERNAME=doosan-robotics
 ARG USER_UID=1000
 ARG USER_GID=1000
-ARG WORKSPACE=/workspaces/doosan_ws
+ARG WORKSPACE=/workspace/doosan_ws
 
 # Install basic packages
 RUN apt-get update && apt-get install -y \
@@ -17,8 +17,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create user
-RUN groupadd --gid $USER_GID $USERNAME || true \
-    && useradd --uid $USER_UID --gid $USER_GID -m -s /bin/bash $USERNAME || true \
+RUN if getent passwd $USER_UID > /dev/null; then userdel -r $(getent passwd $USER_UID | cut -d: -f1); fi \
+    && if getent group $USER_GID > /dev/null; then groupdel $(getent group $USER_GID | cut -d: -f1); fi \
+    && groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m -s /bin/bash $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 

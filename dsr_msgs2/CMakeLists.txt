@@ -28,7 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ServolStream.msg"
   "msg/SpeedjStream.msg"
   "msg/SpeedlStream.msg"
-
+  "msg/RobotDisconnection.msg"
   "msg/RobotStateRt.msg"
   "msg/ServojRtStream.msg"
   "msg/ServolRtStream.msg"
@@ -50,6 +50,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetRobotControl.srv"
   "srv/ChangeCollisionSensitivity.srv"
   "srv/SetSafetyMode.srv"
+  "srv/GetRobotLinkInfo.srv"
 
   "srv/MoveJoint.srv"
   "srv/MoveLine.srv"
@@ -77,6 +78,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/AlterMotion.srv"
   "srv/DisableAlterMotion.srv"
   "srv/SetSingularityHandling.srv"
+  "srv/SetSingularHandlingForce.srv"
 
   "srv/GetControlMode.srv"              
   "srv/GetControlSpace.srv"             

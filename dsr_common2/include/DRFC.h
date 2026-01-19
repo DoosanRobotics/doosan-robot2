@@ -341,6 +341,12 @@ typedef enum {
     SINGULARITY_AVOIDANCE_VEL,
 }SINGULARITY_AVOIDANCE;
 
+// Singularty_force_handling enum
+typedef enum {
+    SINGULARITY_ERROR = 0,
+    SINGULARITY_IGNORE = 1,
+}SINGULARITY_FORCE_HANDLING;
+
 //
 // blending speed type enumerated value
 //

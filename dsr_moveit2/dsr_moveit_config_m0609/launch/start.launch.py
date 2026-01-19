@@ -17,9 +17,11 @@
 # 
 
 import os
+import re
+import tempfile
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler, DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration, TimerAction
+from launch.actions import ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration, TimerAction
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution, FindExecutable
 from launch_ros.actions import Node
@@ -36,11 +38,16 @@ def generate_robot_description_action(context, *args, **kwargs):
     dynamic_yaml = LaunchConfiguration('dynamic_yaml').perform(context).lower() == 'true'
     model = LaunchConfiguration('model').perform(context)
     color = LaunchConfiguration('color').perform(context)
-    gripper = LaunchConfiguration('gripper').perform(context)
+    name = LaunchConfiguration('name').perform(context)
+    host = LaunchConfiguration('host').perform(context)
+    rt_host = LaunchConfiguration('rt_host').perform(context)
+    port = LaunchConfiguration('port').perform(context)
+    mode = LaunchConfiguration('mode').perform(context)
+    update_rate = read_update_rate() # get update_rate from yaml
 
     # Parse URDF to extract active and passive joints
-    urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, gripper)
-    print(f"[DEBUG] model={model}, gripper={gripper}")
+    urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, name, host, rt_host, port, mode, update_rate)
+    print(f"[DEBUG] model={model}, color={color}, name={name}, host={host}, rt_host={rt_host}, port={port}, mode={mode}, update_rate={update_rate}")
     print(f"[DEBUG] active_joints={active_joints}")
     print(f"[DEBUG] passive_joints={passive_joints}")
 
@@ -90,7 +97,7 @@ def rviz_and_move_group_fn(context):
         .robot_description(file_path=f"config/{model_value}.urdf.xacro")
         .robot_description_semantic(file_path="config/dsr.srdf.xacro", mappings={'gripper': LaunchConfiguration('gripper')})
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
-        .planning_pipelines(pipelines=["ompl", "chomp"],      # List of planning pipelines to load (each loaded from config/<name>_planning.yaml)
+        .planning_pipelines(pipelines=["ompl", "chomp", "pilz_industrial_motion_planner"],      # List of planning pipelines to load (each loaded from config/<name>_planning.yaml)
                             default_planning_pipeline="ompl", # Name of the default planning pipeline (used if none is explicitly selected)
                             load_all= False                   # If pipelines is None: True loads all from config/default packages; False loads only from config package
                             )
@@ -102,10 +109,12 @@ def rviz_and_move_group_fn(context):
         {"robot_description": ParameterValue(LaunchConfiguration('robot_description'), value_type=str)},
     ]
 
+    ns_value = LaunchConfiguration('name').perform(context)
+
     run_move_group_node = Node(
         package="moveit_ros_move_group",
         executable="move_group",
-        namespace=LaunchConfiguration('name'),
+        namespace=ns_value,
         output="screen",
         parameters=common_params,
     )
@@ -113,15 +122,45 @@ def rviz_and_move_group_fn(context):
     rviz_base = os.path.join(get_package_share_directory(package_name), "launch")
     rviz_full_config = os.path.join(rviz_base, "moveit.rviz")
 
+    # dynamically modify RViz config to set correct namespace
+    with open(rviz_full_config, 'r') as f:
+        content = f.read()
+
+    target_ns = f"/{ns_value}" if ns_value else ""
+
+    new_content = re.sub(
+        r'Move Group Namespace:.*', 
+        f'Move Group Namespace: {target_ns}', 
+        content
+    )
+
+    tmp_rviz = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.rviz')
+    tmp_rviz.write(new_content)
+    tmp_rviz.close()
+    tmp_rviz_path = tmp_rviz.name
+
+    print(f"[INFO] Generated dynamic RViz config: {tmp_rviz_path} (NS: {target_ns})")
+
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
         name="rviz2",
         output="log",
-        arguments=["-d", rviz_full_config],
+        namespace=ns_value,
+        arguments=["-d", tmp_rviz_path],
         parameters=common_params,
     )
-    return [run_move_group_node, rviz_node]
+
+    cleanup_rviz_file = RegisterEventHandler(
+        OnProcessExit(
+            target_action=rviz_node,
+            on_exit=[
+                LogInfo(msg=f">> Cleaning up temp RViz config: {tmp_rviz_path}"),
+                ExecuteProcess(cmd=['rm', tmp_rviz_path], output='screen')
+            ]
+        )
+    )
+    return [run_move_group_node, rviz_node, cleanup_rviz_file]
 
 # sets up the parameters for the controller manager node, if 'gripper' argument is setted, it additionally loads the 'gripper_controller.yaml' file
 def control_node_fn(context):
@@ -174,29 +213,6 @@ def generate_launch_description():
 
     # Build robot_description and select controller YAML
     robot_description_action = OpaqueFunction(function=generate_robot_description_action)
-    update_rate = read_update_rate() # get update_rate from yaml
-
-    # Run set_config
-    set_config_node = Node(
-        package="dsr_bringup2",
-        executable="set_config",
-        namespace=LaunchConfiguration('name'),
-        parameters=[{
-            "name": LaunchConfiguration('name'),
-            "rate": 100,
-            "standby": 5000,
-            "command": True,
-            "host": LaunchConfiguration('host'),
-            "port": LaunchConfiguration('port'),
-            "mode": LaunchConfiguration('mode'),
-            "model": LaunchConfiguration('model'),
-            "gripper": LaunchConfiguration('gripper'),
-            "mobile": "none",
-            "rt_host": LaunchConfiguration('rt_host'),
-            "update_rate": update_rate,
-        }],
-        output="screen",
-    )
 
     # Run emulator
     run_emulator_node = Node(
@@ -239,7 +255,11 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["joint_state_broadcaster", "-c", "controller_manager"],
+        arguments=[
+            "joint_state_broadcaster",
+            "-c", "controller_manager",
+            "--controller-manager-timeout", "120"
+        ],
     )
 
     # Spawn dsr_controller2
@@ -247,7 +267,11 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=[
+            "dsr_controller2",
+            "-c", "controller_manager",
+            "--controller-manager-timeout", "120"
+        ],
     )
 
     # Spawn dsr_moveit_controller
@@ -255,50 +279,39 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         namespace=LaunchConfiguration('name'),
-        arguments=["dsr_moveit_controller", "-c", "controller_manager"],
+        arguments=[
+            "dsr_moveit_controller",
+            "-c", "controller_manager",
+            "--controller-manager-timeout", "120"
+        ],
     )
 
     # MoveGroup + (optional) RViz
     rviz_and_move_group = OpaqueFunction(function=rviz_and_move_group_fn)
 
-    # A) After set_config exits, start controller manager and then (after a short delay) spawn joint_state_broadcaster.
-    delay_control_node_after_set_config = RegisterEventHandler(
-        OnProcessExit(
-            target_action=set_config_node,
-            on_exit=[
-                LogInfo(msg=">> [STEP 1 COMPLETED] set_config finished. Starting ros2_control_node..."),
-                control_node,
-                TimerAction(period=1.0, actions=[
-                    LogInfo(msg=">> [STEP 1B] Spawning joint_state_broadcaster..."),
-                    joint_state_broadcaster_spawner
-                ]),
-            ],
-        )
-    )
-
-    # B) Once joint_state_broadcaster is active, spawn dsr_controller2 (arm controller).
+    # A) Once joint_state_broadcaster is active, spawn dsr_controller2 (arm controller).
     delay_robot_controller_after_joint_state = RegisterEventHandler(
         OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[
-                LogInfo(msg=">> [STEP 2 COMPLETED] joint_state_broadcaster active. Starting dsr_controller2..."),
+                LogInfo(msg=">> [STEP 1 COMPLETED] joint_state_broadcaster active. Starting dsr_controller2..."),
                 robot_controller_spawner
             ],
         )
     )
 
-    # C) After dsr_controller2 becomes active, (conditionally) spawn the gripper position controller.
+    # B) After dsr_controller2 becomes active, (conditionally) spawn the gripper position controller.
     delay_gripper_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
             on_exit=[
-                LogInfo(msg=">> [STEP 3A] dsr_controller2 active. (cond) starting gripper_position_controller..."),
+                LogInfo(msg=">> [STEP 2] dsr_controller2 active. (cond) starting gripper_position_controller..."),
                 OpaqueFunction(function=gripper_spawner_fn),
             ],
         )
     )
 
-    # D) After dsr_controller2 becomes active, spawn dsr_moveit_controller (MoveIt-compatible trajectory controller).
+    # C) After dsr_controller2 becomes active, spawn dsr_moveit_controller (MoveIt-compatible trajectory controller).
     delay_dsr_moveit_controller_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
@@ -309,7 +322,7 @@ def generate_launch_description():
         )
     )
 
-    # E) After dsr_moveit_controller is active, start MoveGroup (and RViz if gui=true).
+    # D) After dsr_moveit_controller is active, start MoveGroup (and RViz if gui=true).
     delay_rviz_after_moveit_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=dsr_moveit_controller_spawner,
@@ -323,10 +336,10 @@ def generate_launch_description():
     nodes = [
         LogInfo(msg=">> [START] Launching Doosan Robot Bringup with MoveIt2..."),
         robot_description_action,
-        set_config_node,
         run_emulator_node,
         robot_state_pub_node,
-        delay_control_node_after_set_config,
+        control_node,
+        joint_state_broadcaster_spawner,
         delay_robot_controller_after_joint_state,
         delay_gripper_after_robot_controller,
         delay_dsr_moveit_controller_after_robot_controller,

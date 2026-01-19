@@ -115,13 +115,13 @@ Visualization Manager:
       Show Trail: false
       State Display Time: 0.05 s
       Trail Step Size: 1
-      Trajectory Topic: /display_planned_path
+      Trajectory Topic: display_planned_path
       Value: true
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: true
       Move Group Namespace: ""
       Name: PlanningScene
-      Planning Scene Topic: /monitored_planning_scene
+      Planning Scene Topic: monitored_planning_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.8999999761581421
@@ -267,7 +267,7 @@ Visualization Manager:
         Show Trail: false
         State Display Time: 3x
         Trail Step Size: 1
-        Trajectory Topic: /display_planned_path
+        Trajectory Topic: display_planned_path
       Planning Metrics:
         Payload: 1
         Show Joint Torques: false
@@ -287,7 +287,7 @@ Visualization Manager:
         Show Workspace: false
         Start State Alpha: 1
         Start State Color: 0; 255; 0
-      Planning Scene Topic: /monitored_planning_scene
+      Planning Scene Topic: monitored_planning_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.8999999761581421

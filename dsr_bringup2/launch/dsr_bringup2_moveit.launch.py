@@ -26,8 +26,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from dsr_bringup2.utils import show_git_info
 
 def include_launch_description(context):
-    model_value = LaunchConfiguration('model').perform(context)
+    """Evaluate the model value at launch time, find the package path, and then execute the launch file"""
     show_git_info() # print git info
+    model_value = LaunchConfiguration('model').perform(context)
+
     # Make pacakage name
     package_name_str = f"dsr_moveit_config_{model_value}"
 
@@ -70,5 +72,4 @@ def generate_launch_description():
 
     # Use OpaqueFunction to dynamically compute the path at launch time and include launch
     included_launch = OpaqueFunction(function=include_launch_description)
-
     return LaunchDescription(ARGUMENTS + [included_launch])

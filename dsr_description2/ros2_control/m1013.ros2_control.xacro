@@ -3,33 +3,26 @@
 
   <!-- Doosan M1013 ros2_control (arm-only) -->
   <xacro:macro name="m1013_ros2_control" params="
-      name
-      rate:=100
-      standby:=true
-      command:=none
-      host:=127.0.0.1
-      port:=12345
-      mode:=virtual
-      model:=m1013
-      mobile:=none">
+  name
+  host:=0.0.0.0
+  rt_host:=0.0.0.0
+  port:=12345
+  mode:=real
+  model:=m1013
+  update_rate
+  ">
 
     <xacro:property name="double_pi" value="${2.0 * pi}"/>
     <xacro:property name="neg_double_pi" value="${-2.0 * pi}"/>
-
     <ros2_control name="${name}" type="system">
       <hardware>
         <plugin>dsr_hardware2/DRHWInterface</plugin>
-        <!-- virtual 테스트면 true 유지 가능 (실기면 false 권장) -->
-        <param name="use_mock_hardware">true</param>
-        <param name="name">${name}</param>
-        <param name="rate">${rate}</param>
-        <param name="standby">${standby}</param>
-        <param name="command">${command}</param>
         <param name="host">${host}</param>
+        <param name="rt_host">${rt_host}</param>
         <param name="port">${port}</param>
         <param name="mode">${mode}</param>
         <param name="model">${model}</param>
-        <param name="mobile">${mobile}</param>
+        <param name="update_rate">${update_rate}</param>
       </hardware>
 
       <!-- Arm joints only -->

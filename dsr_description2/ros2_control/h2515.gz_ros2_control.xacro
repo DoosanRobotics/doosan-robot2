@@ -14,6 +14,7 @@
   gripper:=none
   mobile:=none
   use_gazebo:=false
+  update_rate
   ">
   
     <xacro:property name="double_pi" value="${2.0 * pi}"/>

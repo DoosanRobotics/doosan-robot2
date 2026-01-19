@@ -53,16 +53,17 @@ print("_topic_name_prefix ={0}".format(_topic_name_prefix))
 ############### connect to dsr_control2 (ros2 service) ####################################################################### 
 
 #  system Operations
-_ros2_set_robot_mode             = g_node.create_client(SetRobotMode,           _srv_name_prefix +"system/set_robot_mode")
-_ros2_get_robot_mode             = g_node.create_client(GetRobotMode,           _srv_name_prefix +"system/get_robot_mode")
-_ros2_set_robot_system           = g_node.create_client(SetRobotSystem,         _srv_name_prefix +"system/set_robot_system")
-_ros2_get_robot_system           = g_node.create_client(GetRobotSystem,         _srv_name_prefix +"system/get_robot_system")
-_ros2_get_robot_state            = g_node.create_client(GetRobotState,          _srv_name_prefix +"system/get_robot_state")
-_ros2_set_robot_speed_mode       = g_node.create_client(SetRobotSpeedMode,      _srv_name_prefix +"system/set_robot_speed_mode")
-_ros2_get_robot_speed_mode       = g_node.create_client(GetRobotSpeedMode,      _srv_name_prefix +"system/get_robot_speed_mode")
-_ros2_set_safe_stop_reset_type   = g_node.create_client(SetSafeStopResetType,   _srv_name_prefix +"system/set_safe_stop_reset_type")
-_ros2_get_last_alarm             = g_node.create_client(GetLastAlarm,           _srv_name_prefix +"system/get_last_alarm")
-_ros2_get_current_pose           = g_node.create_client(GetCurrentPose,         _srv_name_prefix +"system/get_current_pose")
+_ros2_set_robot_mode               = g_node.create_client(SetRobotMode,           _srv_name_prefix +"system/set_robot_mode")
+_ros2_get_robot_mode               = g_node.create_client(GetRobotMode,           _srv_name_prefix +"system/get_robot_mode")
+_ros2_set_robot_system             = g_node.create_client(SetRobotSystem,         _srv_name_prefix +"system/set_robot_system")
+_ros2_get_robot_system             = g_node.create_client(GetRobotSystem,         _srv_name_prefix +"system/get_robot_system")
+_ros2_get_robot_state              = g_node.create_client(GetRobotState,          _srv_name_prefix +"system/get_robot_state")
+_ros2_set_robot_speed_mode         = g_node.create_client(SetRobotSpeedMode,      _srv_name_prefix +"system/set_robot_speed_mode")
+_ros2_get_robot_speed_mode         = g_node.create_client(GetRobotSpeedMode,      _srv_name_prefix +"system/get_robot_speed_mode")
+_ros2_set_safe_stop_reset_type     = g_node.create_client(SetSafeStopResetType,   _srv_name_prefix +"system/set_safe_stop_reset_type")
+_ros2_get_last_alarm               = g_node.create_client(GetLastAlarm,           _srv_name_prefix +"system/get_last_alarm")
+_ros2_change_collision_sensitivity = g_node.create_client(ChangeCollisionSensitivity, _srv_name_prefix +"system/change_collision_sensitivity")
+_ros2_get_current_pose             = g_node.create_client(GetCurrentPose,         _srv_name_prefix +"system/get_current_pose")
 
 #  motion Operations
 _ros2_servoj_stream_pub          = g_node.create_publisher(ServojStream,        _topic_name_prefix + "servoj_stream", 10)
@@ -77,29 +78,30 @@ _ros2_torque_rt_stream_pub       = g_node.create_publisher(TorqueRtStream,      
 _ros2_alter_motion_stream_pub    = g_node.create_publisher(AlterMotionStream,   _topic_name_prefix + "alter_motion_stream", 10)
 _ros2_set_safety_mode            = g_node.create_client(SetSafetyMode,          _srv_name_prefix +"system/set_safety_mode")
 
-_ros2_movej                      = g_node.create_client(MoveJoint,              _srv_name_prefix + "motion/move_joint")
-_ros2_movel                      = g_node.create_client(MoveLine,               _srv_name_prefix +"motion/move_line")
-_ros2_movejx                     = g_node.create_client(MoveJointx,             _srv_name_prefix +"motion/move_jointx")
-_ros2_movec                      = g_node.create_client(MoveCircle,             _srv_name_prefix +"motion/move_circle")
-_ros2_movesj                     = g_node.create_client(MoveSplineJoint,        _srv_name_prefix +"motion/move_spline_joint")
-_ros2_movesx                     = g_node.create_client(MoveSplineTask,         _srv_name_prefix +"motion/move_spline_task")
-_ros2_moveb                      = g_node.create_client(MoveBlending,           _srv_name_prefix +"motion/move_blending")
-_ros2_move_spiral                = g_node.create_client(MoveSpiral,             _srv_name_prefix +"motion/move_spiral")
-_ros2_move_periodic              = g_node.create_client(MovePeriodic,           _srv_name_prefix +"motion/move_periodic")
-_ros2_move_wait                  = g_node.create_client(MoveWait,               _srv_name_prefix +"motion/move_wait")
-_ros2_jog                        = g_node.create_client(Jog,                    _srv_name_prefix +"motion/jog")
-_ros2_jog_multi                  = g_node.create_client(JogMulti,               _srv_name_prefix +"motion/jog_multi")
-_ros2_trans                      = g_node.create_client(Trans,                  _srv_name_prefix +"motion/trans")
-_ros2_fkin                       = g_node.create_client(Fkin,                   _srv_name_prefix +"motion/fkin")
-_ros2_ikin                       = g_node.create_client(Ikin,                   _srv_name_prefix +"motion/ikin")
-_ros2_set_ref_coord              = g_node.create_client(SetRefCoord,            _srv_name_prefix +"motion/set_ref_coord")
-_ros2_move_home                  = g_node.create_client(MoveHome,               _srv_name_prefix +"motion/move_home")
-_ros2_check_motion               = g_node.create_client(CheckMotion,            _srv_name_prefix +"motion/check_motion")
-_ros2_change_operation_speed     = g_node.create_client(ChangeOperationSpeed,   _srv_name_prefix +"motion/change_operation_speed")
-_ros2_enable_alter_motion        = g_node.create_client(EnableAlterMotion,      _srv_name_prefix +"motion/enable_alter_motion")
-_ros2_alter_motion               = g_node.create_client(AlterMotion,            _srv_name_prefix +"motion/alter_motion")
-_ros2_disable_alter_motion       = g_node.create_client(DisableAlterMotion,     _srv_name_prefix +"motion/disable_alter_motion")
-_ros2_set_singularity_handling    = g_node.create_client(SetSingularityHandling,_srv_name_prefix +"motion/set_singularity_handling")
+_ros2_movej                          = g_node.create_client(MoveJoint,                   _srv_name_prefix + "motion/move_joint")
+_ros2_movel                          = g_node.create_client(MoveLine,                    _srv_name_prefix +"motion/move_line")
+_ros2_movejx                         = g_node.create_client(MoveJointx,                  _srv_name_prefix +"motion/move_jointx")
+_ros2_movec                          = g_node.create_client(MoveCircle,                  _srv_name_prefix +"motion/move_circle")
+_ros2_movesj                         = g_node.create_client(MoveSplineJoint,             _srv_name_prefix +"motion/move_spline_joint")
+_ros2_movesx                         = g_node.create_client(MoveSplineTask,              _srv_name_prefix +"motion/move_spline_task")
+_ros2_moveb                          = g_node.create_client(MoveBlending,                _srv_name_prefix +"motion/move_blending")
+_ros2_move_spiral                    = g_node.create_client(MoveSpiral,                  _srv_name_prefix +"motion/move_spiral")
+_ros2_move_periodic                  = g_node.create_client(MovePeriodic,                _srv_name_prefix +"motion/move_periodic")
+_ros2_move_wait                      = g_node.create_client(MoveWait,                    _srv_name_prefix +"motion/move_wait")
+_ros2_jog                            = g_node.create_client(Jog,                         _srv_name_prefix +"motion/jog")
+_ros2_jog_multi                      = g_node.create_client(JogMulti,                    _srv_name_prefix +"motion/jog_multi")
+_ros2_trans                          = g_node.create_client(Trans,                       _srv_name_prefix +"motion/trans")
+_ros2_fkin                           = g_node.create_client(Fkin,                        _srv_name_prefix +"motion/fkin")
+_ros2_ikin                           = g_node.create_client(Ikin,                        _srv_name_prefix +"motion/ikin")
+_ros2_set_ref_coord                  = g_node.create_client(SetRefCoord,                 _srv_name_prefix +"motion/set_ref_coord")
+_ros2_move_home                      = g_node.create_client(MoveHome,                    _srv_name_prefix +"motion/move_home")
+_ros2_check_motion                   = g_node.create_client(CheckMotion,                 _srv_name_prefix +"motion/check_motion")
+_ros2_change_operation_speed         = g_node.create_client(ChangeOperationSpeed,        _srv_name_prefix +"motion/change_operation_speed")
+_ros2_enable_alter_motion            = g_node.create_client(EnableAlterMotion,           _srv_name_prefix +"motion/enable_alter_motion")
+_ros2_alter_motion                   = g_node.create_client(AlterMotion,                 _srv_name_prefix +"motion/alter_motion")
+_ros2_disable_alter_motion           = g_node.create_client(DisableAlterMotion,          _srv_name_prefix +"motion/disable_alter_motion")
+_ros2_set_singularity_handling       = g_node.create_client(SetSingularityHandling,      _srv_name_prefix +"motion/set_singularity_handling")
+_ros2_set_singular_handling_force    = g_node.create_client(SetSingularityHandlingForce, _srv_name_prefix +"motion/set_singularity_handling_force")
 
 
 # Auxiliary Control Operations
@@ -125,6 +127,7 @@ _ros2_get_external_torque            = g_node.create_client(GetExternalTorque,  
 _ros2_get_tool_force                 = g_node.create_client(GetToolForce,               _srv_name_prefix +"aux_control/get_tool_force")
 _ros2_get_solution_space             = g_node.create_client(GetSolutionSpace,           _srv_name_prefix +"aux_control/get_solution_space")
 _ros2_get_orientation_error          = g_node.create_client(GetOrientationError,        _srv_name_prefix +"aux_control/get_orientation_error")
+_ros2_get_robot_link_info            = g_node.create_client(GetRobotLinkInfo,           _srv_name_prefix +"aux_control/get_robot_link_info")
 
 # Force/Stiffness Control & others Operations
 _ros2_get_workpiece_weight        = g_node.create_client(GetWorkpieceWeight,            _srv_name_prefix +"force/get_workpiece_weight")
@@ -346,6 +349,10 @@ DR_VECTOR_V1_LEN  = 3
 DR_AVOID     = 0
 DR_TASK_STOP = 1
 DR_VAR_VEL   = 2        #add 2019/04/01 
+
+# set_singular_handling_force mode
+DR_SINGULARITY_ERROR                     = 0
+DR_SINGULARITY_IGNORE                    = 1
 
 # object container type
 DR_FIFO      = 0
@@ -846,6 +853,29 @@ def get_last_alarm():
                 ret = result.log_alarm            
     return ret
 
+def change_collision_sensitivity(sensitivity):
+    if type(sensitivity) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : sensitivity")
+    
+    # ROS2 service call
+    if __ROS2__:
+        req = ChangeCollisionSensitivity.Request()
+        req.sensitivity = sensitivity
+
+        future = _ros2_change_collision_sensitivity.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().info('change_collision_sensitivity Service call failed %r' % (e,))
+        else:
+            if result == None:
+                ret = -1
+            else:
+                ret = 0 if (result.success == True) else -1
+    return ret
+
 ##### Auxiliary Control ##############################################################################################################################
 def get_control_mode():
     if __ROS2__:
@@ -1293,6 +1323,23 @@ def get_orientation_error(xd, xc, axis):
             else:        
                 ret = result.ori_error            
     return ret
+
+def get_robot_link_info():
+    if __ROS2__:
+        req = GetRobotLinkInfo.Request()
+        future = _ros2_get_robot_link_info.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().info('get_robot_link_info Service call failed %r' % (e,))
+            return None
+        else:
+            if result == None or result.success == False:
+                return None
+            else:
+                return result
+    return None
 
 ##### MOTION ##############################################################################################################################
 def trans(pos, delta, ref=None, ref_out=DR_BASE):
@@ -3966,6 +4013,29 @@ def set_singularity_handling(mode = DR_AVOID):
     ret = set_singular_handling(mode)
     return ret
 
+def set_singular_handling_force(mode = DR_SINGULARITY_ERROR):
+    if type(mode) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type : mode")
+
+    if __ROS2__:
+        req = SetSingularHandlingForce.Request()  
+        req.mode = mode
+
+        future = _ros2_set_singular_handling_force.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().info('set_singular_handling_force Service call failed %r' % (e,))
+            ret = -1
+        else:
+            if result == None:
+                ret = -1
+            else:
+                ret = 0 if (result.success == True) else -1
+    return ret
+
 def jog(jog_axis, ref=0, speed=0):
     if type(jog_axis) != int and type(jog_axis) != float:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : jog_axis")
@@ -5425,14 +5495,14 @@ def check_force_condition(axis, min=DR_COND_NONE, max=DR_COND_NONE, ref=None):
         raise DR_Error(DR_ERROR_VALUE, "Invalid value: min({0}), max({1})".format(min, max))
 
     # min check : min 설정되어 있는데 0보다 작은 경우 에러 처리 2017/12/07
-    if min != DR_COND_NONE:
-        if min < 0:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value: min (Ranges: min({0}) >= 0)".format(min))
+    # if min != DR_COND_NONE:
+    #     if min < 0:
+    #         raise DR_Error(DR_ERROR_VALUE, "Invalid value: min (Ranges: min({0}) >= 0)".format(min))
 
     # max check : max 설정되어 있는데 0보다 작은 경우 에러 처리 2017/12/07
-    if max != DR_COND_NONE:
-        if max < 0:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value: max (Ranges: max({0}) >= 0)".format(max))
+    # if max != DR_COND_NONE:
+    #     if max < 0:
+    #         raise DR_Error(DR_ERROR_VALUE, "Invalid value: max (Ranges: max({0}) >= 0)".format(max))
 
     # min < max check
     if min != DR_COND_NONE and max != DR_COND_NONE: #min, max 값이 둘다 설정된 경우에만 검사 실시 2017/08/23
@@ -6558,16 +6628,17 @@ class CDsrRobot:
         #rospy.wait_for_service(self._srv_name_prefix +"/motion/move_joint")
         
         # system Operations
-        self._ros2_set_robot_mode             = g_node.create_client(SetRobotMode, self._srv_name_prefix +"/system/set_robot_mode") ; self.req_SetRobotMode = SetRobotMode.Request()
-        self._ros2_get_robot_mode             = g_node.create_client(GetRobotMode, self._srv_name_prefix +"/system/get_robot_mode") ; self.req_GetRobotMode = GetRobotMode.Request()
-        self._ros2_set_robot_system           = g_node.create_client(SetRobotSystem, self._srv_name_prefix +"/system/set_robot_system") ; self.req_SetRobotSystem = SetRobotSystem.Request()
-        self._ros2_get_robot_system           = g_node.create_client(GetRobotSystem, self._srv_name_prefix +"/system/get_robot_system") ; self.req_GetRobotSystem = GetRobotSystem.Request()
-        self._ros2_get_robot_state            = g_node.create_client(GetRobotState, self._srv_name_prefix +"/system/get_robot_state") ; self.req_GetRobotState = GetRobotState.Request()
-        self._ros2_set_robot_speed_mode       = g_node.create_client(SetRobotSpeedMode, self._srv_name_prefix +"/system/set_robot_speed_mode") ; self.req_SetRobotSpeedMode = SetRobotSpeedMode.Request()
-        self._ros2_get_robot_speed_mode       = g_node.create_client(GetRobotSpeedMode, self._srv_name_prefix +"/system/get_robot_speed_mode") ; self.req_GetRobotSpeedMode = GetRobotSpeedMode.Request()
-        self._ros2_set_safe_stop_reset_type   = g_node.create_client(SetSafeStopResetType, self._srv_name_prefix +"/system/set_safe_stop_reset_type") ; self.req_SetSafeStopResetType = SetSafeStopResetType.Request()
-        self._ros2_get_last_alarm             = g_node.create_client(GetLastAlarm, self._srv_name_prefix +"/system/get_last_alarm") ; self.req_GetLastAlarm = GetLastAlarm.Request()
-        self._ros2_get_current_pose           = g_node.create_client(GetCurrentPose, self._srv_name_prefix +"/system/get_current_pose") ; self.req_GetCurrentPose = GetCurrentPose.Request()
+        self._ros2_set_robot_mode               = g_node.create_client(SetRobotMode, self._srv_name_prefix +"/system/set_robot_mode") ; self.req_SetRobotMode = SetRobotMode.Request()
+        self._ros2_get_robot_mode               = g_node.create_client(GetRobotMode, self._srv_name_prefix +"/system/get_robot_mode") ; self.req_GetRobotMode = GetRobotMode.Request()
+        self._ros2_set_robot_system             = g_node.create_client(SetRobotSystem, self._srv_name_prefix +"/system/set_robot_system") ; self.req_SetRobotSystem = SetRobotSystem.Request()
+        self._ros2_get_robot_system             = g_node.create_client(GetRobotSystem, self._srv_name_prefix +"/system/get_robot_system") ; self.req_GetRobotSystem = GetRobotSystem.Request()
+        self._ros2_get_robot_state              = g_node.create_client(GetRobotState, self._srv_name_prefix +"/system/get_robot_state") ; self.req_GetRobotState = GetRobotState.Request()
+        self._ros2_set_robot_speed_mode         = g_node.create_client(SetRobotSpeedMode, self._srv_name_prefix +"/system/set_robot_speed_mode") ; self.req_SetRobotSpeedMode = SetRobotSpeedMode.Request()
+        self._ros2_get_robot_speed_mode         = g_node.create_client(GetRobotSpeedMode, self._srv_name_prefix +"/system/get_robot_speed_mode") ; self.req_GetRobotSpeedMode = GetRobotSpeedMode.Request()
+        self._ros2_set_safe_stop_reset_type     = g_node.create_client(SetSafeStopResetType, self._srv_name_prefix +"/system/set_safe_stop_reset_type") ; self.req_SetSafeStopResetType = SetSafeStopResetType.Request()
+        self._ros2_get_last_alarm               = g_node.create_client(GetLastAlarm, self._srv_name_prefix +"/system/get_last_alarm") ; self.req_GetLastAlarm = GetLastAlarm.Request()
+        self._ros2_change_collision_sensitivity = g_node.create_client(ChangeCollisionSensitivity, self._srv_name_prefix +"/system/change_collision_sensitivity") ; self.req_ChangeCollisionSensitivity = ChangeCollisionSensitivity.Request()
+        self._ros2_get_current_pose             = g_node.create_client(GetCurrentPose, self._srv_name_prefix +"/system/get_current_pose") ; self.req_GetCurrentPose = GetCurrentPose.Request()
 
     
         #  motion Operations
@@ -6585,16 +6656,17 @@ class CDsrRobot:
         self._ros2_jog_multi                  = g_node.create_client(JogMulti,               self._srv_name_prefix +"/motion/jog_multi") ; self.req_JogMulti = JogMulti.Request()
         self._ros2_trans                      = g_node.create_client(Trans,                  self._srv_name_prefix +"/motion/trans") ; self.req_Trans = Trans.Request()
 
-        self._ros2_fkin                       = g_node.create_client(Fkin,                   self._srv_name_prefix +"/motion/fkin") ; self.req_Fkin = Fkin.Request()
-        self._ros2_ikin                       = g_node.create_client(Ikin,                   self._srv_name_prefix +"/motion/ikin") ; self.req_Ikin = Ikin.Request()
-        self._ros2_set_ref_coord              = g_node.create_client(SetRefCoord,            self._srv_name_prefix +"/motion/set_ref_coord") ; self.req_SetRefCoord = SetRefCoord.Request()
-        self._ros2_move_home                  = g_node.create_client(MoveHome,               self._srv_name_prefix +"/motion/move_home") ; self.req_MoveHome = MoveHome.Request()
-        self._ros2_check_motion               = g_node.create_client(CheckMotion,            self._srv_name_prefix +"/motion/check_motion") ; self.req_CheckMotion = CheckMotion.Request()
-        self._ros2_change_operation_speed     = g_node.create_client(ChangeOperationSpeed,   self._srv_name_prefix +"/motion/change_operation_speed") ; self.req_ChangeOperationSpeed = ChangeOperationSpeed.Request()
-        self._ros2_enable_alter_motion        = g_node.create_client(EnableAlterMotion,      self._srv_name_prefix +"/motion/enable_alter_motion") ; self.req_EnableAlterMotion = EnableAlterMotion.Request()
-        self._ros2_alter_motion               = g_node.create_client(AlterMotion,            self._srv_name_prefix +"/motion/alter_motion") ; self.req_AlterMotion = AlterMotion.Request()
-        self._ros2_disable_alter_motion       = g_node.create_client(DisableAlterMotion,     self._srv_name_prefix +"/motion/disable_alter_motion") ; self.req_DisableAlterMotion = DisableAlterMotion.Request()
-        self._ros2_set_singularity_handling   = g_node.create_client(SetSingularityHandling, self._srv_name_prefix +"/motion/set_singularity_handling") ; self.req_SetSingularityHandling = SetSingularityHandling.Request()
+        self._ros2_fkin                           = g_node.create_client(Fkin,                        self._srv_name_prefix +"/motion/fkin") ; self.req_Fkin = Fkin.Request()
+        self._ros2_ikin                           = g_node.create_client(Ikin,                        self._srv_name_prefix +"/motion/ikin") ; self.req_Ikin = Ikin.Request()
+        self._ros2_set_ref_coord                  = g_node.create_client(SetRefCoord,                 self._srv_name_prefix +"/motion/set_ref_coord") ; self.req_SetRefCoord = SetRefCoord.Request()
+        self._ros2_move_home                      = g_node.create_client(MoveHome,                    self._srv_name_prefix +"/motion/move_home") ; self.req_MoveHome = MoveHome.Request()
+        self._ros2_check_motion                   = g_node.create_client(CheckMotion,                 self._srv_name_prefix +"/motion/check_motion") ; self.req_CheckMotion = CheckMotion.Request()
+        self._ros2_change_operation_speed         = g_node.create_client(ChangeOperationSpeed,        self._srv_name_prefix +"/motion/change_operation_speed") ; self.req_ChangeOperationSpeed = ChangeOperationSpeed.Request()
+        self._ros2_enable_alter_motion            = g_node.create_client(EnableAlterMotion,           self._srv_name_prefix +"/motion/enable_alter_motion") ; self.req_EnableAlterMotion = EnableAlterMotion.Request()
+        self._ros2_alter_motion                   = g_node.create_client(AlterMotion,                 self._srv_name_prefix +"/motion/alter_motion") ; self.req_AlterMotion = AlterMotion.Request()
+        self._ros2_disable_alter_motion           = g_node.create_client(DisableAlterMotion,          self._srv_name_prefix +"/motion/disable_alter_motion") ; self.req_DisableAlterMotion = DisableAlterMotion.Request()
+        self._ros2_set_singularity_handling       = g_node.create_client(SetSingularityHandling,      self._srv_name_prefix +"/motion/set_singularity_handling") ; self.req_SetSingularityHandling = SetSingularityHandling.Request()
+        self._ros2_set_singular_handling_force    = g_node.create_client(SetSingularityHandlingForce, self._srv_name_prefix +"/motion/set_singularity_handling_force") ; self.req_SetSingularityHandlingForce = SetSingularityHandlingForce.Request()
 
 
         # Auxiliary Control Operations
@@ -6620,6 +6692,7 @@ class CDsrRobot:
         self._ros2_get_tool_force                 = g_node.create_client(GetToolForce,               self._srv_name_prefix +"/aux_control/get_tool_force") ; self.req_GetToolForce = GetToolForce.Request()
         self._ros2_get_solution_space             = g_node.create_client(GetSolutionSpace,           self._srv_name_prefix +"/aux_control/get_solution_space") ; self.req_GetSolutionSpace = GetSolutionSpace.Request()
         self._ros2_get_orientation_error          = g_node.create_client(GetOrientationError,        self._srv_name_prefix +"/aux_control/get_orientation_error") ; self.req_GetOrientationError = GetOrientationError.Request()
+        self._ros2_get_robot_link_info            = g_node.create_client(GetRobotLinkInfo,           self._srv_name_prefix +"/aux_control/get_robot_link_info") ; self.req_GetRobotLinkInfo = GetRobotLinkInfo.Request()
 
         # Force/Stiffness Control & others Operations
         self._ros2_get_workpiece_weight        = g_node.create_client(GetWorkpieceWeight,            self._srv_name_prefix +"/force/get_workpiece_weight") ; self.req_GetWorkpieceWeight = GetWorkpieceWeight.Request()
@@ -6941,6 +7014,29 @@ class CDsrRobot:
                     ret = -1    
                 else:        
                     ret = result.log_alarm            
+        return ret
+
+    def change_collision_sensitivity(self, sensitivity):
+        if type(sensitivity) != int:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : sensitivity")
+        
+        # ROS2 service call
+        if __ROS2__:
+            req = self.req_ChangeCollisionSensitivity
+            req.sensitivity = sensitivity
+
+            future = self._ros2_change_collision_sensitivity.call_async(req)
+            rclpy.spin_until_future_complete(g_node, future)
+
+            try:
+                result = future.result()
+            except Exception as e:
+                g_node.get_logger().info('change_collision_sensitivity Service call failed %r' % (e,))
+            else:
+                if result == None:
+                    ret = -1
+                else:
+                    ret = 0 if (result.success == True) else -1
         return ret
 
 ##### Auxiliary Control ##############################################################################################################################
@@ -7380,6 +7476,23 @@ class CDsrRobot:
                 else:        
                     ret = result.ori_error            
         return ret
+
+    def get_robot_link_info(self):
+        if __ROS2__:
+            req = self.req_GetRobotLinkInfo
+            future = self._ros2_get_robot_link_info.call_async(req)
+            rclpy.spin_until_future_complete(g_node, future)
+            try:
+                result = future.result()
+            except Exception as e:
+                g_node.get_logger().info('get_robot_link_info Service call failed %r' % (e,))
+                return None
+            else:
+                if result == None or result.success == False:
+                    return None
+                else:
+                    return result 
+        return None
 
 ##### MOTION ##############################################################################################################################
 
@@ -9031,6 +9144,29 @@ class CDsrRobot:
 
     def set_singularity_handling(self, mode = DR_AVOID):
         ret = set_singular_handling(mode)
+        return ret
+
+    def set_singular_handling_force(self, mode = DR_SINGULARITY_ERROR):
+        if type(mode) != int:
+            raise DR_Error(DR_ERROR_TYPE, "Invalid type : mode")
+
+        if __ROS2__:
+            req = self.req_SetSingularHandlingForce  
+            req.mode = mode
+
+            future = self._ros2_set_singular_handling_force.call_async(req)
+            rclpy.spin_until_future_complete(g_node, future)
+
+            try:
+                result = future.result()
+            except Exception as e:
+                g_node.get_logger().info('set_singular_handling_force Service call failed %r' % (e,))
+                ret = -1
+            else:
+                if result == None:
+                    ret = -1
+                else:
+                    ret = 0 if (result.success == True) else -1
         return ret
 
     def jog(self, jog_axis, ref=0, speed=0):
@@ -11603,5 +11739,4 @@ class CDsrRobot:
                     ret = -1    
                 else:        
                     ret = result.drl_state 
-
         return ret

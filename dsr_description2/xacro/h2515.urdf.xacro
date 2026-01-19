@@ -1,30 +1,46 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="h2515" >
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="h2515">
 
-  <xacro:arg name="mode"           default="virtual"/>   
-  <xacro:arg name="color"          default="white"/>      
-  <xacro:arg name="namespace"      default=""/>
+  <!-- Args -->
+  <xacro:arg name="mode"                default="virtual"/>   
+  <xacro:arg name="color"               default="white"/>      
+  <xacro:arg name="namespace"           default=""/>
 
   <!-- gripper control argument -->
-  <xacro:arg name="gripper"              default="none"/>         <!-- none | robotique -->
-  <xacro:arg name="gripper_prefix"       default=""/>             <!-- ex) dsr01_ -->
-  <xacro:arg name="gripper_parent_link"  default="link_6"/>
+  <xacro:arg name="gripper"             default="none"/>         <!-- none | robotique -->
+  <xacro:arg name="gripper_prefix"      default=""/>             <!-- ex) dsr01_ -->
+  <xacro:arg name="gripper_parent_link" default="link_6"/>
 
-  <xacro:arg name="use_gazebo" default="false"/>
-  <xacro:property name="gz" value="$(arg use_gazebo)"/>
+  <xacro:arg name="use_gazebo"          default="false"/>
+  <xacro:arg name="host"                default=""/>
+  <xacro:arg name="port"                default=""/>
+  <xacro:arg name="rt_host"             default=""/>
+  <xacro:arg name="mode"                default=""/>
+  <xacro:arg name="model"               default=""/>
+  <xacro:arg name="update_rate"         default=""/>
 
-  <xacro:property name="cr" value="$(arg color)"/>
+  <!-- Local properties -->
+  <xacro:property name="cr"             value="$(arg color)"/>
+  <xacro:property name="gr"             value="$(arg gripper)"/>
+  <xacro:property name="gz"             value="$(arg use_gazebo)"/>
+  <xacro:property name="host"           value="$(arg host)"/>
+  <xacro:property name="rt_host"        value="$(arg rt_host)"/>
+  <xacro:property name="port"           value="$(arg port)"/>
+  <xacro:property name="mode"           value="$(arg mode)"/>
+  <xacro:property name="model"          value="$(arg model)"/>
+  <xacro:property name="update_rate"    value="$(arg update_rate)"/>
 
-  <xacro:property name="gr" value="$(arg gripper)"/>
-
+  <!-- Visual -->
   <xacro:if value="${cr == 'white'}">
     <xacro:include filename="$(find dsr_description2)/xacro/macro.h2515.white.xacro"/>
   </xacro:if>
   <xacro:if value="${cr == 'blue'}">
     <xacro:include filename="$(find dsr_description2)/xacro/macro.h2515.blue.xacro"/>
   </xacro:if>
+
   <xacro:h2515 namespace="$(arg namespace)"/>
 
+  <!-- World -->
   <link name="world"/>
   <joint name="world_fixed" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -32,13 +48,23 @@
     <child  link="base_link"/>
   </joint>
 
+  <!-- Gazebo -->
   <xacro:if value="${gz}">
     <xacro:include filename="$(find dsr_description2)/ros2_control/h2515.gz_ros2_control.xacro"/>
     <xacro:h2515_gz_ros2_control namespace="$(arg namespace)"/>
   </xacro:if>
+  <!-- Default ros2_control -->
   <xacro:unless value="${gz}">
-    <xacro:include filename="$(find dsr_description2)/ros2_control/h2515.ros2_control.xacro"/>
-    <xacro:h2515_ros2_control name="h2515"/>
+    <xacro:include filename="$(find dsr_description2)/ros2_control/h2515.ros2_control.xacro" />
+    <xacro:h2515_ros2_control
+      name="h2515"
+      host="${host}"
+      rt_host="${rt_host}"
+      port="${port}"
+      mode="${mode}"
+      model="${model}"
+      update_rate="${update_rate}"
+    />
   </xacro:unless>
 
   <xacro:if value="${gr == 'robotiq_2f85'}">

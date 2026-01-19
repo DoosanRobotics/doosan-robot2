@@ -58,6 +58,9 @@
 #include <dsr_msgs2/msg/speedj_rt_stream.hpp>
 #include <dsr_msgs2/msg/speedl_rt_stream.hpp>
 #include <dsr_msgs2/msg/torque_rt_stream.hpp>
+#include <dsr_msgs2/msg/robot_error.hpp>
+#include <dsr_msgs2/msg/robot_disconnection.hpp>
+
 
 
 //system
@@ -104,6 +107,7 @@
 #include "dsr_msgs2/srv/alter_motion.hpp"
 #include "dsr_msgs2/srv/disable_alter_motion.hpp"
 #include "dsr_msgs2/srv/set_singularity_handling.hpp"
+#include "dsr_msgs2/srv/set_singular_handling_force.hpp"
 
 //----- auxiliary_control
 #include "dsr_msgs2/srv/get_control_mode.hpp"          
@@ -124,6 +128,7 @@
 #include "dsr_msgs2/srv/get_tool_force.hpp"            
 #include "dsr_msgs2/srv/get_solution_space.hpp"
 #include "dsr_msgs2/srv/get_orientation_error.hpp"
+#include "dsr_msgs2/srv/get_robot_link_info.hpp"
 
 //----- force/stiffness
 #include "dsr_msgs2/srv/parallel_axis1.hpp"
@@ -209,6 +214,9 @@
 #include "dsr_msgs2/srv/start_rt_control.hpp"
 #include "dsr_msgs2/srv/stop_rt_control.hpp"
 #include "dsr_msgs2/srv/write_data_rt.hpp"
+
+#include "std_msgs/msg/float32_multi_array.hpp"
+
 
 #include "../../../dsr_common2/include/DRFLEx.h"
 
@@ -491,6 +499,30 @@ typedef struct _ROBOT_JOINT_DATA
 std::string m_name;
 std::string m_model;
 
+bool g_bIsEmulatorMode = FALSE;
+bool g_bHasControlAuthority = FALSE;
+bool g_bTpInitailizingComplted = FALSE;
+bool g_bHommingCompleted = FALSE;
+bool init_state=TRUE;
+
+
+
+namespace DRFL_CALLBACKS {
+  void OnTpInitializingCompletedCB();
+  void OnHommingCompletedCB();
+  void OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/);
+  void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO);
+  void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO);
+  void OnMonitoringDataCB(const LPMONITORING_DATA pData);
+  void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
+  void OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus);
+  void OnMonitoringStateCB(const ROBOT_STATE eState);
+  void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl);
+  void OnLogAlarm(LPLOG_ALARM pLogAlarm);
+  void OnDisConnected();
+}
+
+
 namespace dsr_controller2
 {
 class RobotController : public controller_interface::ControllerInterface
@@ -525,6 +557,8 @@ public:
   controller_interface::CallbackReturn on_shutdown(
     const rclcpp_lifecycle::State & previous_state) override;
   
+  rclcpp::Publisher<dsr_msgs2::msg::RobotDisconnection>::SharedPtr disconnect_pub_;
+  rclcpp::Publisher<dsr_msgs2::msg::RobotError>::SharedPtr error_log_pub_;
 protected:
   std::vector<std::string> joint_names_;
   std::vector<std::string> command_interface_types_;
@@ -587,6 +621,7 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::AlterMotion>::SharedPtr             m_nh_srv_alter_motion;
   rclcpp::Service<dsr_msgs2::srv::DisableAlterMotion>::SharedPtr      m_nh_srv_disable_alter_motion;
   rclcpp::Service<dsr_msgs2::srv::SetSingularityHandling>::SharedPtr  m_nh_srv_set_singularity_handling;
+  rclcpp::Service<dsr_msgs2::srv::SetSingularHandlingForce>::SharedPtr m_nh_srv_set_singular_handling_force;
   
   rclcpp::Service<dsr_msgs2::srv::GetControlMode>::SharedPtr               m_nh_srv_get_control_mode;          
   rclcpp::Service<dsr_msgs2::srv::GetControlSpace>::SharedPtr              m_nh_srv_get_control_space;         
@@ -606,6 +641,7 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::GetToolForce>::SharedPtr                 m_nh_srv_get_tool_force;            
   rclcpp::Service<dsr_msgs2::srv::GetSolutionSpace>::SharedPtr             m_nh_srv_get_solution_space;
   rclcpp::Service<dsr_msgs2::srv::GetOrientationError>::SharedPtr          m_nh_srv_get_orientation_error;
+  rclcpp::Service<dsr_msgs2::srv::GetRobotLinkInfo>::SharedPtr             m_nh_srv_get_robot_link_info;
 
   rclcpp::Service<dsr_msgs2::srv::ParallelAxis1>::SharedPtr                m_nh_srv_parallel_axis1;
   rclcpp::Service<dsr_msgs2::srv::ParallelAxis2>::SharedPtr                m_nh_srv_parallel_axis2;
@@ -689,7 +725,7 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::ReadDataRt>::SharedPtr                    m_nh_read_data_rt;
   rclcpp::Service<dsr_msgs2::srv::WriteDataRt>::SharedPtr                   m_nh_write_data_rt;
 
-  // Real-time data publishing members and parameters for periodic Float32MultiArray topic output.
+  // Real-time data publishing members and parameters for periodic Float64MultiArray topic output.
   bool use_rt_topic_pub_{false};
   std::vector<std::string> rt_topic_keys_;
   std::unordered_map<std::string,
@@ -703,7 +739,6 @@ private:
   static constexpr const char* PARAM_RT_TOPIC_KEYS    = "rt_topic_keys";
   static constexpr const char* PARAM_RT_TIMER_MS      = "rt_timer_ms";
 };
-
-}  // namespace dsr_control2
+}  // namespace dsr_controller2
 
 #endif  
