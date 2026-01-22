@@ -13,9 +13,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='gossi',
-    maintainer_email='mincheol710313@gmail.com',
-    description='TODO: Package description',
+    maintainer='minsoo.song',
+    maintainer_email='minsoo.song@doosan.com',
+    description='This package is example code for Doosan Robot ROS2 packages.',
     license='BSD',
     tests_require=['pytest'],
     entry_points={
@@ -25,7 +25,7 @@ setup(
                 'slope_demo = dsr_example.demo.slope_demo:main',
                 'test = dsr_example.simple.test:main',
                 'test2 = dsr_example.simple.test2:main',
-
+                'test_action = dsr_example.simple.test_action:main',
         ],
     },
 )

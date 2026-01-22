@@ -3,8 +3,9 @@
 <package format="3">
   <name>dsr_example</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="mincheol710313@gmail.com">gossi</maintainer>
+  <description>This package is example code for Doosan Robot ROS2 packages.</description>
+
+  <maintainer email="minsoo.song@doosan.com">minsoo.song</maintainer>
   <license>BSD</license>
 
   <depend>rclpy</depend>
