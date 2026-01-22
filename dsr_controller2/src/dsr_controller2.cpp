@@ -2455,6 +2455,75 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_set_accx_rt = get_node()->create_service<dsr_msgs2::srv::SetAccxRt>("realtime/set_accx_rt", set_accx_rt_cb);
   m_nh_read_data_rt = get_node()->create_service<dsr_msgs2::srv::ReadDataRt>("realtime/read_data_rt", read_data_rt_cb);
   m_nh_write_data_rt = get_node()->create_service<dsr_msgs2::srv::WriteDataRt>("realtime/write_data_rt", write_data_rt_cb);
+  
+
+  // H2r
+  rclcpp::QoS qos_profile(10); //`rmw_qos_profile_services_default` has been deprecated using qos(depth) instead
+  
+  // H2r
+  using JogH2r = dsr_msgs2::action::JogH2r;
+  using GoalHandleJogH2r = rclcpp_action::ServerGoalHandle<JogH2r>;
+
+    auto handle_goal_jog_h2r = [this](const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const JogH2r::Goal> goal) {
+      RCLCPP_INFO(get_node()->get_logger(), "Received goal request for JogH2r");
+      (void)uuid;
+      (void)goal;
+      return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+  };
+
+  auto handle_cancel_jog_h2r = [this](const std::shared_ptr<GoalHandleJogH2r> goal_handle) {
+      RCLCPP_INFO(get_node()->get_logger(), "Received request to cancel goal");
+      (void)goal_handle;
+      return rclcpp_action::CancelResponse::ACCEPT;
+  };
+
+  auto handle_accepted_jog_h2r = [this](const std::shared_ptr<GoalHandleJogH2r> goal_handle) {
+      std::thread{ [this, goal_handle]() {
+          const auto goal = goal_handle->get_goal();
+          auto feedback = std::make_shared<JogH2r::Feedback>();
+          auto result = std::make_shared<JogH2r::Result>();
+          
+          RCLCPP_INFO(get_node()->get_logger(), "Executing JogH2r goal");
+          
+          // Execute Jog Motion
+          // Map action goal fields to Drfl->jog parameters
+          // Parameters: (JOG_AXIS)jog_axis, (MOVE_REFERENCE)move_reference, (float)velocity
+          bool is_started = Drfl->jog_h2r((JOG_AXIS)goal->jog_axis, (MOVE_REFERENCE)goal->move_reference, goal->velocity);
+          
+          if (!is_started) {
+              RCLCPP_ERROR(get_node()->get_logger(), "Failed to start JogH2r motion");
+              result->success = false;
+              goal_handle->abort(result);
+              return;
+          }
+
+          rclcpp::Rate loop_rate(100); // 100Hz check
+
+          // Keep loop until cancellation or shutdown
+          while(rclcpp::ok()) { 
+              if (goal_handle->is_canceling()) {
+                  Drfl->stop(STOP_TYPE_QUICK); // Stop the robot immediately
+                  result->success = true;
+                  goal_handle->canceled(result);
+                  RCLCPP_INFO(get_node()->get_logger(), "JogH2r Goal canceled");
+                  return;
+              }
+
+              // Update Feedback: Get current robot pose (Task Space)
+              LPROBOT_POSE cur_pos = Drfl->get_current_pose(); 
+              if(cur_pos) {
+                 for(int j=0; j<6; ++j) feedback->pos[j] = cur_pos->_fPosition[j];
+              }
+              Drfl->hold2run(); // Update H2r internal state
+              
+              goal_handle->publish_feedback(feedback);
+              loop_rate.sleep();
+          }
+      }}.detach();
+  };
+
+  m_nh_srv_jog_h2r = rclcpp_action::create_server<JogH2r>(get_node(), "motion/jog_h2r", handle_goal_jog_h2r, handle_cancel_jog_h2r, handle_accepted_jog_h2r);
+
 
   memset(&g_stDrState, 0x00, sizeof(DR_STATE)); 
 
@@ -2804,7 +2873,7 @@ void OnMonitoringStateCB(const ROBOT_STATE eState)
         }
         break;
     case STATE_RECOVERY:
-        Drfl->set_robot_control(CONTROL_RESET_RECOVERY);
+        // Drfl->set_robot_control(CONTROL_RESET_RECOVERY);
         break;
     default:
         break;
