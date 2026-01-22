@@ -87,9 +87,14 @@ class GazeboConnection(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = GazeboConnection()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
