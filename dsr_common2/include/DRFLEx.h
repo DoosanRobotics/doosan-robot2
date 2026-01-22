@@ -558,6 +558,11 @@ namespace DRAFramework
         DRFL_API unsigned char _get_state_led_rule(LPROBOTCONTROL _rbtCtrl);
         //Link Info
         DRFL_API bool _get_robot_link_info(LPROBOTCONTROL pCtrl,LPROBOT_LINK_INFO pOut,int timeout_ms);
+		//brief(327) : hold2run 
+        DRFL_API bool _hold2run(LPROBOTCONTROL pCtrl);
+        //brief(400) :  jog_h2r
+		DRFL_API bool _jog_h2r(LPROBOTCONTROL pCtrl, JOG_AXIS eJogAxis, MOVE_REFERENCE eMoveReference, float fVelocity);
+
 #ifdef __cplusplus
     };
 #endif
@@ -1000,6 +1005,10 @@ namespace DRAFramework
         unsigned char get_state_led_rule() {return _get_state_led_rule(_rbtCtrl);};
         // Link Info
         bool get_robot_link_info(ROBOT_LINK_INFO& out, int timeout_ms = 300) {return _get_robot_link_info(_rbtCtrl, &out, timeout_ms); }; 
+        //brief(327) : hold2run 
+		bool hold2run() { return _hold2run(_rbtCtrl); };
+        //brief(400) :  jog_h2r
+		bool jog_h2r(JOG_AXIS eJogAxis, MOVE_REFERENCE eMoveReference, float fVelocity) { return _jog_h2r(_rbtCtrl, eJogAxis, eMoveReference, fVelocity); };
 
         ////////////////////////////////////////////////////////////////////////////
         //  welding                                                //
