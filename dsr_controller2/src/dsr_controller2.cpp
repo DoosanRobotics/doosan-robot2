@@ -2558,7 +2558,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
           }
 
           // Execute Movej Motion
-          bool is_started = Drfl->safe_movej_h2r(pos_f.data(), vel_f.data(), acc_f.data());
+          bool is_started = Drfl->movej_h2r(pos_f.data(), vel_f.data(), acc_f.data());
           if (!is_started) {
               RCLCPP_ERROR(get_node()->get_logger(), "Failed to start MovejH2r motion");
               result->success = false;
@@ -2627,7 +2627,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
             pos_f[i] = static_cast<float>(goal->target_pos[i]);
           }
           // Execute Movel Motion
-          bool is_started = Drfl->safe_movel_h2r(pos_f.data(), vel_f.data(), acc_f.data());
+          bool is_started = Drfl->movel_h2r(pos_f.data(), vel_f.data(), acc_f.data());
           if (!is_started) {
               RCLCPP_ERROR(get_node()->get_logger(), "Failed to start MovelH2r motion");
               result->success = false;
