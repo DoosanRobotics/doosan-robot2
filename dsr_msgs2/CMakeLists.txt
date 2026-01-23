@@ -181,6 +181,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/realtime/WriteDataRt.srv"
 
   "action/JogH2r.action"
+  "action/MovejH2r.action"
+  "action/MovelH2r.action"
+
 
   DEPENDENCIES builtin_interfaces std_msgs action_msgs 
 )

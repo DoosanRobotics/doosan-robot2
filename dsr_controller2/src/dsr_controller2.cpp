@@ -2523,7 +2523,156 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   };
 
   m_nh_srv_jog_h2r = rclcpp_action::create_server<JogH2r>(get_node(), "motion/jog_h2r", handle_goal_jog_h2r, handle_cancel_jog_h2r, handle_accepted_jog_h2r);
+  
+  using MovejH2r = dsr_msgs2::action::MovejH2r;
+  using GoalHandleMovejH2r = rclcpp_action::ServerGoalHandle<MovejH2r>;
+  using MovelH2r = dsr_msgs2::action::MovelH2r;
+  using GoalHandleMovelH2r = rclcpp_action::ServerGoalHandle<MovelH2r>;
 
+  auto handle_goal_movej_h2r = [this](const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const MovejH2r::Goal> goal) {
+      RCLCPP_INFO(get_node()->get_logger(), "Received goal request for MovejH2r");
+      (void)uuid;
+      (void)goal;
+      return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+  };
+
+  auto handle_cancel_movej_h2r = [this](const std::shared_ptr<GoalHandleMovejH2r> goal_handle) {
+      RCLCPP_INFO(get_node()->get_logger(), "Received request to cancel goal");
+      (void)goal_handle;
+      return rclcpp_action::CancelResponse::ACCEPT;
+  };
+
+  auto handle_accepted_movej_h2r = [this](const std::shared_ptr<GoalHandleMovejH2r> goal_handle) {
+      std::thread{ [this, goal_handle]() {
+          const auto goal = goal_handle->get_goal();
+          auto feedback = std::make_shared<MovejH2r::Feedback>();
+          auto result = std::make_shared<MovejH2r::Result>();
+          RCLCPP_INFO(get_node()->get_logger(), "Executing MovejH2r goal");
+          std::array<float, 6> pos_f;
+          std::array<float, 6> vel_f;
+          std::array<float, 6> acc_f;
+          for (size_t i = 0; i < NUM_JOINT; ++i) {
+            pos_f[i] = static_cast<float>(goal->target_pos[i]);
+            vel_f[i] = static_cast<float>(goal->target_vel[i]);
+            acc_f[i] = static_cast<float>(goal->target_acc[i]);
+          }
+
+          // Execute Movej Motion
+          bool is_started = Drfl->safe_movej_h2r(pos_f.data(), vel_f.data(), acc_f.data());
+          if (!is_started) {
+              RCLCPP_ERROR(get_node()->get_logger(), "Failed to start MovejH2r motion");
+              result->success = false;
+              goal_handle->abort(result);
+              return;
+          }
+          rclcpp::Rate loop_rate(100); // 100Hz check
+          // Keep loop until cancellation or shutdown
+          while(rclcpp::ok()) { 
+              if (goal_handle->is_canceling()) {
+                  Drfl->stop(STOP_TYPE_QUICK); // Stop the robot immediately
+                  result->success = true;
+                  goal_handle->canceled(result);
+                  RCLCPP_INFO(get_node()->get_logger(), "MovejH2r Goal canceled");
+                  return;
+              }
+              // Update Feedback: Get current robot pose (Task Space)
+              LPROBOT_POSE cur_pos = Drfl->get_current_pose(); 
+              if(cur_pos) {
+                 for(int j=0; j<6; ++j) feedback->pos[j] = cur_pos->_fPosition[j];
+                 bool is_arrived = true;
+                 for(int i=0; i<6; i++) {
+                     if(std::abs(cur_pos->_fPosition[i] - goal->target_pos[i]) > 0.1) {
+                        is_arrived = false;
+                        break;
+                     }
+                 }
+                 if(is_arrived) {
+                     Drfl->stop(STOP_TYPE_QUICK);
+                     result->success = true;
+                     goal_handle->succeed(result);
+                     RCLCPP_INFO(get_node()->get_logger(), "MovejH2r Goal Arrived");
+                     return;
+                 }
+              }
+              Drfl->hold2run(); // Update H2r internal state
+              goal_handle->publish_feedback(feedback);
+              loop_rate.sleep();
+          }
+      }}.detach();
+  };
+
+  auto handle_goal_movel_h2r = [this](const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const MovelH2r::Goal> goal) {
+      RCLCPP_INFO(get_node()->get_logger(), "Received goal request for MovelH2r");
+      (void)uuid;
+      (void)goal;
+      return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+  };
+
+  auto handle_cancel_movel_h2r = [this](const std::shared_ptr<GoalHandleMovelH2r> goal_handle) {
+      RCLCPP_INFO(get_node()->get_logger(), "Received request to cancel goal");
+      (void)goal_handle;
+      return rclcpp_action::CancelResponse::ACCEPT;
+  };
+
+  auto handle_accepted_movel_h2r = [this](const std::shared_ptr<GoalHandleMovelH2r> goal_handle) {
+      std::thread{ [this, goal_handle]() {
+          const auto goal = goal_handle->get_goal();
+          auto feedback = std::make_shared<MovelH2r::Feedback>();
+          auto result = std::make_shared<MovelH2r::Result>();
+          RCLCPP_INFO(get_node()->get_logger(), "Executing MovelH2r goal");
+          std::array<float, 6> pos_f;
+          std::array<float, 2> vel_f = {static_cast<float>(goal->target_vel[0]), static_cast<float>(goal->target_vel[1])};
+          std::array<float, 2> acc_f = {static_cast<float>(goal->target_acc[0]), static_cast<float>(goal->target_acc[1])};
+          for (size_t i = 0; i < NUM_JOINT; ++i) {
+            pos_f[i] = static_cast<float>(goal->target_pos[i]);
+          }
+          // Execute Movel Motion
+          bool is_started = Drfl->safe_movel_h2r(pos_f.data(), vel_f.data(), acc_f.data());
+          if (!is_started) {
+              RCLCPP_ERROR(get_node()->get_logger(), "Failed to start MovelH2r motion");
+              result->success = false;
+              goal_handle->abort(result);
+              return;
+          }
+          rclcpp::Rate loop_rate(100); // 100Hz check
+          // Keep loop until cancellation or shutdown
+          while(rclcpp::ok()) { 
+              if (goal_handle->is_canceling()) {
+                  Drfl->stop(STOP_TYPE_QUICK); // Stop the robot immediately
+                  result->success = true;
+                  goal_handle->canceled(result);
+                  RCLCPP_INFO(get_node()->get_logger(), "MovelH2r Goal canceled");
+                  return;
+              }
+              // Update Feedback: Get current robot pose (Task Space)
+              LPROBOT_POSE cur_pos = Drfl->get_current_pose(ROBOT_SPACE_TASK); 
+              if(cur_pos) {
+                 for(int j=0; j<6; ++j) feedback->pos[j] = cur_pos->_fPosition[j];
+                 bool is_arrived = true;
+                 for(int i=0; i<6; i++) {
+                     if(std::abs(cur_pos->_fPosition[i] - goal->target_pos[i]) > 0.1) {
+                        is_arrived = false;
+                        break;
+                     }
+                 }
+                 if(is_arrived) {
+                     Drfl->stop(STOP_TYPE_QUICK);
+                     result->success = true;
+                     goal_handle->succeed(result);
+                     RCLCPP_INFO(get_node()->get_logger(), "MovelH2r Goal Arrived");
+                     return;
+                 }
+              }
+              Drfl->hold2run(); // Update H2r internal state
+              goal_handle->publish_feedback(feedback);
+              loop_rate.sleep();
+          }
+      }}.detach();
+  };
+
+  //move_to
+  m_nh_srv_movej_h2r = rclcpp_action::create_server<MovejH2r>(get_node(), "motion/movej_h2r", handle_goal_movej_h2r, handle_cancel_movej_h2r, handle_accepted_movej_h2r);
+  m_nh_srv_movel_h2r = rclcpp_action::create_server<MovelH2r>(get_node(), "motion/movel_h2r", handle_goal_movel_h2r, handle_cancel_movel_h2r, handle_accepted_movel_h2r);
 
   memset(&g_stDrState, 0x00, sizeof(DR_STATE)); 
 

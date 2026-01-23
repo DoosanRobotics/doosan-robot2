@@ -204,6 +204,8 @@
 
 // action
 #include "dsr_msgs2/action/jog_h2r.hpp"
+#include "dsr_msgs2/action/movej_h2r.hpp"
+#include "dsr_msgs2/action/movel_h2r.hpp"
 
 #include "std_msgs/msg/float32_multi_array.hpp"
 
@@ -727,6 +729,8 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::WriteDataRt>::SharedPtr                   m_nh_write_data_rt;
   
   rclcpp_action::Server<dsr_msgs2::action::JogH2r>::SharedPtr               m_nh_srv_jog_h2r;
+  rclcpp_action::Server<dsr_msgs2::action::MovejH2r>::SharedPtr              m_nh_srv_movej_h2r;
+  rclcpp_action::Server<dsr_msgs2::action::MovelH2r>::SharedPtr              m_nh_srv_movel_h2r;
 
   // Real-time data publishing members and parameters for periodic Float32MultiArray topic output.
   bool use_rt_topic_pub_{false};

@@ -491,6 +491,7 @@ namespace DRAFramework
         DRFL_API bool _disable_alter_motion(LPROBOTCONTROL pCtrl);
         DRFL_API bool _alter_motion(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK]);
         DRFL_API bool _set_singularity_handling(LPROBOTCONTROL pCtrl, SINGULARITY_AVOIDANCE eMode);
+        //Add
         DRFL_API bool _set_singular_handling_force(LPROBOTCONTROL pCtrl, SINGULARITY_FORCE_HANDLING eMode);
         DRFL_API bool _config_program_watch_variable(LPROBOTCONTROL pCtrl, VARIABLE_TYPE eDivision, DATA_TYPE eType, const char* szName, const char* szData);
         DRFL_API bool _save_sub_program(LPROBOTCONTROL pCtrl, int iTargetType, const char* szFileName, const char* lpszTextString);
@@ -562,6 +563,10 @@ namespace DRAFramework
         DRFL_API bool _hold2run(LPROBOTCONTROL pCtrl);
         //brief(400) :  jog_h2r
 		DRFL_API bool _jog_h2r(LPROBOTCONTROL pCtrl, JOG_AXIS eJogAxis, MOVE_REFERENCE eMoveReference, float fVelocity);
+        //brief(403) :  safe_movej_h2r
+		DRFL_API bool _safe_movej_h2r(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_JOINT], float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime, MOVE_MODE eMoveMode, float fBlendingRadius, BLENDING_SPEED_TYPE eBlendingType);
+		//brief(404) :  safe_movel_h2r
+		DRFL_API bool _safe_movel_h2r(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime, MOVE_MODE eMoveMode, MOVE_REFERENCE eMoveReference, float fBlendingRadius, BLENDING_SPEED_TYPE eBlendingType);
 
 #ifdef __cplusplus
     };
@@ -1005,10 +1010,15 @@ namespace DRAFramework
         unsigned char get_state_led_rule() {return _get_state_led_rule(_rbtCtrl);};
         // Link Info
         bool get_robot_link_info(ROBOT_LINK_INFO& out, int timeout_ms = 300) {return _get_robot_link_info(_rbtCtrl, &out, timeout_ms); }; 
+        
         //brief(327) : hold2run 
 		bool hold2run() { return _hold2run(_rbtCtrl); };
         //brief(400) :  jog_h2r
 		bool jog_h2r(JOG_AXIS eJogAxis, MOVE_REFERENCE eMoveReference, float fVelocity) { return _jog_h2r(_rbtCtrl, eJogAxis, eMoveReference, fVelocity); };
+        //brief(403) :  safe_movej_h2r
+        bool safe_movej_h2r(float fTargetPos[NUM_JOINT], float fTargetVel[NUM_JOINT], float fTargetAcc[NUM_JOINT], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _safe_movej_h2r(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, fBlendingRadius, eBlendingType); };
+        //brief(404) :  safe_movel_h2r
+        bool safe_movel_h2r(float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, float fBlendingRadius = 0.f, BLENDING_SPEED_TYPE eBlendingType = BLENDING_SPEED_TYPE_DUPLICATE) { return _safe_movel_h2r(_rbtCtrl, fTargetPos, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, fBlendingRadius, eBlendingType); }
 
         ////////////////////////////////////////////////////////////////////////////
         //  welding                                                //
