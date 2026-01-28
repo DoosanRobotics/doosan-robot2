@@ -56,7 +56,7 @@ def generate_launch_description():
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # gui = LaunchConfiguration("gui")
     mode = LaunchConfiguration("mode")
-    update_rate = str(read_update_rate()) # get update_rate from yaml
+    update_rate = int(read_update_rate()) # get update_rate from yaml
     show_git_info() # print git info
     # Get URDF via xacro
     robot_description_content = Command(
