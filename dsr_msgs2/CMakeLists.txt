@@ -12,6 +12,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(action_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
@@ -179,7 +180,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/realtime/StopRtControl.srv"
   "srv/realtime/WriteDataRt.srv"
 
-  DEPENDENCIES builtin_interfaces std_msgs  
+  "action/JogH2r.action"
+  "action/MovejH2r.action"
+  "action/MovelH2r.action"
+
+
+  DEPENDENCIES builtin_interfaces std_msgs action_msgs 
 )
 
 ament_export_dependencies(rosidl_default_runtime)

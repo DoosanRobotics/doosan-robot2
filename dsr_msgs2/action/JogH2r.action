@@ -1,0 +1,10 @@
+# Goal
+int8 jog_axis
+int8 move_reference
+float64 velocity
+---
+# Result
+bool success
+---
+# Feedback
+float64[6] pos
