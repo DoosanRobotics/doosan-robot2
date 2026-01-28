@@ -91,3 +91,4 @@ jobs:
                         dsr_tests
                         
           target-ros2-distro: ${{ matrix.ros_distribution }}
+          import-token: ${{ secrets.GITHUB_TOKEN }}
