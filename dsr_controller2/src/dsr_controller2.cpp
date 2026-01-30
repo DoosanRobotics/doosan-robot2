@@ -2294,33 +2294,37 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
 auto get_input_register_int_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetInputRegisterInt::Request> req, 
                                       std::shared_ptr<dsr_msgs2::srv::GetInputRegisterInt::Response> res) -> void 
 {
-    res->success = Drfl->get_input_register_int(req->address, &res->value, req->timeout_ms);
+    res->success = Drfl->get_input_register_int(req->address, res->value, req->timeout_ms);
 };
 
 auto get_input_register_bit_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetInputRegisterBit::Request> req, 
                                       std::shared_ptr<dsr_msgs2::srv::GetInputRegisterBit::Response> res) -> void 
 {
-    res->success = Drfl->get_input_register_bit(req->address, &res->value, req->timeout_ms);
+    res->success = Drfl->get_input_register_bit(req->address, res->value, req->timeout_ms);
 };
 auto get_input_register_float_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetInputRegisterFloat::Request> req, 
                                       std::shared_ptr<dsr_msgs2::srv::GetInputRegisterFloat::Response> res) -> void 
 {
-    res->success = Drfl->get_input_register_float(req->address, &res->value, req->timeout_ms);
+    float temp_value;
+    res->success = Drfl->get_input_register_float(req->address, temp_value, req->timeout_ms);
+    res->value = temp_value;
 };
 auto get_output_register_int_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterInt::Request> req, 
                                       std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterInt::Response> res) -> void 
 {
-    res->success = Drfl->get_output_register_int(req->address, &res->value, req->timeout_ms);
+    res->success = Drfl->get_output_register_int(req->address, res->value, req->timeout_ms);
 };
 auto get_output_register_bit_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterBit::Request> req, 
                                       std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterBit::Response> res) -> void 
 {
-    res->success = Drfl->get_output_register_bit(req->address, &res->value, req->timeout_ms);
+    res->success = Drfl->get_output_register_bit(req->address, res->value, req->timeout_ms);
 };
 auto get_output_register_float_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterFloat::Request> req, 
                                       std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterFloat::Response> res) -> void 
 {
-    res->success = Drfl->get_output_register_float(req->address, &res->value, req->timeout_ms);
+    float temp_value;
+    res->success = Drfl->get_output_register_float(req->address, temp_value, req->timeout_ms);
+    res->value = temp_value;
 };
 
 auto set_output_register_int_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetOutputRegisterInt::Request> req, 
