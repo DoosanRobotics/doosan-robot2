@@ -76,7 +76,6 @@
 
 namespace DRAFramework 
 {   
-    // 추가
     typedef void* LPROBOTCONTROL;
 
     typedef void (*TOnMonitoringDataExCB)(const LPMONITORING_DATA_EX);
@@ -96,8 +95,6 @@ namespace DRAFramework
     typedef void (*TOnMonitoringAnalogWeldingDataCB)(const LPMONITORING_ALALOG_WELDING);
     typedef void (*TOnMonitoringDigitalWeldingDataCB)(const LPMONITORING_DIGITAL_WELDING);
 
-
-    ////////추가/////////////
     typedef void (*TOnMonitoringStateCB)(const ROBOT_STATE);
     typedef void (*TOnMonitoringDataCB)(const LPMONITORING_DATA);
     typedef void (*TOnMonitoringCtrlIOCB)(const LPMONITORING_CTRLIO);
@@ -110,7 +107,6 @@ namespace DRAFramework
     typedef void (*TOnMonitoringSpeedModeCB)(const MONITORING_SPEED);
     typedef void (*TOnMasteringNeedCB)();
     typedef void (*TOnDisconnectedCB)();
-    //////////////////////
 
 #ifdef __cplusplus
     void PrintFParam(float* printArr, int iSize, string strFunc);
@@ -798,7 +794,6 @@ namespace DRAFramework
 		//brief(404) :  safe_movel_h2r
 		DRFL_API bool _safe_movel_h2r(LPROBOTCONTROL pCtrl, float fTargetPos[NUM_TASK], float fTargetVel[2], float fTargetAcc[2], float fTargetTime, MOVE_MODE eMoveMode, MOVE_REFERENCE eMoveReference, float fBlendingRadius, BLENDING_SPEED_TYPE eBlendingType);
 
-        
         DRFL_API bool _set_output_register_bit(LPROBOTCONTROL pCtrl, unsigned short address, int val);
         DRFL_API bool _set_output_register_int(LPROBOTCONTROL pCtrl, unsigned short address, int val);
         DRFL_API bool _set_output_register_float(LPROBOTCONTROL pCtrl, unsigned short address, float val);
@@ -1218,8 +1213,6 @@ namespace DRAFramework
         bool movesx_g(float fTargetPos[MAX_SPLINE_POINT][NUM_TASK], unsigned char nPosCount, float fTargetVel[2], float fTargetAcc[2], float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE, MOVE_REFERENCE eMoveReference = MOVE_REFERENCE_BASE, SPLINE_VELOCITY_OPTION eVelOpt = SPLINE_VELOCITY_OPTION_DEFAULT) { return _movesx_g(_rbtCtrl, fTargetPos, nPosCount, fTargetVel, fTargetAcc, fTargetTime, eMoveMode, eMoveReference, eVelOpt); };
         bool movesj_g(float fTargetPos[MAX_SPLINE_POINT][NUM_JOINT], unsigned char nPosCount, float fTargetVel, float fTargetAcc, float fTargetTime = 0.f, MOVE_MODE eMoveMode = MOVE_MODE_ABSOLUTE) { return _movesj_g(_rbtCtrl, fTargetPos, nPosCount, fTargetVel, fTargetAcc, fTargetTime, eMoveMode); };
 
-
-
         ////////////////////////////////////////////////////////////////////////////
         //  GPIO Operations                                                       //
         ////////////////////////////////////////////////////////////////////////////
@@ -1266,7 +1259,6 @@ namespace DRAFramework
         bool set_tool_digital_output_type(int nPort, OUTPUT_TYPE eOutputType){ return _set_tool_digital_output_type(_rbtCtrl, nPort, eOutputType); };
         bool set_mode_tool_analog_input(int nCh, GPIO_ANALOG_TYPE eAnalogType){ return _set_mode_tool_analog_input(_rbtCtrl, nCh, eAnalogType); };
         
-
         ////////////////////////////////////////////////////////////////////////////
         //  Modbus Operations                                                     //
         ////////////////////////////////////////////////////////////////////////////
@@ -1289,7 +1281,6 @@ namespace DRAFramework
         bool del_modbus_signal(string strSymbol) { return _del_modbus_signal(_rbtCtrl, strSymbol.c_str()); };
         DRFL_DEPRECATED("Deprecated: Use del_modbus_signal() instead.")
         bool ConfigDeleteModbus(string strSymbol) { return _ConfigDeleteModbus(_rbtCtrl, strSymbol.c_str()); };
-
 
         // get all of the modbus data list
         LPMODBUS_DATA_LIST query_modbus_data_list() { return _query_modbus_data_list(_rbtCtrl); };
@@ -1372,6 +1363,7 @@ namespace DRAFramework
         int check_motion() {return _check_motion(_rbtCtrl);};
         
         bool set_auto_safety_move_stop(bool bFuncEnable) {return _set_auto_safety_move_stop(_rbtCtrl, bFuncEnable); };
+        
         ////////////////////////////////////////////////////////////////////////////
         //  drl program Operations                                                //
         ////////////////////////////////////////////////////////////////////////////
@@ -1472,7 +1464,6 @@ namespace DRAFramework
         bool get_input_register_bit(unsigned short address, int& out_val, int timeout_ms = 300) {return _get_input_register_bit(_rbtCtrl, address, &out_val, timeout_ms); };
         bool get_input_register_int(unsigned short address, int& out_val, int timeout_ms = 300) {return _get_input_register_int(_rbtCtrl, address, &out_val, timeout_ms); };
         bool get_input_register_float(unsigned short address, float& out_val, int timeout_ms = 300) {return _get_input_register_float(_rbtCtrl, address, &out_val, timeout_ms); };
-
 
         ////////////////////////////////////////////////////////////////////////////
         //  welding                                                //
