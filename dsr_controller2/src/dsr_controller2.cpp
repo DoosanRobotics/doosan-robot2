@@ -2291,6 +2291,53 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
     Drfl->torque_rt(tor.data(), time);
 };
 
+auto get_input_register_int_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetInputRegisterInt::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::GetInputRegisterInt::Response> res) -> void 
+{
+    res->success = Drfl->get_input_register_int(req->address, &res->value, req->timeout_ms);
+};
+
+auto get_input_register_bit_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetInputRegisterBit::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::GetInputRegisterBit::Response> res) -> void 
+{
+    res->success = Drfl->get_input_register_bit(req->address, &res->value, req->timeout_ms);
+};
+auto get_input_register_float_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetInputRegisterFloat::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::GetInputRegisterFloat::Response> res) -> void 
+{
+    res->success = Drfl->get_input_register_float(req->address, &res->value, req->timeout_ms);
+};
+auto get_output_register_int_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterInt::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterInt::Response> res) -> void 
+{
+    res->success = Drfl->get_output_register_int(req->address, &res->value, req->timeout_ms);
+};
+auto get_output_register_bit_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterBit::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterBit::Response> res) -> void 
+{
+    res->success = Drfl->get_output_register_bit(req->address, &res->value, req->timeout_ms);
+};
+auto get_output_register_float_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterFloat::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::GetOutputRegisterFloat::Response> res) -> void 
+{
+    res->success = Drfl->get_output_register_float(req->address, &res->value, req->timeout_ms);
+};
+
+auto set_output_register_int_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetOutputRegisterInt::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::SetOutputRegisterInt::Response> res) -> void 
+{
+    res->success = Drfl->set_output_register_int(req->address, req->value);
+};
+auto set_output_register_bit_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetOutputRegisterBit::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::SetOutputRegisterBit::Response> res) -> void 
+{
+    res->success = Drfl->set_output_register_bit(req->address, req->value);
+};
+auto set_output_register_float_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetOutputRegisterFloat::Request> req, 
+                                      std::shared_ptr<dsr_msgs2::srv::SetOutputRegisterFloat::Response> res) -> void 
+{
+    res->success = Drfl->set_output_register_float(req->address, req->value);
+};
 
   error_log_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotError>("error", 100);
   disconnect_pub_ = get_node()->create_publisher<dsr_msgs2::msg::RobotDisconnection>("robot_disconnection", 100);
@@ -2456,6 +2503,16 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_read_data_rt = get_node()->create_service<dsr_msgs2::srv::ReadDataRt>("realtime/read_data_rt", read_data_rt_cb);
   m_nh_write_data_rt = get_node()->create_service<dsr_msgs2::srv::WriteDataRt>("realtime/write_data_rt", write_data_rt_cb);
   
+  // PLC
+  m_nh_srv_get_input_register_int = get_node()->create_service<dsr_msgs2::srv::GetInputRegisterInt>("plc/get_input_register_int", get_input_register_int_cb);
+  m_nh_srv_get_input_register_bit = get_node()->create_service<dsr_msgs2::srv::GetInputRegisterBit>("plc/get_input_register_bit", get_input_register_bit_cb);
+  m_nh_srv_get_input_register_float = get_node()->create_service<dsr_msgs2::srv::GetInputRegisterFloat>("plc/get_input_register_float", get_input_register_float_cb);
+  m_nh_srv_set_output_register_int = get_node()->create_service<dsr_msgs2::srv::SetOutputRegisterInt>("plc/set_output_register_int", set_output_register_int_cb);
+  m_nh_srv_set_output_register_bit = get_node()->create_service<dsr_msgs2::srv::SetOutputRegisterBit>("plc/set_output_register_bit", set_output_register_bit_cb);
+  m_nh_srv_set_output_register_float = get_node()->create_service<dsr_msgs2::srv::SetOutputRegisterFloat>("plc/set_output_register_float", set_output_register_float_cb);
+  m_nh_srv_get_output_register_int = get_node()->create_service<dsr_msgs2::srv::GetOutputRegisterInt>("plc/get_output_register_int", get_output_register_int_cb);
+  m_nh_srv_get_output_register_bit = get_node()->create_service<dsr_msgs2::srv::GetOutputRegisterBit>("plc/get_output_register_bit", get_output_register_bit_cb);
+  m_nh_srv_get_output_register_float = get_node()->create_service<dsr_msgs2::srv::GetOutputRegisterFloat>("plc/get_output_register_float", get_output_register_float_cb);
 
   // H2r
   rclcpp::QoS qos_profile(10); //`rmw_qos_profile_services_default` has been deprecated using qos(depth) instead
@@ -2650,7 +2707,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
                  for(int j=0; j<6; ++j) feedback->pos[j] = cur_pos->_fPosition[j];
                  bool is_arrived = true;
                  for(int i=0; i<6; i++) {
-                     if(std::abs(cur_pos->_fPosition[i] - goal->target_pos[i]) > 0.1) {
+                     if(std::abs(cur_pos->_fPosition[i] - goal->target_pos[i]) > 0.3) {
                         is_arrived = false;
                         break;
                      }
