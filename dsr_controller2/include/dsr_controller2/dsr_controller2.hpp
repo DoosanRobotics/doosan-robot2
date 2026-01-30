@@ -154,6 +154,17 @@
 #include "dsr_msgs2/srv/get_ctrl_box_digital_output.hpp"
 #include "dsr_msgs2/srv/get_tool_digital_output.hpp"
 
+//plc
+#include "dsr_msgs2/srv/get_input_register_bit.hpp"
+#include "dsr_msgs2/srv/get_input_register_int.hpp"
+#include "dsr_msgs2/srv/get_input_register_float.hpp"
+#include "dsr_msgs2/srv/get_output_register_bit.hpp"
+#include "dsr_msgs2/srv/get_output_register_int.hpp"
+#include "dsr_msgs2/srv/get_output_register_float.hpp"
+#include "dsr_msgs2/srv/set_output_register_bit.hpp"
+#include "dsr_msgs2/srv/set_output_register_int.hpp"
+#include "dsr_msgs2/srv/set_output_register_float.hpp"
+
 //modbus
 #include "dsr_msgs2/srv/set_modbus_output.hpp"
 #include "dsr_msgs2/srv/get_modbus_input.hpp"
@@ -731,6 +742,26 @@ protected:
   rclcpp_action::Server<dsr_msgs2::action::JogH2r>::SharedPtr               m_nh_srv_jog_h2r;
   rclcpp_action::Server<dsr_msgs2::action::MovejH2r>::SharedPtr              m_nh_srv_movej_h2r;
   rclcpp_action::Server<dsr_msgs2::action::MovelH2r>::SharedPtr              m_nh_srv_movel_h2r;
+
+  //----- PLC
+  //   m_nh_srv_get_input_register_int = get_node()->create_service<dsr_msgs2::srv::GetInputRegisterInt>("plc/get_input_register_int", get_input_register_int_cb);
+  // m_nh_srv_get_input_register_bit = get_node()->create_service<dsr_msgs2::srv::GetInputRegisterBit>("plc/get_input_register_bit", get_input_register_bit_cb);
+  // m_nh_srv_get_input_register_float = get_node()->create_service<dsr_msgs2::srv::GetInputRegisterFloat>("plc/get_input_register_float", get_input_register_float_cb);
+  // m_nh_srv_set_output_register_int = get_node()->create_service<dsr_msgs2::srv::SetOutputRegisterInt>("plc/set_output_register_int", set_output_register_int_cb);
+  // m_nh_srv_set_output_register_bit = get_node()->create_service<dsr_msgs2::srv::SetOutputRegisterBit>("plc/set_output_register_bit", set_output_register_bit_cb);
+  // m_nh_srv_set_output_register_float = get_node()->create_service<dsr_msgs2::srv::SetOutputRegisterFloat>("plc/set_output_register_float", set_output_register_float_cb);
+  // m_nh_srv_get_output_register_int = get_node()->create_service<dsr_msgs2::srv::GetOutputRegisterInt>("plc/get_output_register_int", get_output_register_int_cb);
+  // m_nh_srv_get_output_register_bit = get_node()->create_service<dsr_msgs2::srv::GetOutputRegisterBit>("plc/get_output_register_bit", get_output_register_bit_cb);
+  // m_nh_srv_get_output_register_float = get_node()->create_service<dsr_msgs2::srv::GetOutputRegisterFloat>("plc/get_output_register_float", get_output_register_float_cb);
+  rclcpp::Service<dsr_msgs2::srv::GetInputRegisterInt>::SharedPtr    m_nh_srv_get_input_register_int;
+  rclcpp::Service<dsr_msgs2::srv::GetInputRegisterBit>::SharedPtr    m_nh_srv_get_input_register_bit;
+  rclcpp::Service<dsr_msgs2::srv::GetInputRegisterFloat>::SharedPtr  m_nh_srv_get_input_register_float;
+  rclcpp::Service<dsr_msgs2::srv::SetOutputRegisterInt>::SharedPtr   m_nh_srv_set_output_register_int;
+  rclcpp::Service<dsr_msgs2::srv::SetOutputRegisterBit>::SharedPtr   m_nh_srv_set_output_register_bit;
+  rclcpp::Service<dsr_msgs2::srv::SetOutputRegisterFloat>::SharedPtr m_nh_srv_set_output_register_float;
+  rclcpp::Service<dsr_msgs2::srv::GetOutputRegisterInt>::SharedPtr   m_nh_srv_get_output_register_int;
+  rclcpp::Service<dsr_msgs2::srv::GetOutputRegisterBit>::SharedPtr   m_nh_srv_get_output_register_bit;
+  rclcpp::Service<dsr_msgs2::srv::GetOutputRegisterFloat>::SharedPtr m_nh_srv_get_output_register_float;
 
   // Real-time data publishing members and parameters for periodic Float32MultiArray topic output.
   bool use_rt_topic_pub_{false};
