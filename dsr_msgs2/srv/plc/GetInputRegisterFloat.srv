@@ -1,0 +1,5 @@
+uint16 address
+uint32 timeout_ms
+---
+bool success
+float64 value

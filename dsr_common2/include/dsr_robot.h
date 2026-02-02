@@ -154,6 +154,16 @@
 #include <dsr_msgs2/GetCtrlBoxDigitalOutput.h>
 #include <dsr_msgs2/GetToolDigitalOutput.h>
 
+#include <dsr_msgs2/GetInputRegisterBit.h>
+#include <dsr_msgs2/GetInputRegisterInt.h>
+#include <dsr_msgs2/GetInputRegisterFloat.h>
+#include <dsr_msgs2/GetOutputRegisterBit.h>
+#include <dsr_msgs2/GetOutputRegisterInt.h>
+#include <dsr_msgs2/GetOutputRegisterFloat.h>
+#include <dsr_msgs2/SetOutputRegisterBit.h>
+#include <dsr_msgs2/SetOutputRegisterInt.h>
+#include <dsr_msgs2/SetOutputRegisterFloat.h>
+
 #include <dsr_msgs2/SetModbusOutput.h>
 #include <dsr_msgs2/GetModbusInput.h>
 #include <dsr_msgs2/ConfigCreateModbus.h>
