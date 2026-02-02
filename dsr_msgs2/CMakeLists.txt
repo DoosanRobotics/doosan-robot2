@@ -145,6 +145,16 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/io/SetCtrlBoxAnalogOutputType.srv"
   "srv/io/SetCtrlBoxAnalogOutput.srv"
   "srv/io/GetCtrlBoxAnalogInput.srv"
+
+  "srv/plc/GetInputRegisterBit.srv"
+  "srv/plc/GetInputRegisterInt.srv"
+  "srv/plc/GetInputRegisterFloat.srv"
+  "srv/plc/GetOutputRegisterBit.srv"
+  "srv/plc/GetOutputRegisterInt.srv"
+  "srv/plc/GetOutputRegisterFloat.srv"
+  "srv/plc/SetOutputRegisterBit.srv"
+  "srv/plc/SetOutputRegisterInt.srv"
+  "srv/plc/SetOutputRegisterFloat.srv"
     
   "srv/modbus/ConfigCreateModbus.srv"
   "srv/modbus/ConfigDeleteModbus.srv"
