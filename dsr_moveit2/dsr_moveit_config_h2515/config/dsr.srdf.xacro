@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot name="m0609" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="h2515" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:arg name="gripper" default="none"/>
   <xacro:property name="grip" value="${xacro.arg('gripper')}"/>
   

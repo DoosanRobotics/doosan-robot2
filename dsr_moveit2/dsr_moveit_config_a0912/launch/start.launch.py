@@ -103,20 +103,26 @@ def rviz_and_move_group_fn(context):
                             )
         .to_moveit_configs()
     )
-
-    common_params = [
+    
+    move_group_params = [
         moveit_config.to_dict(),  # robot_description & robot_description_semantic from MoveitConfigbuilder
         {"robot_description": ParameterValue(LaunchConfiguration('robot_description'), value_type=str)},
     ]
-
-    ns_value = LaunchConfiguration('name').perform(context)
+    
+    rviz_params = [
+        moveit_config.planning_pipelines,
+        moveit_config.robot_description_kinematics,
+        moveit_config.joint_limits,
+        moveit_config.robot_description_semantic,
+        {"robot_description": ParameterValue(LaunchConfiguration('robot_description'), value_type=str)},
+    ]
 
     run_move_group_node = Node(
         package="moveit_ros_move_group",
         executable="move_group",
-        namespace=ns_value,
+        namespace=LaunchConfiguration('name'),
         output="screen",
-        parameters=common_params,
+        parameters=move_group_params,
     )
 
     rviz_base = os.path.join(get_package_share_directory(package_name), "launch")
@@ -146,9 +152,8 @@ def rviz_and_move_group_fn(context):
         executable="rviz2",
         name="rviz2",
         output="log",
-        namespace=ns_value,
-        arguments=["-d", tmp_rviz_path],
-        parameters=common_params,
+        arguments=["-d", rviz_full_config],
+        parameters=rviz_params,
     )
 
     cleanup_rviz_file = RegisterEventHandler(
