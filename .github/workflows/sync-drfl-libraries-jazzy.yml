@@ -1,0 +1,57 @@
+name: Sync DRFL Libraries (Jazzy)
+
+on:
+  repository_dispatch:
+    types: [update-drfl-libraries-jazzy]
+
+jobs:
+  sync-libraries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ros2-dev repository
+        uses: actions/checkout@v4
+        with:
+          ref: github-jazzy
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download ARM64 library (24.04)
+        run: |
+          mkdir -p dsr_common2/lib/jazzy/arm64
+          curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            "https://raw.githubusercontent.com/dsg-robotics/drfl-example/main/library/Linux/64bits/arm64/24.04/libDRFL.a" \
+            -o dsr_common2/lib/jazzy/arm64/libDRFL.a
+
+      - name: Download x86_64 library (24.04)
+        run: |
+          mkdir -p dsr_common2/lib/jazzy/x86_64
+          curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            "https://raw.githubusercontent.com/dsg-robotics/drfl-example/main/library/Linux/64bits/amd64/24.04/libDRFL.a" \
+            -o dsr_common2/lib/jazzy/x86_64/libDRFL.a
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dsr_common2/lib/jazzy/arm64/libDRFL.a dsr_common2/lib/jazzy/x86_64/libDRFL.a
+          git commit -m "chore: update DRFL libraries (24.04) from drfl-example@${{ github.event.client_payload.sha }}
+
+          Auto-synced from dsg-robotics/drfl-example
+          Triggered by: ${{ github.event.client_payload.ref }}"
+          git push origin github-jazzy
+
+      - name: Summary
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          echo "Libraries successfully synced to ros2-dev github-jazzy branch"
