@@ -84,6 +84,7 @@ def generate_robot_description_action(context, *args, **kwargs):
 
 def rviz_and_move_group_fn(context):
     model_value = LaunchConfiguration('model').perform(context)
+    ns_value = LaunchConfiguration('name').perform(context)
     gui = LaunchConfiguration('gui').perform(context).lower() == 'true'
 
     package_name = f"dsr_moveit_config_{model_value}"
