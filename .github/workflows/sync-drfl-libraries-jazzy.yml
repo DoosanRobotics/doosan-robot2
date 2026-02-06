@@ -17,7 +17,7 @@ jobs:
       - name: Download ARM64 library (24.04)
         run: |
           mkdir -p dsr_common2/lib/jazzy/arm64
-          curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -L -H "Authorization: token ${{ secrets.ROS2_DEV_PUSH_TOKEN }}" \
             -H "Accept: application/vnd.github.v3.raw" \
             "https://raw.githubusercontent.com/dsg-robotics/drfl-example/main/library/Linux/64bits/arm64/24.04/libDRFL.a" \
             -o dsr_common2/lib/jazzy/arm64/libDRFL.a
@@ -25,7 +25,7 @@ jobs:
       - name: Download x86_64 library (24.04)
         run: |
           mkdir -p dsr_common2/lib/jazzy/x86_64
-          curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -L -H "Authorization: token ${{ secrets.ROS2_DEV_PUSH_TOKEN }}" \
             -H "Accept: application/vnd.github.v3.raw" \
             "https://raw.githubusercontent.com/dsg-robotics/drfl-example/main/library/Linux/64bits/amd64/24.04/libDRFL.a" \
             -o dsr_common2/lib/jazzy/x86_64/libDRFL.a
@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir -p dsr_common2/include
           for header in DRFC.h DRFL.h DRFLEx.h DRFS.h; do
-            curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            curl -L -H "Authorization: token ${{ secrets.ROS2_DEV_PUSH_TOKEN }}" \
               -H "Accept: application/vnd.github.v3.raw" \
               "https://raw.githubusercontent.com/dsg-robotics/drfl-example/main/include/$header" \
               -o dsr_common2/include/$header
