@@ -19,7 +19,18 @@ jobs:
         with:
           ref: jazzy
           fetch-depth: 0  # Full history for proper sync
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
+
+      - name: Verify token exists
+        env:
+          UPSTREAM_TOKEN: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
+        run: |
+          if [ -z "$UPSTREAM_TOKEN" ]; then
+            echo "ERROR: ROS2_DEV_PUSH_TOKEN secret is not set!"
+            echo "Please add the secret at: https://github.com/dsg-robotics/ros2-dev/settings/secrets/actions"
+            exit 1
+          fi
+          echo "✓ ROS2_DEV_PUSH_TOKEN is configured"
 
       - name: Configure Git
         run: |
