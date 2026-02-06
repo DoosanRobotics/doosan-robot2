@@ -130,7 +130,7 @@ jobs:
       - name: Push to upstream
         if: steps.check_commits.outputs.has_new_commits == 'true'
         env:
-          UPSTREAM_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+          UPSTREAM_TOKEN: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
         run: |
           BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
 
@@ -140,7 +140,7 @@ jobs:
       - name: Create Pull Request
         if: steps.check_commits.outputs.has_new_commits == 'true'
         env:
-          UPSTREAM_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+          UPSTREAM_TOKEN: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
         run: |
           BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
           COMMITS_AHEAD="${{ steps.check_commits.outputs.commits_ahead }}"
