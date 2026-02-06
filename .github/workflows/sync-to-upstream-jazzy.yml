@@ -130,17 +130,17 @@ jobs:
       - name: Push to upstream
         if: steps.check_commits.outputs.has_new_commits == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
         run: |
           BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
 
           # Push to upstream using HTTPS with token
-          git push https://$GITHUB_TOKEN@github.com/DoosanRobotics/doosan-robot2.git $BRANCH_NAME
+          git push https://$UPSTREAM_TOKEN@github.com/DoosanRobotics/doosan-robot2.git $BRANCH_NAME
 
       - name: Create Pull Request
         if: steps.check_commits.outputs.has_new_commits == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
         run: |
           BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
           COMMITS_AHEAD="${{ steps.check_commits.outputs.commits_ahead }}"
@@ -150,7 +150,7 @@ jobs:
 
           # Create PR using GitHub API
           curl -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Authorization: token $UPSTREAM_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/DoosanRobotics/doosan-robot2/pulls \
             -d @- << EOF
