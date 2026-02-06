@@ -97,8 +97,14 @@ jobs:
                   exit 1
                 fi
 
-                # Continue cherry-pick with resolved conflicts
-                git cherry-pick --continue
+                # Check if the cherry-pick resulted in empty commit
+                if git diff --cached --quiet; then
+                  echo "Cherry-pick resulted in empty commit. Skipping..."
+                  git cherry-pick --skip
+                else
+                  # Continue cherry-pick with resolved conflicts
+                  git -c core.editor=true cherry-pick --continue
+                fi
               else
                 echo "ERROR: Conflicts in non-DRFL files detected"
                 git diff --name-only --diff-filter=U
