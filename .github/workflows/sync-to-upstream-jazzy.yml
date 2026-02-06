@@ -71,6 +71,13 @@ jobs:
             echo "Cherry-picking commit: $commit"
 
             if ! git cherry-pick $commit; then
+              # Check if it's an empty commit (no conflicts, just empty)
+              if git diff --cached --quiet && [ -z "$(git diff --name-only --diff-filter=U)" ]; then
+                echo "Cherry-pick resulted in empty commit (already applied). Skipping..."
+                git cherry-pick --skip
+                continue
+              fi
+
               echo "Conflict detected in commit $commit"
 
               # Check if conflict is in DRFL files
