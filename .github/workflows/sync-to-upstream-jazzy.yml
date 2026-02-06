@@ -1,0 +1,185 @@
+name: Sync to Upstream Jazzy
+
+on:
+  push:
+    branches:
+      - jazzy
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+  workflow_dispatch:  # Manual trigger for testing
+
+jobs:
+  sync-to-upstream:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ros2-dev repository
+        uses: actions/checkout@v4
+        with:
+          ref: jazzy
+          fetch-depth: 0  # Full history for proper sync
+          token: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
+
+      - name: Verify token exists
+        env:
+          UPSTREAM_TOKEN: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
+        run: |
+          if [ -z "$UPSTREAM_TOKEN" ]; then
+            echo "ERROR: ROS2_DEV_PUSH_TOKEN secret is not set!"
+            echo "Please add the secret at: https://github.com/dsg-robotics/ros2-dev/settings/secrets/actions"
+            exit 1
+          fi
+          echo "✓ ROS2_DEV_PUSH_TOKEN is configured"
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/DoosanRobotics/doosan-robot2.git || true
+          git fetch upstream jazzy
+
+      - name: Check for new commits
+        id: check_commits
+        run: |
+          # Get the latest commit from upstream/jazzy
+          UPSTREAM_SHA=$(git rev-parse upstream/jazzy)
+
+          # Check if our jazzy has commits ahead of upstream
+          COMMITS_AHEAD=$(git rev-list --count upstream/jazzy..origin/jazzy)
+
+          echo "upstream_sha=$UPSTREAM_SHA" >> $GITHUB_OUTPUT
+          echo "commits_ahead=$COMMITS_AHEAD" >> $GITHUB_OUTPUT
+
+          if [ "$COMMITS_AHEAD" -gt 0 ]; then
+            echo "has_new_commits=true" >> $GITHUB_OUTPUT
+            echo "Found $COMMITS_AHEAD new commit(s) to sync"
+          else
+            echo "has_new_commits=false" >> $GITHUB_OUTPUT
+            echo "No new commits to sync"
+          fi
+
+      - name: Create sync branch
+        if: steps.check_commits.outputs.has_new_commits == 'true'
+        run: |
+          # Create a unique branch name with timestamp
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          BRANCH_NAME="auto-sync-jazzy-${TIMESTAMP}"
+
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+          # Start from upstream/jazzy
+          git checkout -b $BRANCH_NAME upstream/jazzy
+
+          # Get list of commits to cherry-pick
+          COMMITS=$(git rev-list --reverse upstream/jazzy..origin/jazzy)
+
+          # Cherry-pick commits one by one with conflict handling
+          for commit in $COMMITS; do
+            echo "Cherry-picking commit: $commit"
+
+            # Check if commit is a merge commit (has multiple parents)
+            if git rev-parse "$commit^2" >/dev/null 2>&1; then
+              echo "Skipping merge commit $commit (merge commits don't need to be cherry-picked)"
+              continue
+            fi
+
+            if ! git cherry-pick $commit; then
+              # Check git status for empty commit
+              GIT_STATUS=$(git status --porcelain)
+
+              # If status is empty, it's an empty commit (no changes at all)
+              if [ -z "$GIT_STATUS" ]; then
+                echo "Cherry-pick resulted in empty commit (already applied). Skipping..."
+                git cherry-pick --skip
+                continue
+              fi
+
+              echo "Conflict detected in commit $commit"
+
+              # Auto-resolve ALL conflicts with origin version
+              # Rationale: dsg-robotics/ros2-dev is the development source
+              # Conflicts typically mean changes are already in upstream
+              # Using origin version + checking for empty commit = safe skip
+
+              CONFLICTED_FILES=$(git diff --name-only --diff-filter=U)
+
+              if [ -n "$CONFLICTED_FILES" ]; then
+                echo "Auto-resolving conflicts with origin version (development source):"
+                echo "$CONFLICTED_FILES"
+
+                # Resolve all conflicts with origin version (ours in cherry-pick)
+                for file in $CONFLICTED_FILES; do
+                  echo "  Resolving $file with origin version"
+                  git checkout --ours "$file"
+                  git add "$file"
+                done
+
+                # Check if resolution resulted in empty commit
+                if git diff --cached --quiet; then
+                  echo "Conflict resolution resulted in empty commit (already applied). Skipping..."
+                  git cherry-pick --skip
+                else
+                  # Continue cherry-pick with resolved conflicts
+                  echo "Continuing with resolved changes..."
+                  git -c core.editor=true cherry-pick --continue
+                fi
+              else
+                echo "ERROR: Cherry-pick failed but no conflicts detected"
+                echo "Manual resolution required"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "All commits cherry-picked successfully"
+        id: create_branch
+
+      - name: Push to upstream
+        if: steps.check_commits.outputs.has_new_commits == 'true'
+        env:
+          UPSTREAM_TOKEN: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
+        run: |
+          BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
+
+          # Push to upstream using HTTPS with token
+          git push https://$UPSTREAM_TOKEN@github.com/DoosanRobotics/doosan-robot2.git $BRANCH_NAME
+
+      - name: Create Pull Request
+        if: steps.check_commits.outputs.has_new_commits == 'true'
+        env:
+          UPSTREAM_TOKEN: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
+        run: |
+          BRANCH_NAME="${{ steps.create_branch.outputs.branch_name }}"
+          COMMITS_AHEAD="${{ steps.check_commits.outputs.commits_ahead }}"
+
+          # Get commit messages for PR body
+          COMMIT_LOG=$(git log --oneline upstream/jazzy..origin/jazzy | sed 's/^/- /')
+
+          # Create PR using GitHub API
+          curl -X POST \
+            -H "Authorization: token $UPSTREAM_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/DoosanRobotics/doosan-robot2/pulls \
+            -d @- << EOF
+          {
+            "title": "chore: auto-sync from dsg-robotics/ros2-dev (jazzy)",
+            "body": "## Auto-Sync from dsg-robotics/ros2-dev\n\nThis PR automatically syncs $COMMITS_AHEAD commit(s) from [dsg-robotics/ros2-dev](https://github.com/dsg-robotics/ros2-dev) jazzy branch.\n\n### Commits included:\n$COMMIT_LOG\n\n---\n\n🤖 Auto-generated by [sync-to-upstream-jazzy workflow](https://github.com/dsg-robotics/ros2-dev/actions)\n\n**Source**: dsg-robotics/ros2-dev@${{ github.sha }}\n**Target**: DoosanRobotics/doosan-robot2:jazzy",
+            "head": "$BRANCH_NAME",
+            "base": "jazzy"
+          }
+          EOF
+
+      - name: Summary
+        if: steps.check_commits.outputs.has_new_commits == 'true'
+        run: |
+          echo "✅ Successfully created PR to sync ${{ steps.check_commits.outputs.commits_ahead }} commit(s) to upstream"
+          echo "Branch: ${{ steps.create_branch.outputs.branch_name }}"
+
+      - name: No changes
+        if: steps.check_commits.outputs.has_new_commits == 'false'
+        run: |
+          echo "ℹ️ No new commits to sync - upstream is already up to date"
