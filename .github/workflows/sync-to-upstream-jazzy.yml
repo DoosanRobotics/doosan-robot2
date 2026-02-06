@@ -63,8 +63,52 @@ jobs:
           # Start from upstream/jazzy
           git checkout -b $BRANCH_NAME upstream/jazzy
 
-          # Cherry-pick new commits from origin/jazzy
-          git cherry-pick upstream/jazzy..origin/jazzy
+          # Get list of commits to cherry-pick
+          COMMITS=$(git rev-list --reverse upstream/jazzy..origin/jazzy)
+
+          # Cherry-pick commits one by one with conflict handling
+          for commit in $COMMITS; do
+            echo "Cherry-picking commit: $commit"
+
+            if ! git cherry-pick $commit; then
+              echo "Conflict detected in commit $commit"
+
+              # Check if conflict is in DRFL files
+              DRFL_CONFLICTS=$(git diff --name-only --diff-filter=U | grep -E "dsr_common2/(include|lib).*/(DRFL|DRFC|DRFS|DRFLEx)" || true)
+
+              if [ -n "$DRFL_CONFLICTS" ]; then
+                echo "DRFL-related conflicts detected. Using origin version for these files:"
+                echo "$DRFL_CONFLICTS"
+
+                # For DRFL conflicts, use origin version (ours in cherry-pick context)
+                for file in $DRFL_CONFLICTS; do
+                  echo "  Resolving $file with origin version"
+                  git checkout --ours "$file"
+                  git add "$file"
+                done
+
+                # Check if there are other conflicts
+                OTHER_CONFLICTS=$(git diff --name-only --diff-filter=U | grep -vE "dsr_common2/(include|lib).*/(DRFL|DRFC|DRFS|DRFLEx)" || true)
+
+                if [ -n "$OTHER_CONFLICTS" ]; then
+                  echo "ERROR: Non-DRFL conflicts detected:"
+                  echo "$OTHER_CONFLICTS"
+                  echo "Manual resolution required"
+                  exit 1
+                fi
+
+                # Continue cherry-pick with resolved conflicts
+                git cherry-pick --continue
+              else
+                echo "ERROR: Conflicts in non-DRFL files detected"
+                git diff --name-only --diff-filter=U
+                echo "Manual resolution required"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "All commits cherry-picked successfully"
         id: create_branch
 
       - name: Push to upstream
