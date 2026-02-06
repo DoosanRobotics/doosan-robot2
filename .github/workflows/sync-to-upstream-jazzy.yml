@@ -71,8 +71,11 @@ jobs:
             echo "Cherry-picking commit: $commit"
 
             if ! git cherry-pick $commit; then
-              # Check if it's an empty commit (no conflicts, just empty)
-              if git diff --cached --quiet && [ -z "$(git diff --name-only --diff-filter=U)" ]; then
+              # Check git status for empty commit
+              GIT_STATUS=$(git status --porcelain)
+
+              # If status is empty, it's an empty commit (no changes at all)
+              if [ -z "$GIT_STATUS" ]; then
                 echo "Cherry-pick resulted in empty commit (already applied). Skipping..."
                 git cherry-pick --skip
                 continue
