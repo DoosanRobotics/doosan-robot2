@@ -83,41 +83,35 @@ jobs:
 
               echo "Conflict detected in commit $commit"
 
-              # Check if conflict is in DRFL files
-              DRFL_CONFLICTS=$(git diff --name-only --diff-filter=U | grep -E "dsr_common2/(include|lib).*/(DRFL|DRFC|DRFS|DRFLEx)" || true)
+              # Auto-resolve ALL conflicts with origin version
+              # Rationale: dsg-robotics/ros2-dev is the development source
+              # Conflicts typically mean changes are already in upstream
+              # Using origin version + checking for empty commit = safe skip
 
-              if [ -n "$DRFL_CONFLICTS" ]; then
-                echo "DRFL-related conflicts detected. Using origin version for these files:"
-                echo "$DRFL_CONFLICTS"
+              CONFLICTED_FILES=$(git diff --name-only --diff-filter=U)
 
-                # For DRFL conflicts, use origin version (ours in cherry-pick context)
-                for file in $DRFL_CONFLICTS; do
+              if [ -n "$CONFLICTED_FILES" ]; then
+                echo "Auto-resolving conflicts with origin version (development source):"
+                echo "$CONFLICTED_FILES"
+
+                # Resolve all conflicts with origin version (ours in cherry-pick)
+                for file in $CONFLICTED_FILES; do
                   echo "  Resolving $file with origin version"
                   git checkout --ours "$file"
                   git add "$file"
                 done
 
-                # Check if there are other conflicts
-                OTHER_CONFLICTS=$(git diff --name-only --diff-filter=U | grep -vE "dsr_common2/(include|lib).*/(DRFL|DRFC|DRFS|DRFLEx)" || true)
-
-                if [ -n "$OTHER_CONFLICTS" ]; then
-                  echo "ERROR: Non-DRFL conflicts detected:"
-                  echo "$OTHER_CONFLICTS"
-                  echo "Manual resolution required"
-                  exit 1
-                fi
-
-                # Check if the cherry-pick resulted in empty commit
+                # Check if resolution resulted in empty commit
                 if git diff --cached --quiet; then
-                  echo "Cherry-pick resulted in empty commit. Skipping..."
+                  echo "Conflict resolution resulted in empty commit (already applied). Skipping..."
                   git cherry-pick --skip
                 else
                   # Continue cherry-pick with resolved conflicts
+                  echo "Continuing with resolved changes..."
                   git -c core.editor=true cherry-pick --continue
                 fi
               else
-                echo "ERROR: Conflicts in non-DRFL files detected"
-                git diff --name-only --diff-filter=U
+                echo "ERROR: Cherry-pick failed but no conflicts detected"
                 echo "Manual resolution required"
                 exit 1
               fi
