@@ -70,6 +70,12 @@ jobs:
           for commit in $COMMITS; do
             echo "Cherry-picking commit: $commit"
 
+            # Check if commit is a merge commit (has multiple parents)
+            if git rev-parse "$commit^2" >/dev/null 2>&1; then
+              echo "Skipping merge commit $commit (merge commits don't need to be cherry-picked)"
+              continue
+            fi
+
             if ! git cherry-pick $commit; then
               # Check git status for empty commit
               GIT_STATUS=$(git status --porcelain)
