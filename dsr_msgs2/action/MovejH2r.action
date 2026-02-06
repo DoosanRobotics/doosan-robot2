@@ -1,0 +1,10 @@
+# Goal
+float64[6] target_pos
+float64[6] target_vel
+float64[6] target_acc
+---
+# Result
+bool success
+---
+# Feedback
+float64[6] pos

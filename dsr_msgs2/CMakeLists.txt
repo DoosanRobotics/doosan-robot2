@@ -12,6 +12,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(action_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
@@ -150,6 +151,16 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetModbusOutput.srv"
   "srv/GetModbusInput.srv"
 
+  "srv/plc/GetInputRegisterBit.srv"
+  "srv/plc/GetInputRegisterInt.srv"
+  "srv/plc/GetInputRegisterFloat.srv"
+  "srv/plc/GetOutputRegisterBit.srv"
+  "srv/plc/GetOutputRegisterInt.srv"
+  "srv/plc/GetOutputRegisterFloat.srv"
+  "srv/plc/SetOutputRegisterBit.srv"
+  "srv/plc/SetOutputRegisterInt.srv"
+  "srv/plc/SetOutputRegisterFloat.srv"
+
   "srv/DrlStart.srv"
   "srv/DrlStop.srv"
   "srv/DrlPause.srv"
@@ -179,7 +190,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/StopRtControl.srv"
   "srv/WriteDataRt.srv"
 
-  DEPENDENCIES builtin_interfaces std_msgs  
+  "action/JogH2r.action"
+  "action/MovejH2r.action"
+  "action/MovelH2r.action"
+
+  DEPENDENCIES builtin_interfaces std_msgs action_msgs  
 )
 
 ament_export_dependencies(rosidl_default_runtime)

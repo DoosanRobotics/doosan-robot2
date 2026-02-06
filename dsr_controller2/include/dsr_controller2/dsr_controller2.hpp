@@ -173,6 +173,17 @@
 #include "dsr_msgs2/srv/config_create_modbus.hpp"
 #include "dsr_msgs2/srv/config_delete_modbus.hpp"
 
+//plc
+#include "dsr_msgs2/srv/get_input_register_bit.hpp"
+#include "dsr_msgs2/srv/get_input_register_int.hpp"
+#include "dsr_msgs2/srv/get_input_register_float.hpp"
+#include "dsr_msgs2/srv/get_output_register_bit.hpp"
+#include "dsr_msgs2/srv/get_output_register_int.hpp"
+#include "dsr_msgs2/srv/get_output_register_float.hpp"
+#include "dsr_msgs2/srv/set_output_register_bit.hpp"
+#include "dsr_msgs2/srv/set_output_register_int.hpp"
+#include "dsr_msgs2/srv/set_output_register_float.hpp"
+
 //drl
 #include "dsr_msgs2/srv/drl_pause.hpp"
 #include "dsr_msgs2/srv/drl_start.hpp"
@@ -214,6 +225,12 @@
 #include "dsr_msgs2/srv/start_rt_control.hpp"
 #include "dsr_msgs2/srv/stop_rt_control.hpp"
 #include "dsr_msgs2/srv/write_data_rt.hpp"
+
+// action
+#include "rclcpp_action/rclcpp_action.hpp"
+#include "dsr_msgs2/action/jog_h2r.hpp"
+#include "dsr_msgs2/action/movej_h2r.hpp"
+#include "dsr_msgs2/action/movel_h2r.hpp"
 
 #include "std_msgs/msg/float32_multi_array.hpp"
 
@@ -695,10 +712,21 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::SetCtrlBoxAnalogInputType>::SharedPtr    m_nh_srv_set_ctrl_box_analog_input_type; 
 
   //----- MODBUS
-  rclcpp::Service<dsr_msgs2::srv::SetModbusOutput>::SharedPtr              m_nh_srv_set_modbus_output; 
-  rclcpp::Service<dsr_msgs2::srv::GetModbusInput>::SharedPtr               m_nh_srv_get_modbus_input; 
-  rclcpp::Service<dsr_msgs2::srv::ConfigCreateModbus>::SharedPtr           m_nh_srv_config_create_modbus; 
-  rclcpp::Service<dsr_msgs2::srv::ConfigDeleteModbus>::SharedPtr           m_nh_srv_config_delete_modbus; 
+  rclcpp::Service<dsr_msgs2::srv::SetModbusOutput>::SharedPtr              m_nh_srv_set_modbus_output;
+  rclcpp::Service<dsr_msgs2::srv::GetModbusInput>::SharedPtr               m_nh_srv_get_modbus_input;
+  rclcpp::Service<dsr_msgs2::srv::ConfigCreateModbus>::SharedPtr           m_nh_srv_config_create_modbus;
+  rclcpp::Service<dsr_msgs2::srv::ConfigDeleteModbus>::SharedPtr           m_nh_srv_config_delete_modbus;
+
+  //----- PLC
+  rclcpp::Service<dsr_msgs2::srv::GetInputRegisterInt>::SharedPtr          m_nh_srv_get_input_register_int;
+  rclcpp::Service<dsr_msgs2::srv::GetInputRegisterBit>::SharedPtr          m_nh_srv_get_input_register_bit;
+  rclcpp::Service<dsr_msgs2::srv::GetInputRegisterFloat>::SharedPtr        m_nh_srv_get_input_register_float;
+  rclcpp::Service<dsr_msgs2::srv::SetOutputRegisterInt>::SharedPtr         m_nh_srv_set_output_register_int;
+  rclcpp::Service<dsr_msgs2::srv::SetOutputRegisterBit>::SharedPtr         m_nh_srv_set_output_register_bit;
+  rclcpp::Service<dsr_msgs2::srv::SetOutputRegisterFloat>::SharedPtr       m_nh_srv_set_output_register_float;
+  rclcpp::Service<dsr_msgs2::srv::GetOutputRegisterInt>::SharedPtr         m_nh_srv_get_output_register_int;
+  rclcpp::Service<dsr_msgs2::srv::GetOutputRegisterBit>::SharedPtr         m_nh_srv_get_output_register_bit;
+  rclcpp::Service<dsr_msgs2::srv::GetOutputRegisterFloat>::SharedPtr       m_nh_srv_get_output_register_float;
 
   //----- DRL        
   rclcpp::Service<dsr_msgs2::srv::DrlPause>::SharedPtr                     m_nh_srv_drl_pause; 
@@ -724,6 +752,11 @@ protected:
   rclcpp::Service<dsr_msgs2::srv::SetAccxRt>::SharedPtr                     m_nh_set_accx_rt;
   rclcpp::Service<dsr_msgs2::srv::ReadDataRt>::SharedPtr                    m_nh_read_data_rt;
   rclcpp::Service<dsr_msgs2::srv::WriteDataRt>::SharedPtr                   m_nh_write_data_rt;
+
+  //----- H2R Actions
+  rclcpp_action::Server<dsr_msgs2::action::JogH2r>::SharedPtr               m_nh_srv_jog_h2r;
+  rclcpp_action::Server<dsr_msgs2::action::MovejH2r>::SharedPtr             m_nh_srv_movej_h2r;
+  rclcpp_action::Server<dsr_msgs2::action::MovelH2r>::SharedPtr             m_nh_srv_movel_h2r;
 
   // Real-time data publishing members and parameters for periodic Float64MultiArray topic output.
   bool use_rt_topic_pub_{false};
