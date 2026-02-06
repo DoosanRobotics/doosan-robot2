@@ -7,7 +7,7 @@ on:
     paths-ignore:
       - '**.md'
       - '.github/**'
-      - '!.github/workflows/sync-to-upstream-jazzy.yml'
+  workflow_dispatch:  # Manual trigger for testing
 
 jobs:
   sync-to-upstream:
