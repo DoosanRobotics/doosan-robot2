@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: jazzy
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ROS2_DEV_PUSH_TOKEN }}
 
       - name: Download ARM64 library (24.04)
         run: |
