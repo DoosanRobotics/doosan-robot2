@@ -2550,8 +2550,6 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_srv_get_output_register_float = get_node()->create_service<dsr_msgs2::srv::GetOutputRegisterFloat>("plc/get_output_register_float", get_output_register_float_cb);
 
   // H2R Action Servers
-  rclcpp::QoS qos_profile(10); // rmw_qos_profile_services_default has been deprecated, using qos(depth) instead
-
   // MovejH2r and MovelH2r action type definitions
   using MovejH2r = dsr_msgs2::action::MovejH2r;
   using GoalHandleMovejH2r = rclcpp_action::ServerGoalHandle<MovejH2r>;
