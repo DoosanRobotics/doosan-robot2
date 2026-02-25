@@ -27,6 +27,8 @@
 #include <fstream>
 #include <iostream>
 #include <chrono>
+#include <map>
+#include <mutex>
 #include <unistd.h>     
 #include <math.h>
 
@@ -39,8 +41,6 @@ using namespace std;
 using namespace chrono;
 using namespace DRAFramework;
 
-CDRFLEx Drfl;
-
 bool g_bIsEmulatorMode = FALSE;
 std::string g_model;
 int m_nVersionDRCF;
@@ -48,9 +48,26 @@ constexpr size_t g_k_default_num_joint = 6;
 constexpr size_t g_k_p3020_num_joint = 5;
 constexpr size_t g_k_p3020_fixed_joint_index = 3;
 
-void* get_drfl(){
-    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"[DRFL address] %p", &Drfl);
-    return &Drfl;
+std::map<std::string, CDRFLEx*> g_drfl_instances;
+std::mutex g_drfl_map_mutex;
+CDRFLEx* g_active_drfl = nullptr;
+
+void* get_drfl(const char* robot_name = nullptr){
+    std::lock_guard<std::mutex> lock(g_drfl_map_mutex);
+
+    if (robot_name == nullptr || strlen(robot_name) == 0) {
+        if (!g_drfl_instances.empty()) {
+            return g_drfl_instances.begin()->second;
+        }
+        return g_active_drfl;
+    }
+
+    auto it = g_drfl_instances.find(robot_name);
+    if (it != g_drfl_instances.end()) {
+        return it->second;
+    }
+
+    return g_active_drfl;
 }
 
 namespace dsr_hardware2{
@@ -93,10 +110,13 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         ignored_joints_.insert(g_k_p3020_fixed_joint_index); // ignore joint 4 for p3020
     }
 
-    // host, rt_host, port, mode, model, update_rate
-    if(info.hardware_parameters.size() != 6) {
-        RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter Size ...");
-        return CallbackReturn::ERROR;
+    // Do not hard-fail by parameter count. Different xacro variants may include
+    // additional keys while still providing all required fields.
+    if(info.hardware_parameters.size() < 6) {
+        RCLCPP_WARN(
+            rclcpp::get_logger("dsr_hw_interface2"),
+            "Hardware parameter count seems low (%zu). Continuing with parsed keys.",
+            info.hardware_parameters.size());
     }
 
     // robot has 6 (or 5) joints and 2 interfaces
@@ -154,7 +174,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     // Try to connect to DRCF for 10 (20 * 0.5) sec. 
     bool is_connected = false;
     for (size_t retry = 0; retry < 20; ++retry) {
-        is_connected = Drfl.open_connection(drcf_ip_, drcf_port_);
+        is_connected = m_Drfl.open_connection(drcf_ip_, drcf_port_);
         if(!is_connected) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"Connecting failure.. retry...");
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -198,12 +218,12 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     });
     for (size_t retry = 0; retry < 10; ++retry, std::this_thread::sleep_for(std::chrono::milliseconds(1000))) {
         if(!get_control_access) {
-            Drfl.ManageAccessControl(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
+            m_Drfl.ManageAccessControl(MANAGE_ACCESS_CONTROL_FORCE_REQUEST);
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL MANAGE_ACCESS_CONTROL_FORCE_REQUEST called");
             continue;
         }
         if(!is_standby) {
-            Drfl.set_robot_control(CONTROL_SERVO_ON);
+            m_Drfl.set_robot_control(CONTROL_SERVO_ON);
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"INITIAL CONTROL_SERVO_ON called");
             continue;
         }
@@ -245,11 +265,11 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    m_nVersionDRCF = %d", m_nVersionDRCF);  //ex> M2.40 = 120400, M2.50 = 120500  
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
 
-    Drfl.setup_monitoring_version(1); //Enabling extended monitoring functions 
+    m_Drfl.setup_monitoring_version(1); //Enabling extended monitoring functions
 
-    if(Drfl.GetRobotState() != STATE_STANDBY)    {
+    if(m_Drfl.GetRobotState() != STATE_STANDBY)    {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Expected State : Stanby, \
-            but Actual State : %s ", to_str(Drfl.GetRobotState()).c_str()); 
+            but Actual State : %s ", to_str(m_Drfl.GetRobotState()).c_str());
         return CallbackReturn::ERROR;
     }
 
@@ -262,7 +282,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     //--- Set Robot mode : virual or real 
     ROBOT_SYSTEM eTargetSystem = ROBOT_SYSTEM_VIRTUAL;
     if(mode_ == "real") eTargetSystem = ROBOT_SYSTEM_REAL;
-    if(!Drfl.SetRobotSystem(eTargetSystem)) {
+    if(!m_Drfl.SetRobotSystem(eTargetSystem)) {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "SetRobotSystem {%s} Setting Failure !!",
                 mode_.c_str()); 
         return CallbackReturn::ERROR;
@@ -277,7 +297,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         if(m_nVersionDRCF >= 3000000) {
             drcf_ip_ = drcf_rt_ip_;
         }
-        if (!Drfl.connect_rt_control(drcf_ip_)) {
+        if (!m_Drfl.connect_rt_control(drcf_ip_)) {
             RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
             return CallbackReturn::FAILURE;
         }
@@ -301,7 +321,12 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         if (!Drfl.set_accj_rt(limit)) return CallbackReturn::ERROR;
     }
 
-    Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+    m_Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS,SAFETY_MODE_EVENT_MOVE);
+    {
+        std::lock_guard<std::mutex> lock(g_drfl_map_mutex);
+        g_drfl_instances[info_.name] = &m_Drfl;
+        g_active_drfl = &m_Drfl;
+    }
     return CallbackReturn::SUCCESS;
 }
 
@@ -345,7 +370,7 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
 {
     const size_t expected_num_joints = joint_position_.size();
     if(mode_ == "real") {
-        const LPRT_OUTPUT_DATA_LIST data = Drfl.read_data_rt();
+        const LPRT_OUTPUT_DATA_LIST data = m_Drfl.read_data_rt();
         if(nullptr == data) {
             RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
                                     "[read] read_data_rt retrieves nullptr");
@@ -360,7 +385,7 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
             idx_ros++;
         }
     }else if(mode_ == "virtual") {
-        LPROBOT_POSE pose = Drfl.GetCurrentPose();
+        LPROBOT_POSE pose = m_Drfl.GetCurrentPose();
         if(nullptr == pose) {
             RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
                                     "[read] GetCurrentPose retrieves nullptr");
@@ -415,7 +440,6 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     //         ,joint_velocities_command_[5]);
 
     // Measure CPU loop duration for REAL servo timing
-    static auto last_tick = std::chrono::steady_clock::now();
     auto now_cpu = std::chrono::steady_clock::now();
     double real_loop_dt = std::chrono::duration<double>(now_cpu - last_tick).count();
     last_tick = now_cpu;
@@ -470,17 +494,14 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     }
 
     // Accumulate simulated time
-    static double total_time_sec = 0.0;
-    total_time_sec += effective_dt;
-
-    static bool idle = false;
+    total_time_sec_ += effective_dt;
 
     if (positionCommandRunning(pre_joint_position_command_, joint_position_command_))
     {
         if (idle)
         {
-            Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE);
-            idle = false;
+            m_Drfl.set_safety_mode(SAFETY_MODE_AUTONOMOUS, SAFETY_MODE_EVENT_MOVE);
+            idle_ = false;
         }
 
         // Convert rad → deg
@@ -507,13 +528,13 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
             const float margin = 20.0f;
             float servo_time = static_cast<float>(real_loop_dt * margin);
 
-            Drfl.servoj_rt(pos, vel, acc, servo_time);
+            m_Drfl.servoj_rt(pos, vel, acc, servo_time);
             cmd_type = "servoj_rt";
         }
         else  // virtual
         {
             float target_vel_acc[g_k_default_num_joint] = {70,70,70,70,70,70};
-            Drfl.amovej(pos, target_vel_acc, target_vel_acc);
+            m_Drfl.amovej(pos, target_vel_acc, target_vel_acc);
             cmd_type = "amovej";
         }
 
@@ -537,7 +558,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         pre_joint_position_command_ = joint_position_command_;
         return return_type::OK;
     }
-    idle = true;
+    idle_ = true;
     pre_joint_position_command_ = joint_position_command_;
     return return_type::OK;
 }
@@ -545,10 +566,10 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
 
 DRHWInterface::~DRHWInterface()
 {
-    Drfl.stop_rt_control();
+    m_Drfl.stop_rt_control();
     // To-do : Update disconnection function in controller version v3.6
-    // Drfl.disconnect_rt_control();
-    Drfl.close_connection();
+    // m_Drfl.disconnect_rt_control();
+    m_Drfl.close_connection();
 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n"); 
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    CONNECTION IS CLOSED");

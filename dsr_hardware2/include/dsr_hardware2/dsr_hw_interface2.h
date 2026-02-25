@@ -25,7 +25,9 @@
 #include <boost/thread/thread.hpp>
 #include <array>
 #include <algorithm>  // std::copy
+#include <chrono>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -76,6 +78,10 @@ protected:
         {"position", {}}, {"velocity", {}}, {"effort", {}}};
 
     std::vector<int> hw_mapping_;   // URDF joints -> hardware joints mapping
+    DRAFramework::CDRFLEx m_Drfl;
+    std::chrono::steady_clock::time_point last_tick_{std::chrono::steady_clock::now()};
+    double total_time_sec_{0.0};
+    bool idle_{false};
 private:
     std::string drcf_ip_;
     std::string drcf_rt_ip_;

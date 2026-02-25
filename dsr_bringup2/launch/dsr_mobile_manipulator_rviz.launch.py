@@ -170,6 +170,7 @@ def generate_launch_description():
         executable="ros2_control_node",
         namespace=LaunchConfiguration('name'),
         parameters=[robot_description, robot_controllers, mobile_base_controllers],
+        remappings=[("~/robot_description", "robot_description")],
         output="both",
     )
 
