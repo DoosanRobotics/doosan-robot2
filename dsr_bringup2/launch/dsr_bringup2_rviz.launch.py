@@ -79,7 +79,7 @@ def generate_launch_description():
             " port:=", LaunchConfiguration('port'),
             " mode:=", LaunchConfiguration('mode'),
             " model:=", LaunchConfiguration('model'),
-            " update_rate:=", update_rate,
+            " update_rate:=", str(update_rate),
         ]
     )
 
@@ -143,7 +143,7 @@ def generate_launch_description():
                 " port:=", LaunchConfiguration('port'),
                 " mode:=", LaunchConfiguration('mode'),
                 " model:=", LaunchConfiguration('model'),
-                " update_rate:=", update_rate,
+                " update_rate:=", str(update_rate),
             ]),
         }]
     )

@@ -32,7 +32,7 @@ def generate_launch_description():
         DeclareLaunchArgument('remap_tf', default_value='false', description='REMAP TF'),
         DeclareLaunchArgument('use_joint_state_publisher', default_value='false', description='Publish joint_states for visualization'),
         DeclareLaunchArgument('use_nav2', default_value='true', description='Start Nav2 navigation stack'),
-        DeclareLaunchArgument('nav2_start_delay', default_value='3.0', description='Delay (sec) before starting Nav2 to wait for odom->base_link TF'),
+        DeclareLaunchArgument('nav2_start_delay', default_value='6.0', description='Delay (sec) before starting Nav2 to wait for odom->base_link TF'),
         DeclareLaunchArgument('use_map', default_value='false', description='Use map_server + AMCL localization'),
         DeclareLaunchArgument('enable_nav2_fallback', default_value='false', description='Call lifecycle_manager startup fallback'),
         DeclareLaunchArgument('map', default_value='', description='Map yaml for map mode (use_map:=true)'),
@@ -106,10 +106,13 @@ def generate_launch_description():
 
     robot_description = {"robot_description": ParameterValue(robot_description_content, value_type=str)}
 
+    moveit_config_pkg = PythonExpression([
+        "'dsr_moveit_config_' + '", LaunchConfiguration('model'), "'"
+    ])
     robot_controllers = PathJoinSubstitution([
-        FindPackageShare("dsr_controller2"),
+        FindPackageShare(moveit_config_pkg),
         "config",
-        "dsr_controller2.yaml",
+        "ros2_controllers.yaml",
     ])
     mobile_base_controllers = PathJoinSubstitution([
         FindPackageShare("dsr_controller2"),
@@ -242,14 +245,21 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager", "--controller-manager-timeout", "120"],
+    )
+
+    moveit_controller_spawner = Node(
+        package="controller_manager",
+        namespace=LaunchConfiguration('name'),
+        executable="spawner",
+        arguments=["dsr_moveit_controller", "-c", "controller_manager", "--activate", "--controller-manager-timeout", "120"],
     )
 
     mobile_base_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["diff_drive_controller", "-c", "controller_manager"],
+        arguments=["diff_drive_controller", "-c", "controller_manager", "--controller-manager-timeout", "120"],
     )
 
     delay_control_node = RegisterEventHandler(
@@ -282,6 +292,13 @@ def generate_launch_description():
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[mobile_base_controller_spawner],
+        )
+    )
+
+    delay_moveit_controller = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=robot_controller_spawner,
+            on_exit=[moveit_controller_spawner],
         )
     )
 
@@ -320,6 +337,7 @@ def generate_launch_description():
             'autostart': 'true',
             'use_composition': 'False',
             'use_respawn': 'False',
+            'use_smoother': 'False',
             'params_file': selected_nav2_params_file,
             'log_level': 'info',
         }.items(),
@@ -336,6 +354,7 @@ def generate_launch_description():
             'autostart': 'true',
             'use_composition': 'False',
             'use_respawn': 'False',
+            'use_smoother': 'False',
             'params_file': selected_nav2_params_file,
             'log_level': 'info',
         }.items(),
@@ -386,6 +405,7 @@ def generate_launch_description():
         delay_control_node,
         delay_joint_state_broadcaster,
         delay_robot_controller,
+        delay_moveit_controller,
         delay_mobile_base_controller,
         static_world_to_odom,
         static_map_to_odom,

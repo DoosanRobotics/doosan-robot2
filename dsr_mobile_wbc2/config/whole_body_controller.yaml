@@ -1,0 +1,12 @@
+/**:
+  whole_body_controller:
+    ros__parameters:
+      enable_base_wbc: false
+      base_cmd_topic: ~/base_cmd_vel
+      base_cmd_msg_type: auto
+      forward_action_ns: dual_dsr_moveit_controller/follow_joint_trajectory
+      max_linear_vel: 0.5
+      max_angular_vel: 1.0
+      base_x_joint_name: base_x
+      base_y_joint_name: base_y
+      base_yaw_joint_name: base_yaw

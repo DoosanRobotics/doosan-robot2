@@ -1,0 +1,9 @@
+<library path="dsr_mobile_wbc2">
+  <class name="dsr_mobile_wbc2/WholeBodyController"
+         type="dsr_mobile_wbc2::WholeBodyController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Skeleton whole-body controller plugin for dual-arm mobile manipulator.
+    </description>
+  </class>
+</library>

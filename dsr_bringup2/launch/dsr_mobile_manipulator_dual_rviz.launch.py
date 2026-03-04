@@ -52,7 +52,7 @@ def generate_launch_description():
         DeclareLaunchArgument('left_init_on_start', default_value='true', description='Move left arm J1 to 180deg once at startup (dual only)'),
         DeclareLaunchArgument('use_joint_state_publisher', default_value='false', description='Publish joint_states for visualization'),
         DeclareLaunchArgument('use_nav2', default_value='true', description='Start Nav2 navigation stack'),
-        DeclareLaunchArgument('nav2_start_delay', default_value='3.0', description='Delay (sec) before starting Nav2 to wait for odom->base_link TF'),
+        DeclareLaunchArgument('nav2_start_delay', default_value='1.5', description='Delay (sec) before starting Nav2 to wait for odom->base_link TF'),
         DeclareLaunchArgument('use_map', default_value='false', description='Use map_server + AMCL localization'),
         DeclareLaunchArgument('enable_nav2_fallback', default_value='false', description='Call lifecycle_manager startup fallback'),
         DeclareLaunchArgument('map', default_value='', description='Map yaml for map mode (use_map:=true)'),
@@ -122,6 +122,10 @@ def generate_launch_description():
             ".urdf.xacro",
             " ",
             "color:=", LaunchConfiguration('color'),
+            " ",
+            "arm_prefix:=", "left_",
+            " ",
+            "arm2_prefix:=", "right_",
             " ",
             "arm_spacing:=", LaunchConfiguration('arm_spacing'),
             " ",
@@ -283,6 +287,8 @@ def generate_launch_description():
                     xacro_model,
                     '.urdf.xacro',
                     ' color:=', LaunchConfiguration('color'),
+                    ' arm_prefix:=left_',
+                    ' arm2_prefix:=right_',
                     ' arm_spacing:=', LaunchConfiguration('arm_spacing'),
                     ' enable_ros2_control:=', 'true',
                     ' host:=', LaunchConfiguration('left_host'),
@@ -365,7 +371,7 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["joint_state_broadcaster", "-c", "controller_manager"],
+        arguments=["joint_state_broadcaster", "-c", "controller_manager", "--controller-manager-timeout", "120"],
     )
 
     # Dual-arm service controller
@@ -373,7 +379,7 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager", "--controller-manager-timeout", "120"],
     )
 
     # Dual-arm MoveIt trajectory controller (FollowJointTrajectory action server)
@@ -381,14 +387,14 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dual_dsr_moveit_controller", "-c", "controller_manager"],
+        arguments=["dual_dsr_moveit_controller", "-c", "controller_manager", "--activate", "--controller-manager-timeout", "120"],
     )
 
     mobile_base_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["diff_drive_controller", "-c", "controller_manager"],
+        arguments=["diff_drive_controller", "-c", "controller_manager", "--activate", "--controller-manager-timeout", "120"],
     )
 
     # Delay control_node after both config nodes
@@ -402,11 +408,11 @@ def generate_launch_description():
     delay_control_node = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=right_set_config_node,
-            on_exit=[control_node],
+            on_exit=[TimerAction(period=1.0, actions=[control_node])],
         )
     )
 
-    # Delay joint_state_broadcaster after control_node
+    # Delay joint_state_broadcaster long enough for ros2_control initialization
     delay_joint_state_broadcaster = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=right_set_config_node,
@@ -419,11 +425,12 @@ def generate_launch_description():
         )
     )
 
-    # Delay dual arm controller after joint_state_broadcaster
-    delay_dual_controller = RegisterEventHandler(
+    # Delay MoveIt trajectory controller after joint_state_broadcaster
+    # (same order as dual moveit launch: dual_dsr_moveit_controller first)
+    delay_dual_moveit_controller = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[dual_robot_controller_spawner],
+            on_exit=[dual_moveit_controller_spawner],
         )
     )
 
@@ -434,22 +441,15 @@ def generate_launch_description():
         )
     )
 
-    # Delay MoveIt trajectory controller after dsr_controller2
-    delay_dual_moveit_controller = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=dual_robot_controller_spawner,
-            on_exit=[dual_moveit_controller_spawner],
-        )
-    )
-
     left_init_motion_once = ExecuteProcess(
         cmd=[
-            'ros2', 'service', 'call',
-            PythonExpression(["'/' + '", LaunchConfiguration('name'), "' + '/left/motion/move_joint'"]),
-            'dsr_msgs2/srv/MoveJoint',
-            '{pos: [180.0, 0.0, 0.0, 0.0, 0.0, 0.0], vel: 30.0, acc: 60.0, time: 2.0, radius: 0.0, mode: 0, blend_type: 0, sync_type: 1}',
+            'ros2', 'action', 'send_goal',
+            '-t', '40',
+            PythonExpression(["'/' + '", LaunchConfiguration('name'), "' + '/dual_dsr_moveit_controller/follow_joint_trajectory'"]),
+            'control_msgs/action/FollowJointTrajectory',
+            '{trajectory: {joint_names: [left_joint_1, left_joint_2, left_joint_3, left_joint_4, left_joint_5, left_joint_6, right_joint_1, right_joint_2, right_joint_3, right_joint_4, right_joint_5, right_joint_6], points: [{positions: [3.14159, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], time_from_start: {sec: 4, nanosec: 0}}]}}',
         ],
-        output='log',
+        output='screen',
         condition=IfCondition(LaunchConfiguration('left_init_on_start')),
     )
 
@@ -459,6 +459,16 @@ def generate_launch_description():
             on_exit=[
                 TimerAction(period=1.0, actions=[left_init_motion_once]),
             ],
+        ),
+        condition=IfCondition(LaunchConfiguration('left_init_on_start')),
+    )
+
+    # Delay dual arm service controller after initial left-arm init motion
+    # to avoid interface switching while dual_dsr_moveit_controller is executing init goal.
+    delay_dual_controller = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=left_init_motion_once,
+            on_exit=[dual_robot_controller_spawner],
         ),
         condition=IfCondition(LaunchConfiguration('left_init_on_start')),
     )
@@ -478,6 +488,7 @@ def generate_launch_description():
             target_action=dual_robot_controller_spawner,
             on_exit=[
                 TimerAction(period=0.5, actions=[original_rviz_node, remapped_rviz_node]),
+                dual_robot_controller_spawner,
             ],
         ),
         condition=UnlessCondition(LaunchConfiguration('left_init_on_start')),
@@ -518,6 +529,7 @@ def generate_launch_description():
             'autostart': 'true',
             'use_composition': 'False',
             'use_respawn': 'False',
+            'use_smoother': 'False',
             'params_file': selected_nav2_params_file,
             'log_level': 'info',
         }.items(),
@@ -534,6 +546,7 @@ def generate_launch_description():
             'autostart': 'true',
             'use_composition': 'False',
             'use_respawn': 'False',
+            'use_smoother': 'False',
             'params_file': selected_nav2_params_file,
             'log_level': 'info',
         }.items(),
