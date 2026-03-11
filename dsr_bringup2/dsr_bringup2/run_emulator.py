@@ -48,11 +48,6 @@ class VirtualDRCF(Node):
         # signal.signal(signal.SIGINT, self.terminate_drcf)
         # signal.signal(signal.SIGTERM, self.terminate_drcf)
     
-    ## TODO(Improve) : The context seems to can't handle signal perfectly.
-    # needed to fix after https://github.com/ros2/rclpy/issues/1287
-    def __del__(self):
-        self.terminate_drcf()
-
     def run_drcf(self, port, model, name):
         run_script_path = os.path.join(
             get_package_share_directory("dsr_common2"), "bin"
@@ -65,15 +60,20 @@ class VirtualDRCF(Node):
             format(self.emulator_name)
         print("stop_cmd : ",stop_cmd)
         os.system(stop_cmd)
-        rclpy.shutdown()
-        exit(1)
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = VirtualDRCF()
-    rclpy.spin(node)
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.terminate_drcf()
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

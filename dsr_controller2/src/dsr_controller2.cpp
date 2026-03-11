@@ -107,18 +107,19 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 	Drfl->set_on_homming_completed(DRFL_CALLBACKS::OnHommingCompletedCB);
 	Drfl->set_on_program_stopped(DRFL_CALLBACKS::OnProgramStoppedCB);
 	Drfl->set_on_monitoring_modbus(DRFL_CALLBACKS::OnMonitoringModbusCB);
-	Drfl->set_on_monitoring_data(DRFL_CALLBACKS::OnMonitoringDataCB);           // Callback function in M2.4 and earlier
-	Drfl->set_on_monitoring_ctrl_io(DRFL_CALLBACKS::OnMonitoringCtrlIOCB);       // Callback function in M2.4 and earlier
-	Drfl->set_on_monitoring_state(DRFL_CALLBACKS::OnMonitoringStateCB);//RELATED TO LOGIC
-	Drfl->set_on_monitoring_access_control(DRFL_CALLBACKS::OnMonitoringAccessControlCB);//RELATED TO LOGIC
+	Drfl->set_on_monitoring_ctrl_io(DRFL_CALLBACKS::OnMonitoringCtrlIOCB);
+	Drfl->set_on_monitoring_state(DRFL_CALLBACKS::OnMonitoringStateCB);
+	Drfl->set_on_monitoring_access_control(DRFL_CALLBACKS::OnMonitoringAccessControlCB);
 	Drfl->set_on_log_alarm(DRFL_CALLBACKS::OnLogAlarm);
 	Drfl->set_on_disconnected(DRFL_CALLBACKS::OnDisConnected);
-	Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);
+	// NOTE: OnMonitoringDataCB (below M2.12) has been removed.
+	// Minimum supported DRCF version is M2.12. Please update robot firmware if below M2.12.
+	Drfl->set_on_monitoring_data_ex(DRFL_CALLBACKS::OnMonitoringDataExCB);  // M2.12+
 
     // create publishers by key
     if (use_rt_topic_pub_) {
         rt_pub_map_.clear();
-        for (const auto& key : rt_topic_keys_) 
+        for (const auto& key : rt_topic_keys_)
         {
         auto topic = "/rt_topic/" + key; // topic name
         rt_pub_map_[key] = get_node()->create_publisher<std_msgs::msg::Float32MultiArray>(topic, rclcpp::SystemDefaultsQoS());
@@ -128,6 +129,15 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
         const int rt_ms = get_node()->get_parameter(PARAM_RT_TIMER_MS).as_int();
         rt_timer_ = get_node()->create_wall_timer(std::chrono::milliseconds(rt_ms),std::bind(&RobotController::publish_read_data_rt_selected, this));
     }
+
+    // IO state topic publisher: publishes ctrl-box DI[16] + DO[16] at 10 Hz.
+    // Works in both virtual and real mode via the g_stDrState cache populated by
+    // OnMonitoringCtrlIOCB. Layout: data[0..15] = DI[1..16], data[16..31] = DO[1..16]
+    ctrl_io_pub_ = get_node()->create_publisher<std_msgs::msg::UInt8MultiArray>(
+        "io/ctrl_box_digital_input_state", rclcpp::SystemDefaultsQoS());
+    ctrl_io_timer_ = get_node()->create_wall_timer(
+        std::chrono::milliseconds(100),
+        std::bind(&RobotController::publish_ctrl_io_state, this));
 
   return CallbackReturn::SUCCESS;
 }
@@ -154,6 +164,20 @@ void RobotController::publish_read_data_rt_selected() {
     msg.data = std::move(vals); // using raw data
     it->second->publish(msg);
   }
+}
+
+// Publishes ctrl-box digital IO state from g_stDrState (populated by OnMonitoringCtrlIOCB).
+// data[0..15]  = DI[1..16] (controller_digital_input, 1-based index)
+// data[16..31] = DO[1..16] (controller_digital_output, 1-based index)
+// Works in both virtual and real mode; values are 0 when no monitoring data received yet.
+void RobotController::publish_ctrl_io_state() {
+    std_msgs::msg::UInt8MultiArray msg;
+    msg.data.resize(32, 0);
+    for (int i = 0; i < 16; i++) {
+        msg.data[i]      = g_stDrState.bCtrlBoxDigitalInput[i]  ? 1u : 0u;
+        msg.data[16 + i] = g_stDrState.bCtrlBoxDigitalOutput[i] ? 1u : 0u;
+    }
+    ctrl_io_pub_->publish(msg);
 }
 
 // Extracts a specific field from the real-time data structure (LPRT_OUTPUT_DATA_LIST)
@@ -2880,69 +2904,9 @@ void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO)
     //-------------------------------------------------------------------------
 }
 
-// M2.4 or lower
-void OnMonitoringDataCB(const LPMONITORING_DATA pData)
-{
-    // This function is called every 100 msec
-    // Only work within 50msec
-    //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"OnMonitoringDataCB");
-
-    g_stDrState.nActualMode  = pData->_tCtrl._tState._iActualMode;                  // position control: 0, torque control: 1 ?????
-    g_stDrState.nActualSpace = pData->_tCtrl._tState._iActualSpace;                 // joint space: 0, task space: 1    
-
-    for (int i = 0; i < NUM_JOINT; i++){
-        if(pData){  
-            // joint         
-            g_stDrState.fCurrentPosj[i] = pData->_tCtrl._tJoint._fActualPos[i];     // Position Actual Value in INC     
-            g_stDrState.fCurrentVelj[i] = pData->_tCtrl._tJoint._fActualVel[i];     // Velocity Actual Value
-            g_stDrState.fJointAbs[i]    = pData->_tCtrl._tJoint._fActualAbs[i];     // Position Actual Value in ABS
-            g_stDrState.fJointErr[i]    = pData->_tCtrl._tJoint._fActualErr[i];     // Joint Error
-            g_stDrState.fTargetPosj[i]  = pData->_tCtrl._tJoint._fTargetPos[i];     // Target Position
-            g_stDrState.fTargetVelj[i]  = pData->_tCtrl._tJoint._fTargetVel[i];     // Target Velocity
-            // task
-            g_stDrState.fCurrentPosx[i]     = pData->_tCtrl._tTask._fActualPos[0][i];   //????? <---------이것 2개다 확인할 것  
-            g_stDrState.fCurrentToolPosx[i] = pData->_tCtrl._tTask._fActualPos[1][i];   //????? <---------이것 2개다 확인할 것  
-            g_stDrState.fCurrentVelx[i] = pData->_tCtrl._tTask._fActualVel[i];      // Velocity Actual Value
-            g_stDrState.fTaskErr[i]     = pData->_tCtrl._tTask._fActualErr[i];      // Task Error
-            g_stDrState.fTargetPosx[i]  = pData->_tCtrl._tTask._fTargetPos[i];      // Target Position
-            g_stDrState.fTargetVelx[i]  = pData->_tCtrl._tTask._fTargetVel[i];      // Target Velocity
-            // Torque
-            g_stDrState.fDynamicTor[i]  = pData->_tCtrl._tTorque._fDynamicTor[i];   // Dynamics Torque
-            g_stDrState.fActualJTS[i]   = pData->_tCtrl._tTorque._fActualJTS[i];    // Joint Torque Sensor Value
-            g_stDrState.fActualEJT[i]   = pData->_tCtrl._tTorque._fActualEJT[i];    // External Joint Torque
-            g_stDrState.fActualETT[i]   = pData->_tCtrl._tTorque._fActualETT[i];    // External Task Force/Torque
-
-            g_stDrState.nActualBK[i]    = pData->_tMisc._iActualBK[i];              // brake state     
-            g_stDrState.fActualMC[i]    = pData->_tMisc._fActualMC[i];              // motor input current
-            g_stDrState.fActualMT[i]    = pData->_tMisc._fActualMT[i];              // motor current temperature
-        }
-    }
-    g_stDrState.nSolutionSpace  = pData->_tCtrl._tTask._iSolutionSpace;             // Solution Space
-    g_stDrState.dSyncTime       = pData->_tMisc._dSyncTime;                         // inner clock counter  
-
-    for (int i = 5; i < NUM_BUTTON; i++){
-        if(pData){
-            g_stDrState.nActualBT[i]    = pData->_tMisc._iActualBT[i];              // robot button state
-        }
-    }
-
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 3; j++){
-            if(pData){
-                g_stDrState.fRotationMatrix[j][i] = pData->_tCtrl._tTask._fRotationMatrix[j][i];    // Rotation Matrix
-            }
-        }
-    }
-
-    for (int i = 0; i < NUM_FLANGE_IO; i++){
-        if(pData){
-            g_stDrState.bFlangeDigitalInput[i]  = pData->_tMisc._iActualDI[i];      // Digital Input data             
-            g_stDrState.bFlangeDigitalOutput[i] = pData->_tMisc._iActualDO[i];      // Digital output data
-        }
-    }
-}
-
-// M2.5 or higher    
+// Minimum supported DRCF version: M2.12
+// OnMonitoringDataCB (below M2.12) has been removed. This driver no longer supports below M2.12.
+// If your robot firmware is below M2.12, please update it before using this driver.
 void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData)
 {
     // This function is called every 100 msec
@@ -3183,15 +3147,18 @@ void OnLogAlarm(LPLOG_ALARM pLogAlarm)
 
 void OnDisConnected(){
 	RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"),"Disconnected.. Please check out Ethernet Cable.. ");
-	Drfl->stop_rt_control();
-    // To-do : Update disconnection function in controller version v3.6
-    // Drfl->disconnect_rt_control();
-	Drfl->close_connection(); // clean-up
-
-	
-	if(0 == instance->disconnect_pub_.use_count())	return;
-	dsr_msgs2::msg::RobotDisconnection msg;
-	instance->disconnect_pub_->publish(msg);
+    // Ensure connection is closed
+    if(Drfl) {
+        Drfl->stop_rt_control();
+        // To-do : Update disconnection function in controller version v3.6
+        // Drfl->disconnect_rt_control();
+        Drfl->close_connection(); // clean-up
+    }
+    if(rclcpp::ok() && instance && instance->disconnect_pub_)
+    {
+        dsr_msgs2::msg::RobotDisconnection msg;
+        instance->disconnect_pub_->publish(msg);
+    }
 }
 
 }

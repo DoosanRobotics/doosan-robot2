@@ -219,6 +219,7 @@
 #include "dsr_msgs2/action/movel_h2r.hpp"
 
 #include "std_msgs/msg/float32_multi_array.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 
 
 #include "../../../dsr_common2/include/DRFLEx.h"
@@ -516,7 +517,6 @@ namespace DRFL_CALLBACKS {
   void OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/);
   void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO);
   void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO);
-  void OnMonitoringDataCB(const LPMONITORING_DATA pData);
   void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
   void OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus);
   void OnMonitoringStateCB(const ROBOT_STATE eState);
@@ -770,6 +770,11 @@ protected:
   rclcpp::TimerBase::SharedPtr rt_timer_;
   void publish_read_data_rt_selected();
   static bool extract_field(LPRT_OUTPUT_DATA_LIST temp,const std::string& key,std::vector<float>& out);
+
+  // IO state topic publishing (ctrl-box digital input/output, works in both virtual and real mode).
+  rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr ctrl_io_pub_;
+  rclcpp::TimerBase::SharedPtr ctrl_io_timer_;
+  void publish_ctrl_io_state();
 
 private:
   static constexpr const char* PARAM_USE_RT_TOPIC_PUB = "use_rt_topic_pub";

@@ -30,6 +30,9 @@ using namespace DRAFramework;
 
 CDRFLEx Drfl;
 
+// DRCF minimum supported version: M2.12  (ex> M2.40 = 120400, M2.50 = 120500, M2.12 = 121200)
+#define GV0121200  121200
+
 bool g_bIsEmulatorMode = FALSE;
 std::string g_model;
 int m_nVersionDRCF;
@@ -211,20 +214,46 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 	memset(&tSysVerion, 0, sizeof(tSysVerion));
 	assert(Drfl.get_system_version(&tSysVerion));
 
-	//--- Get DRCF version & convert to integer  ----------            
-	m_nVersionDRCF = 0; 
-	int k=0;
-	for(int i=strlen(tSysVerion._szController); i>0; i--)
-			if(tSysVerion._szController[i]>='0' && tSysVerion._szController[i]<='9')
-					m_nVersionDRCF += (tSysVerion._szController[i]-'0')*pow(10.0,k++);
-	if(m_nVersionDRCF < 100000) m_nVersionDRCF += 100000; 
-                 
+	//--- Get DRCF version & convert to integer  ----------
+	// _szController format: "GV0121200" (prefix 2 chars + version digits)
+	// ex> "GV0120400" = M2.40, "GV0120500" = M2.50, "GV0121200" = M2.12
+	m_nVersionDRCF = atol(&tSysVerion._szController[2]);
+
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRCF version = %s",tSysVerion._szController);
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRFL version = %s",Drfl.get_library_version());
-	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    m_nVersionDRCF = %d", m_nVersionDRCF);  //ex> M2.40 = 120400, M2.50 = 120500  
+	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    m_nVersionDRCF = %d", m_nVersionDRCF);  //ex> GV0120400 = 120400, GV0121200 = 121200
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
 
-	Drfl.setup_monitoring_version(1); //Enabling extended monitoring functions 
+	// -------------------------------------------------------------------------
+	// MINIMUM SUPPORTED DRCF VERSION: M2.12 (121200)
+	// Below M2.12 is NO LONGER SUPPORTED.
+	// OnMonitoringDataCB (below M2.12) has been removed.
+	// Only OnMonitoringDataExCB (M2.12+) is used.
+	// If your robot firmware is below M2.12, please update it before using this driver.
+	// -------------------------------------------------------------------------
+	if (m_nVersionDRCF < GV0121200) {
+		RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+			"\033[1;31m"
+			"==================================================================\n"
+			"  [VERSION WARNING] DRCF version %d (= %s)\n"
+			"  Minimum supported version is M2.12 (121200).\n"
+			"  Below M2.12 is NO LONGER SUPPORTED.\n"
+			"  OnMonitoringDataExCB requires M2.12+.\n"
+			"  !!! PLEASE UPDATE YOUR ROBOT FIRMWARE TO M2.12 OR HIGHER !!!\n"
+			"=================================================================="
+			"\033[0m",
+			m_nVersionDRCF, tSysVerion._szController);
+	}
+
+	// Register IO monitoring callback before setup_monitoring_version() so that DRFL
+	// starts collecting ctrl-box IO state (DI/DO) from the robot.
+	// dsr_controller2 will overwrite this with its own callback that populates g_stDrState.
+	Drfl.set_on_monitoring_ctrl_io([](const LPMONITORING_CTRLIO /*pCtrlIO*/) {
+		// Intentionally empty placeholder. Registering here ensures DRFL enables
+		// IO monitoring data collection when setup_monitoring_version() is called.
+	});
+
+	Drfl.setup_monitoring_version(1); //Enabling extended monitoring functions
 
 	if(Drfl.GetRobotState() != STATE_STANDBY)	{
 		RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Expected State : Stanby, \

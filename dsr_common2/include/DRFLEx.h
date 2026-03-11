@@ -340,8 +340,8 @@ namespace DRAFramework
 
         DRFL_API LPROBOT_POSE _trans(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], float fOffset[NUM_TASK], COORDINATE_SYSTEM eSourceRef = COORDINATE_SYSTEM_BASE, COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE);
         DRFL_API LPROBOT_POSE _ikin(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE);
-		DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_ex(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, unsigned char iRefPosOpt);
-        DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_add_iter_threshold(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, float fIterThreshold[2]);
+		DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_ex(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE, unsigned char iRefPosOpt = 0);
+        DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_add_iter_threshold(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE, float fIterThreshold[2]= nullptr);
         DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_norm(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef,  unsigned char iRefPosOpt);
         
         DRFL_API LPROBOT_POSE _fkin(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_JOINT], COORDINATE_SYSTEM eTargetRef = COORDINATE_SYSTEM_BASE);
@@ -681,9 +681,11 @@ namespace DRAFramework
         DRFL_API bool _task_compliance_ctrl(LPROBOTCONTROL pCtrl, float fTargetStiffness[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f);
         //DRFL_API bool _joint_compliance_ctrl(LPROBOTCONTROL pCtrl, float fTargetStiffness[NUM_TASK], float fTargetTime = 0.f);
         DRFL_API bool _set_stiffnessx(LPROBOTCONTROL pCtrl, float fTargetStiffness[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f);
+        DRFL_API bool _set_stiffnessx_v3(LPROBOTCONTROL pCtrl, float fTargetStiffness[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f);
         DRFL_API bool _release_compliance_ctrl(LPROBOTCONTROL pCtrl);
         //DRFL_API bool _release_joint_compliance_ctrl(LPROBOTCONTROL pCtrl);
         DRFL_API bool _set_desired_force(LPROBOTCONTROL pCtrl, float fTargetForce[NUM_TASK], unsigned char iTargetDirection[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f, FORCE_MODE eForceMode = FORCE_MODE_ABSOLUTE);
+        DRFL_API bool _set_desired_force_v3(LPROBOTCONTROL pCtrl, float fTargetForce[NUM_TASK], unsigned char iTargetDirection[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f, FORCE_MODE eForceMode = FORCE_MODE_ABSOLUTE);
         DRFL_API bool _release_force(LPROBOTCONTROL pCtrl, float fTargetTime = 0.f);
 
         DRFL_API bool _check_force_condition(LPROBOTCONTROL pCtrl, FORCE_AXIS eForceAxis, float fTargetMin, float fTargetMax, COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL);
@@ -1391,10 +1393,18 @@ namespace DRAFramework
 
         bool task_compliance_ctrl(float fTargetStiffness[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f) { return _task_compliance_ctrl(_rbtCtrl, fTargetStiffness, eForceReference, fTargetTime); };
         //bool EnterJointCompliance(float fTargetStiffness[NUM_TASK], float fTargetTime = 0.f){ return _EnterJointCompliance(_rbtCtrl, fTargetStiffness, fTargetTime);};
+#if DRCF_VERSION == 2
         bool set_stiffnessx(float fTargetStiffness[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f) { return _set_stiffnessx(_rbtCtrl, fTargetStiffness, eForceReference, fTargetTime); };
+#elif DRCF_VERSION == 3
+        bool set_stiffnessx(float fTargetStiffness[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f) { return _set_stiffnessx_v3(_rbtCtrl, fTargetStiffness, eForceReference, fTargetTime); };
+#endif
         bool release_compliance_ctrl() { return _release_compliance_ctrl(_rbtCtrl); };
         //bool LeaveJointCompliance() { return _LeaveJointCompliance(_rbtCtrl);};
+#if DRCF_VERSION == 2
         bool set_desired_force(float fTargetForce[NUM_TASK], unsigned char iTargetDirection[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f, FORCE_MODE eForceMode = FORCE_MODE_ABSOLUTE) { return _set_desired_force(_rbtCtrl, fTargetForce, iTargetDirection, eForceReference, fTargetTime, eForceMode); };
+#elif DRCF_VERSION == 3
+        bool set_desired_force(float fTargetForce[NUM_TASK], unsigned char iTargetDirection[NUM_TASK], COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL, float fTargetTime = 0.f, FORCE_MODE eForceMode = FORCE_MODE_ABSOLUTE) { return _set_desired_force_v3(_rbtCtrl, fTargetForce, iTargetDirection, eForceReference, fTargetTime, eForceMode); };
+#endif
         bool release_force(float fTargetTime = 0.f) { return _release_force(_rbtCtrl, fTargetTime); };
 
         bool check_force_condition(FORCE_AXIS eForceAxis, float fTargetMin, float fTargetMax, COORDINATE_SYSTEM eForceReference = COORDINATE_SYSTEM_TOOL) { return _check_force_condition(_rbtCtrl, eForceAxis, fTargetMin, fTargetMax, eForceReference); };

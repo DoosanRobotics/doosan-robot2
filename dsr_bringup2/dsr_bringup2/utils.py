@@ -43,7 +43,34 @@ def find_git_root_for_package(here: pathlib.Path):
     for parent in [pkg_src_path, *pkg_src_path.parents]:
         if (parent / ".git").exists():
             return parent
+    return None
 
+def find_git_root_for_package_symlink_install(here: pathlib.Path):
+    # symlink-install does not copy python files to install/lib/<pkg>,
+    # so we can find the src folder directly.
+    src_dir = None
+    pkg_name = here.parents[0].name  # assume here is in <pkg>/utils.py
+
+    for parent in here.parents:
+        if parent.name == "src":
+            src_dir = parent
+            break
+    if src_dir is None:
+        return None
+
+    # 1) Search any folder named <pkg_name>
+    candidates = list(src_dir.rglob(pkg_name))
+    if not candidates:
+        print(f"[Git Info] No source folder found for package '{pkg_name}'")
+        return None
+
+    pkg_src_path = candidates[0]  # choose the first match
+
+    # 2) Find closest parent folder that contains a .git directory
+    for parent in [pkg_src_path, *pkg_src_path.parents]:
+        if (parent / ".git").exists():
+            return parent
+    print(f"[Git Info] No .git directory found for package '{pkg_name}'")
     return None
 
 
@@ -69,6 +96,8 @@ def show_git_info():
     git_root = find_git_root_for_package(here)
 
     # Fallback search if direct package search fails
+    if git_root is None:
+        git_root = find_git_root_for_package_symlink_install(here)
     if git_root is None:
         for parent in here.parents:
             if parent.name == "install":
