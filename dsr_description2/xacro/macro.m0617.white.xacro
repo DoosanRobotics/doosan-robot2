@@ -4,7 +4,7 @@
 	<xacro:include filename="$(find dsr_description2)/config/macro.gazebo.xacro" />
 	<xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
 	<xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
-	<xacro:macro name="m0617" params="namespace">
+	<xacro:macro name="m0617" params="namespace simple:=false">
 		<xacro:dsr_materials />
 		<link name="base_link">
 			<inertial>
@@ -240,7 +240,9 @@
 				</geometry>
 			</visual>
 		</link>
+		<xacro:unless value="${simple}">
 		<xacro:dsr_transmission />
 		<xacro:dsr_gazebo namespace="${namespace}" />
+	</xacro:unless>
 	</xacro:macro>
 </robot>
