@@ -5,7 +5,7 @@
     <xacro:include filename="$(find dsr_description2)/config/macro.transmission.xacro" />
     <xacro:include filename="$(find dsr_description2)/config/macro.materials.xacro" />
 
-    <xacro:macro name="p3020" params="namespace">
+    <xacro:macro name="p3020" params="namespace simple:=false">
         <xacro:dsr_materials />
 
         <!-- Base Link -->
@@ -322,7 +322,9 @@
             <limit effort="50" lower="-6.2832" upper="6.2832" velocity="6.2832"/>
         </joint>
 
+        <xacro:unless value="${simple}">
         <xacro:dsr_transmission />
         <xacro:dsr_gazebo namespace="${namespace}" />
+       </xacro:unless>
     </xacro:macro>
 </robot>

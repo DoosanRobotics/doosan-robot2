@@ -13,6 +13,7 @@
   <xacro:arg name="mode"         default=""/>
   <xacro:arg name="model"        default=""/>
   <xacro:arg name="update_rate"  default=""/>
+  <xacro:arg name="simple"        default="false"/>
 
   <!-- Local properties -->
   <xacro:property name="cr"          value="$(arg color)"/>
@@ -34,8 +35,9 @@
     <xacro:include filename="$(find dsr_description2)/xacro/macro.h2515.blue.xacro"/>
   </xacro:if>
 
-  <xacro:h2515 namespace="$(arg namespace)"/>
+  <xacro:h2515 namespace="$(arg namespace)" simple="$(arg simple)"/>
 
+  <xacro:unless value="$(arg simple)">
   <!-- World -->
   <link name="world"/>
   <joint name="world_fixed" type="fixed">
@@ -77,4 +79,5 @@
     />
   </xacro:unless>
 
+  </xacro:unless>
 </robot>
