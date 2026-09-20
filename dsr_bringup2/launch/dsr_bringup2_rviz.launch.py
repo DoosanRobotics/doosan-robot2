@@ -49,13 +49,13 @@ def generate_launch_description():
         DeclareLaunchArgument('mode',       default_value = 'virtual',        description = 'OPERATION MODE' ),
         DeclareLaunchArgument('model',      default_value = 'm1013',          description = 'ROBOT_MODEL'    ),
         DeclareLaunchArgument('color',      default_value = 'white',          description = 'ROBOT_COLOR'    ),
-        DeclareLaunchArgument('gui',        default_value = 'false',          description = 'Start RViz2'    ),
+        DeclareLaunchArgument('gui',        default_value = 'true',           description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',         default_value = 'false',          description = 'USE GAZEBO SIM' ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50', description = 'ROBOT_RT_IP'    ),
         DeclareLaunchArgument('remap_tf',   default_value = 'false',          description = 'REMAP TF'       ),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
-    # gui = LaunchConfiguration("gui")
+    gui = LaunchConfiguration("gui")
     mode = LaunchConfiguration("mode")
     update_rate = int(read_update_rate()) # get update_rate from yaml
     show_git_info() # print git info
@@ -155,7 +155,7 @@ def generate_launch_description():
         name="rviz2",
         output="log",
         arguments=["-d", rviz_config_file],
-        # condition=IfCondition(gui),
+        condition=IfCondition(gui),
     )
 
     original_tf_nodes = GroupAction(
@@ -214,4 +214,4 @@ def generate_launch_description():
         control_node,
     ]
 
-    return LaunchDescription(ARGUMENTS + nodes)
+    return LaunchDescription(ARGUMENTS + nodes) 
