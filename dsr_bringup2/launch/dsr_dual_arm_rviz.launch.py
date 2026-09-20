@@ -39,7 +39,7 @@ def generate_launch_description():
         DeclareLaunchArgument('mode',       default_value='virtual',        description='OPERATION MODE'),
         DeclareLaunchArgument('model',      default_value='m1013_dual',     description='ROBOT_MODEL'),
         DeclareLaunchArgument('color',      default_value='white',          description='ROBOT_COLOR'),
-        DeclareLaunchArgument('gui',        default_value='false',          description='Start RViz2'),
+        DeclareLaunchArgument('gui',        default_value='true',           description='Start RViz2'),
         DeclareLaunchArgument('gz',         default_value='false',          description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host',    default_value='192.168.137.50', description='ROBOT_RT_IP'),
         DeclareLaunchArgument('remap_tf',   default_value='false',          description='REMAP TF'),
@@ -205,6 +205,7 @@ def generate_launch_description():
         name="rviz2",
         output="log",
         arguments=["-d", rviz_config_file],
+        condition=IfCondition(LaunchConfiguration('gui')),
     )
 
     original_tf_nodes = GroupAction(
