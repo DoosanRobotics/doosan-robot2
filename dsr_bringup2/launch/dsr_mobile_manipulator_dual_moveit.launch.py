@@ -24,7 +24,7 @@ def generate_launch_description():
         DeclareLaunchArgument('right_port', default_value='12348', description='RIGHT_ROBOT_PORT'),
         DeclareLaunchArgument('mode', default_value='virtual', description='OPERATION MODE'),
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
-        DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
         DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotiq_2f85)'),
         DeclareLaunchArgument('gui', default_value='true', description='Start RViz2'),
         DeclareLaunchArgument('left_init_on_start', default_value='true', description='Move left arm J1 to 180deg once before MoveIt/RViz'),

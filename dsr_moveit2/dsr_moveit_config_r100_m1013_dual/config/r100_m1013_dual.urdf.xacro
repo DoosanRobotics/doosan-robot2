@@ -10,13 +10,13 @@
   <xacro:arg name="enable_ros2_control" default="false"/>
   <xacro:arg name="host" default="127.0.0.1"/>
   <xacro:arg name="port" default="12345"/>
-  <xacro:arg name="rt_host" default="192.168.137.50"/>
+  <xacro:arg name="rt_host" default=""/>
   <xacro:arg name="mode" default="virtual"/>
   <xacro:arg name="model" default="m1013"/>
   <xacro:arg name="update_rate" default="100"/>
   <xacro:arg name="arm2_host" default="127.0.0.1"/>
   <xacro:arg name="arm2_port" default="12348"/>
-  <xacro:arg name="arm2_rt_host" default="192.168.137.50"/>
+  <xacro:arg name="arm2_rt_host" default=""/>
   <xacro:arg name="arm2_mode" default="virtual"/>
   <xacro:arg name="arm2_model" default="m1013"/>
   <xacro:arg name="arm2_update_rate" default="100"/>

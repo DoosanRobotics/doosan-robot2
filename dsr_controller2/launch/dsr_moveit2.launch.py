@@ -54,6 +54,7 @@ args =[
     DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
     DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
     DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
+    DeclareLaunchArgument('tf_prefix', default_value = '',      description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
 ]
 
 def generate_launch_description():
@@ -127,7 +128,7 @@ def generate_launch_description():
                                  executable='robot_state_publisher',
                                  name='robot_state_publisher',
                                  output='both',
-                                 parameters=[robot_description])
+                                 parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, robot_description])
 
     # Fake joint driver
     fake_joint_driver_node = Node(package='fake_joint_driver',

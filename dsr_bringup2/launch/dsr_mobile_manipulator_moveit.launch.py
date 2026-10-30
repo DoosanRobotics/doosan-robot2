@@ -20,7 +20,7 @@ def generate_launch_description():
         DeclareLaunchArgument('port', default_value='12345', description='ROBOT_PORT'),
         DeclareLaunchArgument('mode', default_value='virtual', description='OPERATION MODE'),
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
-        DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
         DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotiq_2f85)'),
         DeclareLaunchArgument('gui', default_value='true', description='Start RViz2'),
         DeclareLaunchArgument('enable_whole_body_controller', default_value='true', description='Spawn whole_body_controller scaffold plugin'),

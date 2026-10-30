@@ -38,7 +38,7 @@ class ConnectionNode(Node):
         self.declare_parameter('model', 'm1013')
         self.declare_parameter('gripper', 'none')
         self.declare_parameter('mobile', 'none')
-        self.declare_parameter('rt_host', '192.168.137.50')
+        self.declare_parameter('rt_host', '')
 
         parameters = {
             'name': self.get_parameter('name').get_parameter_value().string_value,

@@ -186,6 +186,10 @@ def rviz_and_move_group_fn(context):
         ],
     )
 
+    # RViz is optional; move_group is not. Returning here also skips writing the temporary RViz config.
+    if not gui:
+        return [run_move_group_node]
+
     rviz_base = os.path.join(get_package_share_directory(package_name), "launch")
     rviz_full_config = os.path.join(rviz_base, "moveit.rviz")
 
@@ -304,15 +308,16 @@ def generate_launch_description():
         DeclareLaunchArgument('host',  default_value='127.0.0.1', description='ROBOT_IP'),
         DeclareLaunchArgument('port',  default_value='12345', description='ROBOT_PORT'),
         DeclareLaunchArgument('mode',  default_value='virtual', description='OPERATION MODE'),
-        DeclareLaunchArgument('model', default_value='a0509', description='ROBOT_MODEL'),
+        DeclareLaunchArgument('model', default_value='r100_m1013', description='ROBOT_MODEL'),
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
-        DeclareLaunchArgument('gui',   default_value='false', description='Start RViz2'),
+        DeclareLaunchArgument('gui',   default_value='true', description='Start RViz2'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
-        DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
         DeclareLaunchArgument('dynamic_yaml', default_value='true', description='Use dynamic controller.yaml'),
         DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotiq_2f85)'),
         DeclareLaunchArgument('enable_whole_body_controller', default_value='true', description='Spawn whole_body_controller scaffold plugin'),
         DeclareLaunchArgument('enable_rviz_refresh', default_value='true', description='Auto-refresh planning scene after execute (RViz whole-body UI refresh)'),
+        DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
 
     # Build robot_description and select controller YAML
@@ -360,7 +365,7 @@ def generate_launch_description():
             ('tf_static', '/tf_static'),
             ('joint_states', joint_states_remap),
         ],
-        parameters=[{
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, {
             'robot_description': ParameterValue(LaunchConfiguration('robot_description'), value_type=str)
         }],
     )

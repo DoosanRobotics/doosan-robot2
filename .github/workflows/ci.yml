@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - jazzy
+  pull_request:
+    branches:
+      - jazzy
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    if: github.repository == 'DoosanRobotics/doosan-robot2'
+    uses: ./.github/workflows/ci-base.yml
+    with:
+      runner: linux_x86_8core_runner
+    secrets: inherit

@@ -56,9 +56,10 @@ def generate_launch_description():
         DeclareLaunchArgument('R',            default_value = '0',              description = 'Location Roll on Gazebo' ),
         DeclareLaunchArgument('P',            default_value = '0',              description = 'Location Pitch on Gazebo'),
         DeclareLaunchArgument('Y',            default_value = '0',              description = 'Location Yaw on Gazebo'  ),
-        DeclareLaunchArgument('rt_host',      default_value = '192.168.137.50', description = 'ROBOT_RT_IP'             ),
+        DeclareLaunchArgument('rt_host',      default_value = '',               description = 'ROBOT_RT_IP'             ),
         DeclareLaunchArgument('use_sim_time', default_value='false',            description='Use simulation time'       ),
         DeclareLaunchArgument('remap_tf',     default_value = 'false',          description = 'REMAP TF'                ),
+        DeclareLaunchArgument('tf_prefix',    default_value = '',               description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
     
     set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='false')
@@ -150,7 +151,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[robot_description],
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, robot_description],
     )
     
     rviz_node = Node(

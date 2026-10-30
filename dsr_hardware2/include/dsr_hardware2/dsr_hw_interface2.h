@@ -86,6 +86,13 @@ private:
     std::string drcf_ip_;
     std::string drcf_rt_ip_;
     std::string mode_;
+    // Freshness tracking for the RT stream (see read()).
+    double      last_rt_time_stamp_ = -1.0;
+    size_t      rt_stale_count_     = 0;
+    bool        rt_stale_reported_  = false;
+    std::chrono::steady_clock::time_point last_rt_change_{std::chrono::steady_clock::now()};
+    // Must outlive the throttled log in read(); the macro binds it by reference.
+    rclcpp::Clock rt_log_clock_{RCL_STEADY_TIME};
     std::string model_;
     int drcf_port_;
     int update_rate_;

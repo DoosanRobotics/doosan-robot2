@@ -126,6 +126,10 @@ def rviz_and_move_group_fn(context):
         parameters=move_group_params,
     )
 
+    # RViz is optional; move_group is not. Returning here also skips writing the temporary RViz config.
+    if not gui:
+        return [run_move_group_node]
+
     rviz_base = os.path.join(get_package_share_directory(package_name), "launch")
     rviz_full_config = os.path.join(rviz_base, "moveit.rviz")
 
@@ -210,11 +214,12 @@ def generate_launch_description():
         DeclareLaunchArgument('mode',  default_value='virtual', description='OPERATION MODE'),
         DeclareLaunchArgument('model', default_value='a0509', description='ROBOT_MODEL'),
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
-        DeclareLaunchArgument('gui',   default_value='false', description='Start RViz2'),
+        DeclareLaunchArgument('gui',   default_value='true', description='Start RViz2'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
-        DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
         DeclareLaunchArgument('dynamic_yaml', default_value='false', description='Use dynamic controller.yaml'),
         DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotiq_2f85)'),
+        DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
 
     # Build robot_description and select controller YAML
@@ -248,7 +253,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, {
             'robot_description': ParameterValue(LaunchConfiguration('robot_description'), value_type=str)
         }],
     )

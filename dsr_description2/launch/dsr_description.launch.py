@@ -55,6 +55,7 @@ ARGUMENTS = [
         default_value='m1013',
         description='Robot Model'
     ),
+    DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     DeclareLaunchArgument(
         'color',
         default_value='white',
@@ -85,7 +86,7 @@ def generate_launch_description():
                                  executable='robot_state_publisher',
                                  name='robot_state_publisher',
                                  output='both',
-                                 parameters=[{
+                                 parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, {
                                     'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
                                  }])
 

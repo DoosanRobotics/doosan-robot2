@@ -36,6 +36,7 @@ ARGUMENTS = [
         description='Robot Color'
     ),
     DeclareLaunchArgument('name',  default_value = '',     description = 'NAME_SPACE'     ),
+    DeclareLaunchArgument('tf_prefix', default_value = '', description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]	
 
 def generate_launch_description():
@@ -92,7 +93,7 @@ def generate_launch_description():
                 "/dsr/joint_states",
             ),
         ],
-        parameters=[robot_description],
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, robot_description],
     )
     rviz_node = Node(
         package="rviz2",

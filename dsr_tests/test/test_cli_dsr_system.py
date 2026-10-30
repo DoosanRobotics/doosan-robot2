@@ -35,6 +35,11 @@ NAMESPACE = "dsr01"
 MODEL = 'm1013'
 SRV_CALL_TIMEOUT = 30	
 PORT = 12345
+# A CI job running inside a container reaches the emulator service by its address
+# on the job network rather than on localhost.
+HOST = os.getenv("DSR_EMULATOR_HOST", "127.0.0.1")
+ROBOT_MODE_MANUAL = 0
+ROBOT_MODE_AUTONOMOUS = 1
 
 RVIZ = True
 START_EMULATOR = True 
@@ -61,6 +66,7 @@ def bringUp():
 			"dsr_bringup_without_spawner_test.launch.py",
 			"mode:={}".format(MODE),
 			"name:={}".format(NAMESPACE),
+			"host:={}".format(HOST),
 			"port:={}".format(PORT),
 			"rviz:={}".format(RVIZ),
 			"start_emulator:={}".format(START_EMULATOR)
@@ -1756,6 +1762,15 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 
 
 """ Tool Service Client Test Class """
+def _set_robot_mode(node, mode):
+	cli = node.create_client(SetRobotMode, "system/set_robot_mode")
+	cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
+	future = cli.call_async(SetRobotMode.Request(robot_mode=mode))
+	rclpy.spin_until_future_complete(node, future, timeout_sec=SRV_CALL_TIMEOUT)
+	node.destroy_client(cli)
+	return future.done() and future.result().success
+
+
 class TestDsrToolCli(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -1763,9 +1778,13 @@ class TestDsrToolCli(unittest.TestCase):
 		print("===== DooSanSystem Tool Tests Start ================")
 		cls._lock = threading.Lock()
 		cls.node =rclpy.create_node("dsr_tool_test_node", namespace=NAMESPACE)
+		# DRFL accepts add_tool and del_tool only in manual mode. In autonomous mode,
+		# where bringup leaves the robot, it refuses both without contacting the controller.
+		assert _set_robot_mode(cls.node, ROBOT_MODE_MANUAL), "system/set_robot_mode(manual) failed."
 
 	@classmethod
 	def tearDownClass(cls):
+		_set_robot_mode(cls.node, ROBOT_MODE_AUTONOMOUS)
 		print("===== DooSanSystem Tool Tests Ends ================")
 		print("====================================================")
 		cls.node.destroy_node()
@@ -1851,6 +1870,7 @@ class TestDsrToolCli(unittest.TestCase):
 
 		""" Set Current Tool """
 		config_create_tool_cli = self.node.create_client(ConfigCreateTool, "tool/config_create_tool")
+		config_create_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		config_create_tool_req = ConfigCreateTool.Request()
 		config_create_tool_req.name = "tool1"
 		config_create_tool_req.weight = 5.3
@@ -1869,6 +1889,7 @@ class TestDsrToolCli(unittest.TestCase):
 
 		""" Config Create Tool """
 		config_create_tool_cli = self.node.create_client(ConfigCreateTool, "tool/config_create_tool")
+		config_create_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		config_create_tool_req = ConfigCreateTool.Request()
 		config_create_tool_req.name = "tool1"
 		config_create_tool_req.weight = 5.3
@@ -1885,6 +1906,7 @@ class TestDsrToolCli(unittest.TestCase):
 
 		""" Config Delete Tool """
 		config_delete_tool_cli = self.node.create_client(ConfigDeleteTool, "tool/config_delete_tool")
+		config_delete_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		config_delete_tool_future = config_delete_tool_cli.call_async(ConfigDeleteTool.Request(name="tool1"))
 		rclpy.spin_until_future_complete(self.node, config_delete_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(config_delete_tool_future.done(), "tool/config_delete_tool service working is not done.")

@@ -27,7 +27,7 @@ def generate_launch_description():
         DeclareLaunchArgument('port', default_value='12345', description='ROBOT_PORT'),
         DeclareLaunchArgument('mode', default_value='virtual', description='OPERATION MODE'),
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
-        DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
         DeclareLaunchArgument('gui', default_value='true', description='Start RViz2'),
         DeclareLaunchArgument('remap_tf', default_value='false', description='REMAP TF'),
         DeclareLaunchArgument('use_joint_state_publisher', default_value='false', description='Publish joint_states for visualization'),
@@ -41,6 +41,7 @@ def generate_launch_description():
             default_value=PathJoinSubstitution([FindPackageShare('dsr_bringup2'), 'config', 'nav2_params_no_map.yaml']),
             description='Nav2 parameter file for no-map mode',
         ),
+        DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
         DeclareLaunchArgument(
             'nav2_params_file_map',
             default_value=PathJoinSubstitution([FindPackageShare('nav2_bringup'), 'params', 'nav2_params.yaml']),
@@ -183,7 +184,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, {
             'robot_description': ParameterValue(robot_description_content, value_type=str)
         }],
     )
@@ -212,6 +213,7 @@ def generate_launch_description():
             ("move_base_simple/goal", "/goal_pose"),
             ("initialpose", "/initialpose"),
         ],
+        condition=IfCondition(LaunchConfiguration('gui')),
     )
 
     original_tf_nodes = GroupAction(

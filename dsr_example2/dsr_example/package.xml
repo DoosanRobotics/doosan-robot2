@@ -10,6 +10,7 @@
 
   <depend>rclpy</depend>
   <depend>dsr_common2</depend>
+  <depend>dsr_msgs2</depend>
   
   <exec_depend>std_msgs</exec_depend>
 

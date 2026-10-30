@@ -57,6 +57,7 @@ def generate_launch_description():
         DeclareLaunchArgument('R',   default_value = '0',     description = 'Location Roll on Gazebo'    ),
         DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
         DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
+        DeclareLaunchArgument('tf_prefix', default_value = '', description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # Initialize Arguments
@@ -132,7 +133,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, {
         'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])
     }])
 

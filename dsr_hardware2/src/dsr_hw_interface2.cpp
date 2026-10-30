@@ -26,6 +26,7 @@
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include <chrono>
 #include <map>
 #include <mutex>
@@ -47,6 +48,20 @@ int m_nVersionDRCF;
 constexpr size_t g_k_default_num_joint = 6;
 constexpr size_t g_k_p3020_num_joint = 5;
 constexpr size_t g_k_p3020_fixed_joint_index = 3;
+// Controller generations that changed where the RT stream is reachable.
+constexpr int g_k_drcf_v3   = 3000000;   // 3.0.0: rt_host starts being used
+constexpr int g_k_drcf_v3_4 = 3040000;   // 3.4.0: RT is reachable on the robot IP
+constexpr const char* g_k_legacy_rt_ip = "192.168.137.50";
+// The ros2_control xacro files default rt_host to this, and it is a wildcard
+// bind address, never somewhere the RT stream can be dialled. Treat it as unset.
+constexpr const char* g_k_unset_rt_ip = "0.0.0.0";
+// write() accepts a cycle only when its period lands inside this window around
+// the nominal control period.
+constexpr double g_k_dt_window_lo = 0.3;
+constexpr double g_k_dt_window_hi = 1.5;
+// How long one RT sample may be repeated before it counts as a stall, at the
+// 100 Hz default rate. Scaled up for slower loops where one period is longer.
+constexpr double g_k_rt_stale_timeout_s = 0.1;
 
 std::map<std::string, CDRFLEx*> g_drfl_instances;
 std::mutex g_drfl_map_mutex;
@@ -171,9 +186,10 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    INITAILIZE");
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
 
-    // Try to connect to DRCF for 10 (20 * 0.5) sec. 
+    // Try to connect to DRCF for 60 (120 * 0.5) sec.
+    // Must outlast a DRCF cold boot: bringup often starts the emulator in parallel.
     bool is_connected = false;
-    for (size_t retry = 0; retry < 20; ++retry) {
+    for (size_t retry = 0; retry < 120; ++retry) {
         is_connected = m_Drfl.open_connection(drcf_ip_, drcf_port_);
         if(!is_connected) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"Connecting failure.. retry...");
@@ -252,7 +268,15 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     //--- Get version -------------------------------------            
     SYSTEM_VERSION tSysVerion;
     memset(&tSysVerion, 0, sizeof(tSysVerion));
-    assert(m_Drfl.get_system_version(&tSysVerion));
+    // Not an assert: NDEBUG strips the asserted call along with the check, and a
+    // release build is what ships. The struct stays zeroed on failure, which the
+    // empty-version check below reports rather than silently passing it off as a
+    // pre-3.0 controller.
+    if(!m_Drfl.get_system_version(&tSysVerion)) {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                "Unable to read the system version from the controller. The RT stream "
+                "address and the robot model check both depend on it.");
+    }
 
     //--- Get DRCF version & convert to integer  ----------            
     m_nVersionDRCF = 0; 
@@ -261,11 +285,39 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
             if(tSysVerion._szController[i]>='0' && tSysVerion._szController[i]<='9')
                     m_nVersionDRCF += (tSysVerion._szController[i]-'0')*pow(10.0,k++);
     if(m_nVersionDRCF < 100000) m_nVersionDRCF += 100000; 
+    if(strlen(tSysVerion._szController) == 0) {
+        // RT address selection below keys off this value, so a failed read must not
+        // pass silently as a pre-3.0 controller.
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                "Controller version came back empty; assuming %d. The RT stream "
+                "address is chosen from this value - set 'rt_host' explicitly.",
+                m_nVersionDRCF);
+    }
                  
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRCF version = %s",tSysVerion._szController);
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRFL version = %s",m_Drfl.get_library_version());
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    m_nVersionDRCF = %d", m_nVersionDRCF);  //ex> M2.40 = 120400, M2.50 = 120500  
+    RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    robot model = %s",
+            tSysVerion._szRobotModel);
     RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
+
+    // The URDF and the MoveIt config are chosen by the 'model' argument at launch,
+    // long before this connection exists, so a mismatch can be reported here but
+    // not corrected.
+    if(mode_ != "virtual" && strlen(tSysVerion._szRobotModel) > 0) {
+        std::string reported = tSysVerion._szRobotModel;
+        std::transform(reported.begin(), reported.end(), reported.begin(), ::tolower);
+        // Composite names carry the arm model inside them: r100_m1509 is an M1509 on
+        // an R100 base, m1013_dual is a pair of M1013s.
+        if(model_.find(reported) == std::string::npos) {
+            RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+                    "Robot model mismatch: the controller reports '%s' but 'model' was "
+                    "launched as '%s'. The URDF, kinematics and MoveIt config in use "
+                    "describe a different robot, so poses and planning will not match "
+                    "the hardware. Relaunch with model:=%s.",
+                    tSysVerion._szRobotModel, model_.c_str(), reported.c_str());
+        }
+    }
 
     m_Drfl.setup_monitoring_version(1); //Enabling extended monitoring functions
 
@@ -296,11 +348,32 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 
     // Virtual controller doesn't support real time connection.
     if(mode_ != "virtual") {
-        if(m_nVersionDRCF >= 3000000) {
-            drcf_ip_ = drcf_rt_ip_;
+        // Where the RT stream is reachable depends on the controller generation:
+        //   < 3.0    rt_host is ignored, RT is reachable on the robot IP.
+        //   3.0-3.3  RT is reachable at 192.168.137.50 by default.
+        //   >= 3.4   RT is reachable on the robot IP, so an unset rt_host follows host.
+        // An explicit rt_host always wins from 3.0 up.
+        const bool rt_ip_set = !drcf_rt_ip_.empty() && drcf_rt_ip_ != g_k_unset_rt_ip;
+        std::string rt_ip = drcf_ip_;
+        if(m_nVersionDRCF >= g_k_drcf_v3) {
+            if(rt_ip_set) {
+                rt_ip = drcf_rt_ip_;
+            } else if(m_nVersionDRCF < g_k_drcf_v3_4) {
+                rt_ip = g_k_legacy_rt_ip;
+                RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[RT] controller %d is older than 3.4, where the RT stream is not "
+                        "reachable on the robot IP. 'rt_host' is unset, falling back to %s. "
+                        "Set 'rt_host' if this controller uses a different address.",
+                        m_nVersionDRCF, rt_ip.c_str());
+            }
         }
-        if (!m_Drfl.connect_rt_control(drcf_ip_)) {
-            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
+        RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                "[RT] connecting to %s:12347", rt_ip.c_str());
+
+        if (!m_Drfl.connect_rt_control(rt_ip)) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "Unable to connect RT control stream to '%s' (UDP 12347). "
+                    "Check with: sudo nmap -sU -p 12347 %s", rt_ip.c_str(), rt_ip.c_str());
             return CallbackReturn::FAILURE;
         }
         RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "Connected RT control stream");
@@ -308,7 +381,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         const float       period    = 0.001;
         const int         losscount = 4;
         if (!m_Drfl.set_rt_control_output(version, period, losscount)) {
-            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to set RT control output");
             return CallbackReturn::FAILURE;
         }
 
@@ -377,6 +450,34 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
             RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
                                     "[read] read_data_rt retrieves nullptr");
             return return_type::ERROR;
+        }
+        // A repeated RT buffer is only detectable here: joint_state_broadcaster
+        // re-stamps every sample with the publish time, so downstream age checks
+        // cannot see the stall. The stream and this loop free-run at similar
+        // rates, so single repeats are beat frequency and must not be reported;
+        // only a sample held well past one control period is a real stall.
+        const auto now_rt = std::chrono::steady_clock::now();
+        if(data->time_stamp == last_rt_time_stamp_) {
+            ++rt_stale_count_;
+            const double held = std::chrono::duration<double>(now_rt - last_rt_change_).count();
+            if(held > g_k_rt_stale_timeout_s * std::max(1.0, 100.0 / std::max(1, update_rate_))) {
+                rt_stale_reported_ = true;
+                RCLCPP_WARN_THROTTLE(rclcpp::get_logger("dsr_hw_interface2"),
+                        rt_log_clock_, 1000,
+                        "[read] RT data is stale: time_stamp %.6f unchanged for %.2f s "
+                        "(%lu cycles). /joint_states is repeating the last received sample.",
+                        data->time_stamp, held, static_cast<unsigned long>(rt_stale_count_));
+            }
+        } else {
+            if(rt_stale_reported_) {
+                RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[read] RT data resumed after %lu stale cycle(s)",
+                        static_cast<unsigned long>(rt_stale_count_));
+                rt_stale_reported_ = false;
+            }
+            rt_stale_count_ = 0;
+            last_rt_time_stamp_ = data->time_stamp;
+            last_rt_change_ = now_rt;
         }
         for(size_t idx_control=0, idx_ros=0; idx_control < g_k_default_num_joint; idx_control++) {
             if (ignored_joints_.find(idx_control) != ignored_joints_.end()) {
@@ -457,8 +558,8 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     // REAL mode: filter unstable dt cycles
     if (mode_ == "real" && desired_period > 0.0)
     {
-        double min_dt = desired_period * 0.3;
-        double max_dt = desired_period * 1.5;
+        double min_dt = desired_period * g_k_dt_window_lo;
+        double max_dt = desired_period * g_k_dt_window_hi;
 
         if (dt_sec < min_dt || dt_sec > max_dt)
         {
@@ -480,8 +581,8 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         }
 
         double desired_period_virtual = (update_rate_ > 0) ? desired_period : 0.1;        // If update_rate_ is invalid, fallback to 10Hz (0.1s)
-        double min_dt = desired_period_virtual * 0.3;
-        double max_dt = desired_period_virtual * 1.5;
+        double min_dt = desired_period_virtual * g_k_dt_window_lo;
+        double max_dt = desired_period_virtual * g_k_dt_window_hi;
 
         if (dt_sec < min_dt || dt_sec > max_dt)
         {
@@ -528,7 +629,15 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         {
             float acc[g_k_default_num_joint] = {0,0,0,0,0,0};
             const float margin = 20.0f;
-            float servo_time = static_cast<float>(real_loop_dt * margin);
+            // real_loop_dt spans the gap since the previous write(), which on the
+            // first cycle covers the whole connect sequence. Clamp to the window
+            // the guard above accepts so no command asks for a huge target time.
+            const double loop_dt = (desired_period > 0.0)
+                    ? std::clamp(real_loop_dt,
+                                 desired_period * g_k_dt_window_lo,
+                                 desired_period * g_k_dt_window_hi)
+                    : real_loop_dt;
+            float servo_time = static_cast<float>(loop_dt * margin);
 
             m_Drfl.servoj_rt(pos, vel, acc, servo_time);
             cmd_type = "servoj_rt";

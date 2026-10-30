@@ -39,6 +39,7 @@ def generate_launch_description():
         DeclareLaunchArgument('model', default_value = 'a0912',     description = 'ROBOT_MODEL'    ),
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('gz',    default_value = 'false',     description = 'USE GAZEBO SIM'    ),
+        DeclareLaunchArgument('tf_prefix', default_value = '', description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
 
     # Command-line arguments
@@ -105,7 +106,7 @@ def generate_launch_description():
             ),
         ],
         output="both",
-        parameters=[moveit_config.robot_description],
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, moveit_config.robot_description],
     )
 
     # ros2_control using FakeSystem as hardware

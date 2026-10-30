@@ -66,7 +66,7 @@ def generate_launch_description():
         DeclareLaunchArgument('model', default_value='m1013', description='ROBOT_MODEL'),
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
-        DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
         DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotique)'), # [modified]
     ]
 

@@ -34,7 +34,7 @@
 #include <atomic>
 #include <mutex>
 
-#include "../../dsr_common2/include/DRFLEx.h"
+#include "DRFLEx.h"
 
 typedef struct {
     /* timestamp at the data of data acquisition */
@@ -188,7 +188,7 @@ private:
     float pos_d[NUMBER_OF_JOINT]={0,0,};
     float vel_d[NUMBER_OF_JOINT]={0,0,};
     float acc_d[NUMBER_OF_JOINT]={0,0,};
-    float time_d=0.0;
+    float time_d=0.02;   // target time [s]; must stay well above the 1 ms publish period
     
 };
 
@@ -207,5 +207,5 @@ private:
     float pos_d[NUMBER_OF_JOINT]={0,0,};
     float vel_d[NUMBER_OF_JOINT]={0,0,};
     float acc_d[NUMBER_OF_JOINT]={0,0,};
-    float time_d=0.0;
+    float time_d=0.02;   // target time [s]; must stay well above the 1 ms publish period
 };

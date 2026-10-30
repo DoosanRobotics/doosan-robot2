@@ -580,8 +580,7 @@ protected:
   // Per-instance DRFL pointer (each controller connects to its own robot)
   DRAFramework::CDRFLEx *Drfl = nullptr;
 
-  // Service name prefix (controller node name) for left/right distinction
-  // e.g., "left_dsr_controller2/" so services become /dsr01/left_dsr_controller2/motion/move_joint
+  // Prepended to every service and topic name. Empty; see on_activate().
   std::string svc_prefix_;
 
   std::vector<std::string> joint_names_;

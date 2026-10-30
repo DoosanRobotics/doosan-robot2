@@ -51,8 +51,9 @@ def generate_launch_description():
         DeclareLaunchArgument('color',      default_value = 'white',          description = 'ROBOT_COLOR'    ),
         DeclareLaunchArgument('gui',        default_value = 'true',           description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',         default_value = 'false',          description = 'USE GAZEBO SIM' ),
-        DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50', description = 'ROBOT_RT_IP'    ),
+        DeclareLaunchArgument('rt_host',    default_value = '',               description = 'ROBOT_RT_IP'    ),
         DeclareLaunchArgument('remap_tf',   default_value = 'false',          description = 'REMAP TF'       ),
+        DeclareLaunchArgument('tf_prefix',  default_value = '',               description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     gui = LaunchConfiguration("gui")
@@ -134,6 +135,10 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         output='both',
         parameters=[{
+            # Renames frames on the wire only: .rviz configs, MoveIt SRDF and the
+            # RobotModel display's own 'TF Prefix' must be set to match. Prefixed
+            # robots form separate TF trees until a static transform joins them.
+            'frame_prefix': LaunchConfiguration('tf_prefix'),
             'robot_description': Command([
                 'xacro', ' ', xacro_path, '/', LaunchConfiguration('model'),
                 '.urdf.xacro color:=', LaunchConfiguration('color'),

@@ -2051,7 +2051,17 @@ def set_safety_mode(safety_mode, safety_event):
 
 def connect_rt_control(ip_address=None, port=None):
     g_node.get_logger().warning("RT service connection may already have been established by dsr_hw_interface; Need caution using this function again.")
-    req_ip = ip_address if ip_address is not None else "192.168.137.100" # Need set to 192.168.137.50 in version below 3.4
+    # From controller 3.4 the RT stream is reachable on the robot IP. On 3.0-3.3 it is
+    # reachable at 192.168.137.50 by default. This fallback only fits a controller
+    # reachable at 192.168.137.100, so warn when it is used. dsr_hardware2 resolves
+    # the address from rt_host/host and connects on startup.
+    if ip_address is not None:
+        req_ip = ip_address
+    else:
+        req_ip = "192.168.137.100"
+        g_node.get_logger().warning(
+            "connect_rt_control: no ip_address given, defaulting to " + req_ip +
+            ". Pass the RT address explicitly if the controller is elsewhere.")
     req_port = port if port is not None else 12347
 
     if ip_address is not None and type(ip_address) != str:

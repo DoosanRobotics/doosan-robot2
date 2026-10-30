@@ -1,0 +1,98 @@
+name: CI base
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: "Runner label for the build job"
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 90
+    strategy:
+      matrix:
+        ros_distribution:
+          - jazzy
+    container:
+      image: ubuntu:noble
+    services:
+      emulator-server:
+        image: doosanrobot/dsr_emulator:3.0.1
+        options: -i
+    env:
+      TEST_ON_CLOUD: true
+      DEBIAN_FRONTEND: noninteractive
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Install the container's base tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends sudo curl ca-certificates git
+
+      - name: Clear conflicting git credential helpers
+        run: |
+          git config --global --unset-all credential.helper || true
+          sudo git config --system --unset-all credential.helper || true
+
+      - name: Install the ROS 2 apt source
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eo pipefail
+          version=$(curl -sSf -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest \
+            | grep -F '"tag_name"' | awk -F'"' '{print $4}')
+          [ -n "$version" ] || { echo "could not resolve the ros-apt-source version"; exit 1; }
+          codename=$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+          curl -sSfL --retry 3 --retry-delay 2 -o /tmp/ros2-apt-source.deb \
+            "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${version}/ros2-apt-source_${version}.${codename}_all.deb"
+          sudo dpkg -i /tmp/ros2-apt-source.deb
+          rm -f /tmp/ros2-apt-source.deb
+
+      - name: Install ROS 2 and the build tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ros-${{ matrix.ros_distribution }}-desktop ros-dev-tools python3-pip
+          sudo rosdep init 2>/dev/null || true
+          rosdep update
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpoco-dev libyaml-cpp-dev dbus-x11
+
+      - name: Export ROS Python path
+        run: |
+          source /opt/ros/${{ matrix.ros_distribution }}/setup.bash
+          echo "PYTHONPATH=${PYTHONPATH}" >> $GITHUB_ENV
+
+      - name: Resolve the emulator address
+        run: |
+          host=$(getent hosts emulator-server | awk '{print $1}')
+          [ -n "$host" ] || { echo "emulator-server does not resolve"; exit 1; }
+          echo "DSR_EMULATOR_HOST=${host}" >> $GITHUB_ENV
+
+      - name: Wait for the emulator to accept connections
+        run: |
+          END_TIME=$(( $(date +%s) + 60 ))
+          while [ "$(date +%s)" -lt "$END_TIME" ]; do
+            if (exec 3<>/dev/tcp/${DSR_EMULATOR_HOST}/12345) 2>/dev/null; then
+              echo "emulator is listening on 12345"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "emulator did not open port 12345 within 60s"
+          exit 1
+
+      - name: Build and test
+        uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          target-ros2-distro: ${{ matrix.ros_distribution }}
+          coverage-result: false
+          vcs-repo-file-url: ""
+          import-token: ${{ secrets.GITHUB_TOKEN }}

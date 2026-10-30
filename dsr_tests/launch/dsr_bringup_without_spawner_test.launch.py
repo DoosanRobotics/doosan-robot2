@@ -16,9 +16,7 @@
 #  limitations under the License.
 # 
 
-import os
 
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
@@ -37,11 +35,11 @@ def generate_launch_description():
         DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
         DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
-        DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
+        DeclareLaunchArgument('rt_host',    default_value = '',     description = 'ROBOT_RT_IP'    ),
         DeclareLaunchArgument('rviz',   default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('start_emulator',   default_value = 'false',     description = 'Start emulator'    ),
+        DeclareLaunchArgument('tf_prefix', default_value = '',      description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
-    xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     rviz = LaunchConfiguration("rviz")
     start_emulator = LaunchConfiguration("start_emulator")
     
@@ -66,6 +64,7 @@ def generate_launch_description():
             " mode:=", LaunchConfiguration('mode'),
             " model:=", LaunchConfiguration('model'),
             " update_rate:=", update_rate,
+            " color:=", LaunchConfiguration('color'),
         ]
     )
 
@@ -115,9 +114,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
-        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
-    }])
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, robot_description])
     
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]
