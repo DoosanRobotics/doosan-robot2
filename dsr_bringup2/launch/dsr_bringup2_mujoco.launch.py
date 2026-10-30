@@ -33,6 +33,7 @@ def generate_launch_description():
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
         DeclareLaunchArgument('gripper', default_value='none', description='Use gripper'),
         DeclareLaunchArgument('scene_path', default_value='none', description='Relative path to MuJoCo scene XML file (demo/slope_demo_scene.xml)'),
+        DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
 
     set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='true')
@@ -129,7 +130,7 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         output='both',
         parameters=[
-            {
+            {'frame_prefix': LaunchConfiguration('tf_prefix')}, {
                 'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color'), 
                                          ])
             },

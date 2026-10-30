@@ -74,7 +74,10 @@ def rviz_node_function(context):
         ],
     )
 
-    return [run_move_group_node, rviz_node]
+    # RViz is optional; move_group is not.
+    if LaunchConfiguration('gui').perform(context).lower() == 'true':
+        return [run_move_group_node, rviz_node]
+    return [run_move_group_node]
 
 
 def generate_launch_description():
@@ -86,9 +89,10 @@ def generate_launch_description():
         DeclareLaunchArgument('mode',  default_value='virtual', description='OPERATION MODE'),
         DeclareLaunchArgument('model', default_value='a0912', description='ROBOT_MODEL'),
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
-        DeclareLaunchArgument('gui',   default_value='false', description='Start RViz2'),
+        DeclareLaunchArgument('gui',   default_value='true', description='Start RViz2'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host', default_value='192.168.137.50', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
 
     xacro_path = os.path.join(
@@ -161,7 +165,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, {
             'robot_description': Command([
                 'xacro', ' ',
                 xacro_path, '/',

@@ -17,6 +17,11 @@ NAMESPACE = "dsr01"
 MODEL = 'm1013'
 SRV_CALL_TIMEOUT = 30	
 PORT = 12345
+# A CI job running inside a container reaches the emulator service by its address
+# on the job network rather than on localhost.
+HOST = os.getenv("DSR_EMULATOR_HOST", "127.0.0.1")
+ROBOT_MODE_MANUAL = 0
+ROBOT_MODE_AUTONOMOUS = 1
 
 RVIZ = True
 START_EMULATOR = True 
@@ -43,6 +48,7 @@ def bringUp():
 			"dsr_bringup_without_spawner_test.launch.py",
 			"mode:={}".format(MODE),
 			"name:={}".format(NAMESPACE),
+			"host:={}".format(HOST),
 			"port:={}".format(PORT),
 			"rviz:={}".format(RVIZ),
 			"start_emulator:={}".format(START_EMULATOR)
@@ -1738,6 +1744,15 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 
 
 """ Tool Service Client Test Class """
+def _set_robot_mode(node, mode):
+	cli = node.create_client(SetRobotMode, "system/set_robot_mode")
+	cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
+	future = cli.call_async(SetRobotMode.Request(robot_mode=mode))
+	rclpy.spin_until_future_complete(node, future, timeout_sec=SRV_CALL_TIMEOUT)
+	node.destroy_client(cli)
+	return future.done() and future.result().success
+
+
 class TestDsrToolCli(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -1745,9 +1760,13 @@ class TestDsrToolCli(unittest.TestCase):
 		print("===== DooSanSystem Tool Tests Start ================")
 		cls._lock = threading.Lock()
 		cls.node =rclpy.create_node("dsr_tool_test_node", namespace=NAMESPACE)
+		# DRFL accepts add_tool and del_tool only in manual mode. In autonomous mode,
+		# where bringup leaves the robot, it refuses both without contacting the controller.
+		assert _set_robot_mode(cls.node, ROBOT_MODE_MANUAL), "system/set_robot_mode(manual) failed."
 
 	@classmethod
 	def tearDownClass(cls):
+		_set_robot_mode(cls.node, ROBOT_MODE_AUTONOMOUS)
 		print("===== DooSanSystem Tool Tests Ends ================")
 		print("====================================================")
 		cls.node.destroy_node()
@@ -1800,77 +1819,82 @@ class TestDsrToolCli(unittest.TestCase):
 		self.assertTrue(set_tool_shape_resp.success == True, "tool/set_tool_shape service is not working correctly.")
 		self.node.destroy_client(set_tool_shape_cli)
 
-	# # Config Create Tool  Test
-	# def test_config_create_tool_cli(self):
-	# 	print("Configuration Create Tool Client Test are starting...") # Debug
 
-	# 	""" Create Tool """
-	# 	config_create_tool_cli = self.node.create_client(ConfigCreateTool, "tool/config_create_tool")
-	# 	config_create_tool_req = ConfigCreateTool.Request()
-	# 	config_create_tool_req.name = "tool1"
-	# 	config_create_tool_req.weight = 5.3
-	# 	config_create_tool_req.cog = [10.0, 10.0, 10.0]
-	# 	config_create_tool_req.inertia = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-	# 	config_create_tool_future = config_create_tool_cli.call_async(config_create_tool_req)
-	# 	rclpy.spin_until_future_complete(self.node, config_create_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
-	# 	self.assertTrue(config_create_tool_future.done(), "tool/config_create_tool service working is not done.")
-	# 	config_create_tool_resp = config_create_tool_future.result()
-	# 	self.assertTrue(config_create_tool_resp.success == True, "tool/config_create_tool service is not working correctly.")
-	# 	self.node.destroy_client(config_create_tool_resp)
+	# Set Current Tool  Test
+	def test_set_current_tool_cli(self):
+		print("Set Current Tool Client Test are starting...") # Debug
 
-	# # Set Current Tool  Test
-	# def test_set_current_tool_cli(self):
-	# 	print("Set Current Tool Client Test are starting...") # Debug
+		""" Set Current Tool """
+		set_current_tool_cli = self.node.create_client(SetCurrentTool, "tool/set_current_tool")
+		set_current_tool_future = set_current_tool_cli.call_async(SetCurrentTool.Request(name="tool1"))
+		rclpy.spin_until_future_complete(self.node, set_current_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
+		self.assertTrue(set_current_tool_future.done(), "tool/set_current_tool service working is not done.")
+		set_current_tool_resp = set_current_tool_future.result()
+		self.assertTrue(set_current_tool_resp.success == True, "tool/set_current_tool service is not working correctly.")
+		self.node.destroy_client(set_current_tool_cli)
 
-	# 	""" Set Current Tool """
-	# 	set_current_tool_cli = self.node.create_client(SetCurrentTool, "tool/set_current_tool")
-	# 	set_current_tool_future = set_current_tool_cli.call_async(SetCurrentTool.Request(name="tool1"))
-	# 	rclpy.spin_until_future_complete(self.node, set_current_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
-	# 	self.assertTrue(set_current_tool_future.done(), "tool/set_current_tool service working is not done.")
-	# 	set_current_tool_resp = set_current_tool_future.result()
-	# 	self.assertTrue(set_current_tool_resp.success == True, "tool/set_current_tool service is not working correctly.")
-	# 	self.node.destroy_client(set_current_tool_cli)
+		time.sleep(5) ### Note: we added sleep to make sure set_current_tool works (TODO: Fix service)
 
-	# 	time.sleep(5) ### Note: we added sleep to make sure set_current_tool works (TODO: Fix service)
+		""" Get Current Tool """
+		get_current_tool_cli = self.node.create_client(GetCurrentTool, "tool/get_current_tool")
+		get_current_tool_future = get_current_tool_cli.call_async(GetCurrentTool.Request())
+		rclpy.spin_until_future_complete(self.node, get_current_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
+		self.assertTrue(get_current_tool_future.done(), "tool/get_current_tool service working is not done.")
+		get_current_tool_resp = get_current_tool_future.result()
+		print(get_current_tool_resp)
+		self.assertTrue((get_current_tool_resp.success == True) and (get_current_tool_resp.info == "tool1"), "tool/get_current_tool service is not working correctly.")
+		self.node.destroy_client(get_current_tool_cli)
 
-	# 	""" Get Current Tool """
-	# 	get_current_tool_cli = self.node.create_client(GetCurrentTool, "tool/get_current_tool")
-	# 	get_current_tool_future = get_current_tool_cli.call_async(GetCurrentTool.Request())
-	# 	rclpy.spin_until_future_complete(self.node, get_current_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
-	# 	self.assertTrue(get_current_tool_future.done(), "tool/get_current_tool service working is not done.")
-	# 	get_current_tool_resp = get_current_tool_future.result()
-	# 	print(get_current_tool_resp)
-	# 	self.assertTrue((get_current_tool_resp.success == True) and (get_current_tool_resp.info == "tool1"), "tool/get_current_tool service is not working correctly.")
-	# 	self.node.destroy_client(get_current_tool_cli)
 
-	# # Config Delete Tool Test
-	# def test_config_delete_tool_cli(self):
-	# 	print("Configuration Delete Tool Client Test are starting...") # Debug
+	# Config Create Tool  Test
+	def test_config_create_tool_cli(self):
+		print("Configuration Create Tool Client Test are starting...") # Debug
 
-	# 	""" Config Create Tool """
-	# 	config_create_tool_cli = self.node.create_client(ConfigCreateTool, "tool/config_create_tool")
-	# 	config_create_tool_req = ConfigCreateTool.Request()
-	# 	config_create_tool_req.name = "tool2"
-	# 	config_create_tool_req.weight = 5.3
-	# 	config_create_tool_req.cog = [10.0, 10.0, 10.0]
-	# 	config_create_tool_req.inertia = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-	# 	config_create_tool_future = config_create_tool_cli.call_async(config_create_tool_req)
-	# 	rclpy.spin_until_future_complete(self.node, config_create_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
-	# 	self.assertTrue(config_create_tool_future.done(), "tool/config_create_tool service working is not done.")
-	# 	config_create_tool_resp = config_create_tool_future.result()
-	# 	self.assertTrue(config_create_tool_resp.success == True, "tool/config_create_tool service is not working correctly.")
-	# 	self.node.destroy_client(config_create_tool_resp)
+		""" Set Current Tool """
+		config_create_tool_cli = self.node.create_client(ConfigCreateTool, "tool/config_create_tool")
+		config_create_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
+		config_create_tool_req = ConfigCreateTool.Request()
+		config_create_tool_req.name = "tool1"
+		config_create_tool_req.weight = 5.3
+		config_create_tool_req.cog = [10.0, 10.0, 10.0]
+		config_create_tool_req.inertia = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+		config_create_tool_future = config_create_tool_cli.call_async(config_create_tool_req)
+		rclpy.spin_until_future_complete(self.node, config_create_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
+		self.assertTrue(config_create_tool_future.done(), "tool/config_create_tool service working is not done.")
+		config_create_tool_resp = config_create_tool_future.result()
+		self.assertTrue(config_create_tool_resp.success == True, "tool/config_create_tool service is not working correctly.")
+		self.node.destroy_client(config_create_tool_resp)
 
-	# 	time.sleep(5) ### Note: we added sleep to make sure set_current_tool works (TODO: Fix service)
+	# Config Delete Tool Test
+	def test_config_delete_tool_cli(self):
+		print("Configuration Delete Tool Client Test are starting...") # Debug
 
-	# 	""" Config Delete Tool """
-	# 	config_delete_tool_cli = self.node.create_client(ConfigDeleteTool, "tool/config_delete_tool")
-	# 	config_delete_tool_future = config_delete_tool_cli.call_async(ConfigDeleteTool.Request(name="tool2"))
-	# 	rclpy.spin_until_future_complete(self.node, config_delete_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
-	# 	self.assertTrue(config_delete_tool_future.done(), "tool/config_delete_tool service working is not done.")
-	# 	config_delete_tool_resp = config_delete_tool_future.result()
-	# 	self.assertTrue(config_delete_tool_resp.success == True, "tool/config_delete_tool service is not working correctly.")
-	# 	self.node.destroy_client(config_delete_tool_resp)
+		""" Config Create Tool """
+		config_create_tool_cli = self.node.create_client(ConfigCreateTool, "tool/config_create_tool")
+		config_create_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
+		config_create_tool_req = ConfigCreateTool.Request()
+		config_create_tool_req.name = "tool1"
+		config_create_tool_req.weight = 5.3
+		config_create_tool_req.cog = [10.0, 10.0, 10.0]
+		config_create_tool_req.inertia = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+		config_create_tool_future = config_create_tool_cli.call_async(config_create_tool_req)
+		rclpy.spin_until_future_complete(self.node, config_create_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
+		self.assertTrue(config_create_tool_future.done(), "tool/config_create_tool service working is not done.")
+		config_create_tool_resp = config_create_tool_future.result()
+		self.assertTrue(config_create_tool_resp.success == True, "tool/config_create_tool service is not working correctly.")
+		self.node.destroy_client(config_create_tool_resp)
+
+		time.sleep(5) ### Note: we added sleep to make sure set_current_tool works (TODO: Fix service)
+
+		""" Config Delete Tool """
+		config_delete_tool_cli = self.node.create_client(ConfigDeleteTool, "tool/config_delete_tool")
+		config_delete_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
+		config_delete_tool_future = config_delete_tool_cli.call_async(ConfigDeleteTool.Request(name="tool1"))
+		rclpy.spin_until_future_complete(self.node, config_delete_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
+		self.assertTrue(config_delete_tool_future.done(), "tool/config_delete_tool service working is not done.")
+		config_delete_tool_resp = config_delete_tool_future.result()
+		self.assertTrue(config_delete_tool_resp.success == True, "tool/config_delete_tool service is not working correctly.")
+		self.node.destroy_client(config_delete_tool_resp)
 
 
 # """ Force Service Client Test Class """

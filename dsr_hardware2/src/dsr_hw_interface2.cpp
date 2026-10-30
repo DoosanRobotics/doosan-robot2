@@ -18,6 +18,8 @@
 #include <chrono>
 #include <unistd.h>     
 #include <math.h>
+#include <algorithm>
+#include <cstring>
 
 #include "dsr_hardware2/dsr_hw_interface2.h"
 #include "dsr_hardware2/util.hpp"
@@ -36,6 +38,9 @@ CDRFLEx Drfl;
 bool g_bIsEmulatorMode = FALSE;
 std::string g_model;
 int m_nVersionDRCF;
+// write() accepts a cycle only when its period lands inside this window around the nominal control period.
+constexpr double g_k_dt_window_lo = 0.3;
+constexpr double g_k_dt_window_hi = 1.5;
 
 void* get_drfl(){
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"[DRFL address] %p", &Drfl);
@@ -212,7 +217,11 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 	//--- Get version -------------------------------------            
 	SYSTEM_VERSION tSysVerion;
 	memset(&tSysVerion, 0, sizeof(tSysVerion));
-	assert(Drfl.get_system_version(&tSysVerion));
+	// Not an assert: NDEBUG strips the asserted call along with the check, and a release build is what ships.
+	if(!Drfl.get_system_version(&tSysVerion)) {
+		RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+				"Unable to read the system version from the controller. The DRCF version below will read as 0.");
+	}
 
 	//--- Get DRCF version & convert to integer  ----------
 	// _szController format: "GV0121200" (prefix 2 chars + version digits)
@@ -222,7 +231,22 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRCF version = %s",tSysVerion._szController);
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRFL version = %s",Drfl.get_library_version());
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    m_nVersionDRCF = %d", m_nVersionDRCF);  //ex> GV0120400 = 120400, GV0121200 = 121200
+	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    robot model = %s", tSysVerion._szRobotModel);
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"_______________________________________________\n");
+
+	// The URDF and the MoveIt config are chosen by the 'model' argument at launch, long before this connection exists, so a mismatch can be reported here but not corrected.
+	if(mode != "virtual" && strlen(tSysVerion._szRobotModel) > 0) {
+		std::string reported = tSysVerion._szRobotModel;
+		std::transform(reported.begin(), reported.end(), reported.begin(), ::tolower);
+		if(model.find(reported) == std::string::npos) {
+			RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+					"Robot model mismatch: the controller reports '%s' but 'model' was "
+					"launched as '%s'. The URDF, kinematics and MoveIt config in use "
+					"describe a different robot, so poses and planning will not match "
+					"the hardware. Relaunch with model:=%s.",
+					tSysVerion._szRobotModel, model.c_str(), reported.c_str());
+		}
+	}
 
 	// -------------------------------------------------------------------------
 	// MINIMUM SUPPORTED DRCF VERSION: M2.12 (121200)
@@ -424,8 +448,8 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     // REAL mode: filter unstable dt cycles
     if (mode == "real" && desired_period > 0.0)
     {
-        double min_dt = desired_period * 0.3;
-        double max_dt = desired_period * 1.5;
+        double min_dt = desired_period * g_k_dt_window_lo;
+        double max_dt = desired_period * g_k_dt_window_hi;
 
         if (dt_sec < min_dt || dt_sec > max_dt)
         {
@@ -447,8 +471,8 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         }
 
         double desired_period_virtual = (update_rate > 0) ? desired_period : 0.1;        // If update_rate is invalid, fallback to 10Hz (0.1s)
-        double min_dt = desired_period_virtual * 0.3;
-        double max_dt = desired_period_virtual * 1.5;
+        double min_dt = desired_period_virtual * g_k_dt_window_lo;
+        double max_dt = desired_period_virtual * g_k_dt_window_hi;
 
         if (dt_sec < min_dt || dt_sec > max_dt)
         {
@@ -491,7 +515,13 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
         {
             float acc[6] = {0,0,0,0,0,0};
             const float margin = 20.0f;
-            float servo_time = static_cast<float>(real_loop_dt * margin);
+            // real_loop_dt spans the gap since the previous write(), which on the first cycle covers the whole connect sequence. Clamp to the window the guard above accepts so no command asks for a huge target time.
+            const double loop_dt = (desired_period > 0.0)
+                    ? std::clamp(real_loop_dt,
+                                 desired_period * g_k_dt_window_lo,
+                                 desired_period * g_k_dt_window_hi)
+                    : real_loop_dt;
+            float servo_time = static_cast<float>(loop_dt * margin);
 
             Drfl.servoj_rt(pos, vel, acc, servo_time);
             cmd_type = "servoj_rt";

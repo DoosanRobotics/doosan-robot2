@@ -39,13 +39,14 @@ def generate_launch_description():
         DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
         DeclareLaunchArgument('model', default_value = 'm1013',     description = 'ROBOT_MODEL'    ),
         DeclareLaunchArgument('color', default_value = 'white',     description = 'ROBOT_COLOR'    ),
-        DeclareLaunchArgument('gui',        default_value = 'false',     description = 'Start RViz2'    ),
+        DeclareLaunchArgument('gui',        default_value = 'true',      description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',         default_value = 'false',     description = 'USE GAZEBO SIM'    ),
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
         DeclareLaunchArgument('remap_tf',   default_value = 'false',     description = 'REMAP TF'    ),
+        DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
-    # gui = LaunchConfiguration("gui")
+    gui = LaunchConfiguration("gui")
     mode = LaunchConfiguration("mode")
     
     update_rate = str(read_update_rate()) # get update_rate from yaml
@@ -129,7 +130,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, {
             'robot_description': Command([
                 'xacro', ' ', xacro_path, '/', LaunchConfiguration('model'),
                 '.urdf.xacro color:=', LaunchConfiguration('color'),
@@ -151,7 +152,7 @@ def generate_launch_description():
         name="rviz2",
         output="log",
         arguments=["-d", rviz_config_file],
-        # condition=IfCondition(gui),
+        condition=IfCondition(gui),
     )
 
     original_tf_nodes = GroupAction(

@@ -313,6 +313,52 @@ void check_dsr_model(std::array<float, NUM_JOINT>& target_joint){
     }
 }
 
+// Sentinel DRFL uses for an unspecified rotational vel/acc component.
+constexpr float g_k_cond_none = -10000.0f;
+
+// A target time of 0 hands the limits to vel/acc, so those must be set instead.
+// Same contract DSR_ROBOT2.py enforces in _check_valid_vel_acc_joint/_task.
+bool rt_stream_time_is_sane(float time, const char* api, const rclcpp::Logger& logger, rclcpp::Clock& clock)
+{
+    if (time < 0.0f && time != g_k_cond_none) {
+        RCLCPP_WARN_THROTTLE(logger, clock, 2000,
+                "%s: ignoring command, time must not be negative (%.4f).", api, time);
+        return false;
+    }
+    return true;
+}
+
+bool rt_stream_joint_is_valid(const float* vel, const float* acc, size_t count, float time,
+                              const char* api, const rclcpp::Logger& logger, rclcpp::Clock& clock)
+{
+    if (!rt_stream_time_is_sane(time, api, logger, clock)) return false;
+    if (time != 0.0f && time != g_k_cond_none) return true;
+
+    const bool has_vel = std::any_of(vel, vel + count, [](float v) { return v != 0.0f; });
+    const bool has_acc = std::any_of(acc, acc + count, [](float a) { return a != 0.0f; });
+    if (has_vel && has_acc) return true;
+
+    RCLCPP_WARN_THROTTLE(logger, clock, 2000,
+            "%s: ignoring command, time is 0 or DR_COND_NONE so vel and acc must be non-zero.", api);
+    return false;
+}
+
+bool rt_stream_task_is_valid(const float* vel, const float* acc, float time,
+                             const char* api, const rclcpp::Logger& logger, rclcpp::Clock& clock)
+{
+    if (!rt_stream_time_is_sane(time, api, logger, clock)) return false;
+    if (time != 0.0f && time != g_k_cond_none) return true;
+
+    const auto pair_is_set = [](const float* v) {
+        return v[0] > 0.0f && (v[1] == g_k_cond_none || v[1] > 0.0f);
+    };
+    if (pair_is_set(vel) && pair_is_set(acc)) return true;
+
+    RCLCPP_WARN_THROTTLE(logger, clock, 2000,
+            "%s: ignoring command, time is 0 or DR_COND_NONE so vel[0] and acc[0] must be positive.", api);
+    return false;
+}
+
 controller_interface::CallbackReturn RobotController::on_activate(const rclcpp_lifecycle::State &)
 {
       
@@ -2261,7 +2307,10 @@ auto servoj_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServojRtStream>
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
     check_dsr_model(target_pos);
-    
+
+    if (!rt_stream_joint_is_valid(target_vel.data(), target_acc.data(), NUM_JOINT, time,
+            "servoj_rt", get_node()->get_logger(), *get_node()->get_clock())) return;
+
     Drfl->servoj_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
 };
 
@@ -2275,6 +2324,9 @@ auto servol_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::ServolRtStream>
     std::array<float, NUM_TASK> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
+
+    if (!rt_stream_task_is_valid(target_vel.data(), target_acc.data(), time,
+            "servol_rt", get_node()->get_logger(), *get_node()->get_clock())) return;
 
     Drfl->servol_rt(target_pos.data(), target_vel.data(), target_acc.data(), time);
 };
@@ -2290,6 +2342,9 @@ auto speedj_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedjRtStream>
     check_dsr_model(target_vel);
     check_dsr_model(target_acc);
 
+    if (!rt_stream_joint_is_valid(target_vel.data(), target_acc.data(), NUM_JOINT, time,
+            "speedj_rt", get_node()->get_logger(), *get_node()->get_clock())) return;
+
     Drfl->speedj_rt(target_vel.data(), target_acc.data(), time);
 };
 
@@ -2301,6 +2356,9 @@ auto speedl_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::SpeedlRtStream>
     std::array<float, NUM_TASK> target_acc;
     std::copy(msg->acc.cbegin(), msg->acc.cend(), target_acc.begin());
     float time = msg->time;
+
+    if (!rt_stream_task_is_valid(target_vel.data(), target_acc.data(), time,
+            "speedl_rt", get_node()->get_logger(), *get_node()->get_clock())) return;
 
     Drfl->speedl_rt(target_vel.data(), target_acc.data(), time);
 };
@@ -3066,28 +3124,42 @@ void OnMonitoringAccessControlCB(const MONITORING_ACCESS_CONTROL eAccCtrl)
     switch(eAccCtrl)
     {
     case MONITORING_ACCESS_CONTROL_REQUEST:
+        RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
+                "[AccessControl] another client asked for control; refused. "
+                "It can still take control, which arrives here as a loss.");
         Drfl->ManageAccessControl(MANAGE_ACCESS_CONTROL_RESPONSE_NO);
         //Drfl->TransitControlAuth(MANaGE_ACCESS_CONTROL_RESPONSE_YES);
         break;
     case MONITORING_ACCESS_CONTROL_GRANT:
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"_______________________________________________\n");   
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    Access control granted ");
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"_______________________________________________\n");   
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),
+                "[AccessControl] granted");
         g_bHasControlAuthority = TRUE;
         OnMonitoringStateCB(Drfl->GetRobotState());
         break;
     case MONITORING_ACCESS_CONTROL_DENY:
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"_______________________________________________\n");   
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    Access control deny ");
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"_______________________________________________\n");   
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"),
+                "[AccessControl] request denied; the driver does not ask again. "
+                "Motion commands are accepted but not executed until control "
+                "returns. Release control on the other client, or restart the "
+                "bringup to take it back.");
         break;
     case MONITORING_ACCESS_CONTROL_LOSS:
         g_bHasControlAuthority = FALSE;
         if (g_bTpInitailizingComplted) {
+            RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
+                    "[AccessControl] lost to another client; asking for it back. "
+                    "Motion commands are accepted but not executed until it is granted.");
             Drfl->ManageAccessControl(MANAGE_ACCESS_CONTROL_REQUEST);
+        } else {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_controller2"),
+                    "[AccessControl] lost to another client before the teach pendant "
+                    "finished initialising, so no request is sent and control stays lost. "
+                    "Restart the bringup to take it back.");
         }
         break;
     default:
+        RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),
+                "[AccessControl] unhandled event %d", (int)eAccCtrl);
         break;
     }
     g_stDrState.nAccessControl = (int)eAccCtrl;

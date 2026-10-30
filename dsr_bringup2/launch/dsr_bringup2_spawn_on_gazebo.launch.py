@@ -50,6 +50,7 @@ def generate_launch_description():
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
         DeclareLaunchArgument('use_sim_time', default_value='true', description='Use simulation time'),
         DeclareLaunchArgument('remap_tf',   default_value = 'false',     description = 'REMAP TF'    ),
+        DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
     set_use_sim_time = SetLaunchConfiguration(name='use_sim_time', value='true')
     
@@ -141,7 +142,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, {
             'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
         }],
     )

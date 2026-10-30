@@ -29,9 +29,10 @@ echo "run : '$container_name' ..."
 
 
 # check 
-if [ "$(docker ps -q -f name=$container_name)" ]; then
+# Anchored: docker's `--filter name=` is a substring match, so an unanchored pattern would also tear down other robots' containers.
+if [ "$(docker ps -q -f name=^/${container_name}$)" ]; then
     echo "The emulator '$container_name' is already running... kill it"
-    docker ps -a --filter name=emulator -q | xargs -r docker rm -f
+    docker ps -a --filter name=^/${container_name}$ -q | xargs -r docker rm -f
 fi
 # run
 docker run -dit --privileged --rm --name $container_name --env ROBOT_MODEL=${2^^} -p $server_port:12345 $emulator_image

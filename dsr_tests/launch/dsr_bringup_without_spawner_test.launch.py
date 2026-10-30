@@ -29,8 +29,8 @@ def generate_launch_description():
         DeclareLaunchArgument('rt_host',    default_value = '192.168.137.50',     description = 'ROBOT_RT_IP'    ),
         DeclareLaunchArgument('rviz',   default_value = 'false',     description = 'Start RViz2'    ),
         DeclareLaunchArgument('start_emulator',   default_value = 'false',     description = 'Start emulator'    ),
+        DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
-    xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     rviz = LaunchConfiguration("rviz")
     start_emulator = LaunchConfiguration("start_emulator")
     
@@ -104,9 +104,8 @@ def generate_launch_description():
         name='robot_state_publisher',
         namespace=LaunchConfiguration('name'),
         output='both',
-        parameters=[{
-        'robot_description': Command(['xacro', ' ', xacro_path, '/', LaunchConfiguration('model'), '.urdf.xacro color:=', LaunchConfiguration('color')])           
-    }])
+        # Same description ros2_control_node gets, so both describe one robot.
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, robot_description])
     
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("dsr_description2"), "rviz", "default.rviz"]

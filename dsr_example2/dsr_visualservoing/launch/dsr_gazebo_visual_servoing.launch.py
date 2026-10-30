@@ -34,6 +34,7 @@ ARGUMENTS =[
     DeclareLaunchArgument('R',   default_value = '0',     description = 'Location Roll on Gazebo'    ),
     DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
     DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
+    DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
 ]
 
 def generate_launch_description():
@@ -110,7 +111,7 @@ def generate_launch_description():
         executable="robot_state_publisher",
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
         output="screen",
-        parameters=[robot_description],
+        parameters=[{'frame_prefix': LaunchConfiguration('tf_prefix')}, robot_description],
     )
 
     joint_state_broadcaster_spawner = Node(

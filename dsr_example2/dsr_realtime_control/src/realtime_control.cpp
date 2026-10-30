@@ -309,6 +309,9 @@ int main(int argc, char **argv)
     executor2.add_node(node2);
     auto executor2_thread = std::thread([&](){executor2.spin();});
 
+    // WARNING: ServojRtNode/ServolRtNode are incomplete. pos_d/vel_d/acc_d are
+    // zero-initialised and never assigned, so enabling them as-is streams an
+    // all-zeros joint command -- on a real robot, a move to the zero pose.
     // auto node3= std::make_shared<ServojRtNode>();
     // rclcpp::executors::SingleThreadedExecutor executor3;
     // executor3.add_node(node3);

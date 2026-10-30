@@ -56,7 +56,9 @@ class VirtualDRCF(Node):
         os.system(start_cmd)
 
     def terminate_drcf(self):
-        stop_cmd = "docker ps -a --filter name={} -q | xargs -r docker rm -f".\
+        # Anchored: docker's name filter is a substring match and would otherwise
+        # match other robots' containers.
+        stop_cmd = "docker ps -a --filter name=^/{}$ -q | xargs -r docker rm -f".\
             format(self.emulator_name)
         print("stop_cmd : ",stop_cmd)
         os.system(stop_cmd)
