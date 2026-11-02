@@ -192,6 +192,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     for (size_t retry = 0; retry < 120; ++retry) {
         is_connected = m_Drfl.open_connection(drcf_ip_, drcf_port_);
         if(!is_connected) {
+            m_Drfl.close_connection();
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"Connecting failure.. retry...");
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             continue;
