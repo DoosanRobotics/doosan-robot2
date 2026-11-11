@@ -1,0 +1,47 @@
+# Position PID gains for the MuJoCo motor actuators, read through the hardware parameter pids_config_file
+/**:
+  ros__parameters:
+    pid_gains:
+      position:
+        joint_1:
+          p: 3000.0
+          i: 10.0
+          d: 10.0
+          i_clamp_max: 1000.0
+          i_clamp_min: -1000.0
+        joint_2:
+          p: 3000.0
+          i: 10.0
+          d: 10.0
+          i_clamp_max: 1000.0
+          i_clamp_min: -1000.0
+        joint_3:
+          p: 3000.0
+          i: 10.0
+          d: 10.0
+          i_clamp_max: 1000.0
+          i_clamp_min: -1000.0
+        joint_4:
+          p: 3000.0
+          i: 10.0
+          d: 10.0
+          i_clamp_max: 1000.0
+          i_clamp_min: -1000.0
+        joint_5:
+          p: 3000.0
+          i: 10.0
+          d: 10.0
+          i_clamp_max: 1000.0
+          i_clamp_min: -1000.0
+        joint_6:
+          p: 3000.0
+          i: 10.0
+          d: 10.0
+          i_clamp_max: 1000.0
+          i_clamp_min: -1000.0
+        left_driver_joint:
+          p: 120.0
+          i: 0.1
+          d: 0.1
+          i_clamp_max: 10.0
+          i_clamp_min: -10.0

@@ -1,0 +1,110 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="slope scene">
+  <!-- <include file="m1013.xml" /> -->
+  <option cone="elliptic" impratio="200" integrator="implicitfast"/>
+
+  <compiler angle="radian" meshdir="../" />
+  <statistic center="0.3 0 0.4" extent="1" />
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0" />
+    <rgba haze="0.15 0.25 0.35 1" />
+    <global azimuth="120" elevation="-20" />
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072" />
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8" width="300" height="300" />
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2" />
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true" />
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" />
+  </worldbody>
+
+  <asset>
+    <mesh file="demo/assets/bottom_fence_left.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/bottom_fence_right.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/top_fence_left.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/top_fence_right.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/stopper.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/top_slope.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/bottom_slope.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/stopper_left.stl" scale="0.018 0.02 0.015"/>
+    <mesh file="demo/assets/stopper_right.stl" scale="0.018 0.02 0.015"/>
+
+    <mesh file="demo/assets/bottom_support_left.stl" scale="0.018 0.02 0.02"/>
+    <mesh file="demo/assets/bottom_support_right.stl" scale="0.018 0.02 0.02"/>
+  </asset>
+
+
+  <worldbody>
+    <body name="ball1" pos="0.5 0.0 0.4">
+      <freejoint/>
+      <geom type="sphere" name="ball1" size="0.033" condim="3"
+       friction="1 .03 .003" rgba="0 0.6 0 1" contype="1" conaffinity="1" solref="0.01 1" density="600"/>
+    </body>
+    <body name="ball2" pos="0.5 0.2 0.8">
+      <freejoint/>
+      <geom type="sphere" name="ball2" size="0.033" condim="3"
+       friction="1 .03 .003" rgba="0.6 0.6 0 1" contype="1" conaffinity="1" solref="0.01 1" density="600"/>
+    </body>
+    <body name="ball3" pos="0.5 0.5 0.9">
+      <freejoint/>
+      <geom type="sphere" name="ball3" size="0.033" condim="3"
+       friction="1 .03 .003" rgba="0.0 0.2 0.7 1" contype="1" conaffinity="1" solref="0.01 1" density="600"/>
+    </body>
+    <body name="cylinder1" pos="0.51 -0.32 0.1" euler="0 1.5708 0">
+      <freejoint/>
+      <geom type="cylinder" name="cylinder1" size="0.032 0.027 0.01" condim="3"
+        rgba="0 0.7 0.7 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
+    </body>
+    <body name="cylinder2" pos="0.51 0.1 0.5" euler="0 1.5708 0">
+      <freejoint/>
+      <geom type="cylinder" name="cylinder2" size="0.032 0.027 0.01" condim="3"
+        rgba="0.7 0.2 0 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
+    </body>
+    <body name="cylinder3" pos="0.51 0.3 0.5" euler="0 1.5708 0">
+      <freejoint/>
+      <geom type="cylinder" name="cylinder3" size="0.032 0.027 0.01" condim="3"
+        rgba="0.3 0.2 0.7 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
+    </body>
+
+    <body name="bottom_fence_left" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="bottom_fence_left" mesh="bottom_fence_left" rgba="0 0.369 0.722 1" friction="0 0 0"/>
+    </body>
+    <body name="bottom_fence_right" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="bottom_fence_right" mesh="bottom_fence_right" rgba="0 0.369 0.722 1" friction="0 0 0"/>
+    </body>
+    <body name="top_fence_left" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="top_fence_left" mesh="top_fence_left" rgba="0 0.369 0.722 1" friction="0 0 0"/>
+    </body>
+    <body name="top_fence_right" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="top_fence_right" mesh="top_fence_right" rgba="0 0.369 0.722 1" friction="0 0 0"/>
+    </body>
+    <body name="stopper" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="stopper" mesh="stopper" rgba="0 0.369 0.722 1"/>
+    </body>
+    <body name="top_slope" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="top_slope" mesh="top_slope" rgba="0 0.369 0.722 1"/>
+    </body>
+    <body name="bottom_slope" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="bottom_slope" mesh="bottom_slope" rgba="0 0.369 0.722 1"/>
+    </body>
+    <body name="stopper_right" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="stopper_right" mesh="stopper_right" rgba="0 0.369 0.722 1"/>
+    </body>
+    <body name="stopper_left" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="stopper_left" mesh="stopper_left" rgba="0 0.369 0.722 1"/>
+    </body>
+
+    <body name="bottom_support_left" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="bottom_support_left" mesh="bottom_support_left" rgba="0 0.369 0.722 1"/>
+    </body>
+    <body name="bottom_support_right" pos="0.177 0.0 0.0" euler="0 0 3.14159">
+      <geom type="mesh" name="bottom_support_right" mesh="bottom_support_right" rgba="0 0.369 0.722 1"/>
+    </body>
+
+  </worldbody>
+</mujoco>

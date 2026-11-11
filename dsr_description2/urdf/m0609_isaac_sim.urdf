@@ -1,0 +1,255 @@
+<?xml version="1.0"?>
+
+<robot name="m0609" xmlns:xacro="http://www.ros.org/wiki/xacro">
+		<link name="base_link">
+			<inertial>
+				<mass value="3.18"/>
+				<origin xyz="-2.8e-05   -0.006045    0.038403"/>
+				<inertia ixx="0.017789" ixy="-7.4356e-06" ixz="3.0378e-06" iyy="0.011135"
+					iyz="-0.00029038"
+					izz="0.020054"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_0_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_0_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<link name="base"/>
+		<joint name="base_link-base" type="fixed">
+			<origin rpy="0 0 0" xyz="0 0 0.450"/>
+			<parent link="base_link"/>
+			<child link="base"/>
+		</joint>
+		<!-- joint 1 -->
+		<joint name="joint_1" type="revolute">
+			<parent link="base_link" />
+			<child link="link_1" />
+			<origin rpy="0 0 0" xyz="0 0 0.1345" />
+			<axis xyz="0 0 1" />
+			<limit effort="9600" lower="-6.2832" upper="6.2832" velocity="2.618"/>
+			<dynamics friction="0" damping="26.6667" stiffness="266.6667"/>
+		</joint>
+		<link name="link_1">
+			<inertial>
+				<mass value="5.02"/>
+				<origin xyz="7.2e-05    0.036227   -0.003417"/>
+				<inertia ixx="0.026195" ixy="2.3904e-05" ixz="-1.3319e-05" iyy="0.016899"
+					iyz="-0.00071987"
+					izz="0.022944"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_1_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_1_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint2 -->
+		<joint name="joint_2" type="revolute">
+			<parent link="link_1" />
+			<child link="link_2" />
+			<origin rpy="0 -1.571 -1.571" xyz="0 0.0062 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="9600" lower="-6.2832" upper="6.2832" velocity="2.618"/>
+			<dynamics friction="0"  damping="26.6667" stiffness="266.6667"/>
+		</joint>
+		<link name="link_2">
+			<inertial>
+				<mass value="8.04"/>
+				<origin xyz="0.20447     2.6e-05     0.16005"/>
+				<inertia ixx="0.026743" ixy="-0.00019461" ixz="-0.00058734" iyy="0.30084"
+					iyz="-6.7892e-06"
+					izz="0.29898"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_2_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_2_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_2_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_2_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_2_2.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_2_2.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint3 -->
+		<joint name="joint_3" type="revolute">
+			<parent link="link_2" />
+			<child link="link_3" />
+			<origin rpy="0 0 1.571" xyz="0.411 0 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="5400" lower="-2.618" upper="2.618" velocity="3.1416"/>
+			<dynamics friction="0"  damping="15" stiffness="150"/>
+		</joint>
+		<link name="link_3">
+			<inertial>
+				<mass value="3.6"/>
+				<origin xyz="-2.2e-05   -0.006867    0.043445"/>
+				<inertia ixx="0.018342" ixy="1.1302e-05" ixz="-4.5308e-06" iyy="0.018239"
+					iyz="-0.00099247"
+					izz="0.01326"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_3_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_3_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint4 -->
+		<joint name="joint_4" type="revolute">
+			<parent link="link_3" />
+			<child link="link_4" />
+			<origin rpy="1.571 0 0" xyz="0 -0.368 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="2700" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+			<dynamics friction="0"  damping="7.5" stiffness="750"/>
+		</joint>
+		<link name="link_4">
+			<inertial>
+				<mass value="3.57"/>
+				<origin xyz="4e-05    0.097079    -0.10981"/>
+				<inertia ixx="0.08035" ixy="-4.6119e-06" ixz="-8.1798e-06" iyy="0.066005"
+					iyz="-0.028996"
+					izz="0.029763"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_4_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_4_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_4_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_4_1.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint5 -->
+		<joint name="joint_5" type="revolute">
+			<parent link="link_4" />
+			<child link="link_5" />
+			<origin rpy="-1.571 0 0" xyz="0 0 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="2700" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+			<dynamics friction="0"   damping="7.5" stiffness="750"/>
+		</joint>
+		<link name="link_5">
+			<inertial>
+				<mass value="2.83"/>
+				<origin xyz="-6.8e-05    0.003827    0.031969"/>
+				<inertia ixx="0.014275" ixy="2.2026e-05" ixz="3.3017e-06" iyy="0.012569"
+					iyz="0.00045077"
+					izz="0.0085318"/>
+			</inertial>
+            <collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_5_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_5_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<!-- joint6 -->
+		<joint name="joint_6" type="revolute">
+			<parent link="link_5" />
+			<child link="link_6" />
+			<origin rpy="1.571 0 0" xyz="0 -0.121 0" />
+			<axis xyz="0 0 1" />
+			<limit effort="2700" lower="-6.2832" upper="6.2832" velocity="3.927"/>
+			<dynamics friction="0"   damping="7.5" stiffness="750"/>
+		</joint>
+		<link name="link_6">
+			<inertial>
+				<mass value="1.16"/>
+				<origin xyz="-3e-05    -4.5e-05     -0.0539"/>
+				<inertia ixx="0.0080226" ixy="1.371e-06" ixz="6.3578e-06" iyy="0.0053992"
+					iyz="7.4676e-06"
+					izz="0.0053912"/>
+			</inertial>
+			<collision>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_collision/MF0609_6_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</collision>
+			<visual>
+				<origin rpy="0 0 0" xyz="0 0 0" />
+				<geometry>
+					<mesh filename="package://dsr_description2/meshes/m0609_white/MF0609_6_0.dae" scale="0.001 0.001 0.001" />
+				</geometry>
+			</visual>
+		</link>
+		<link name="tool0"/>
+		<joint name="joint_6-tool0" type="fixed">
+			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<parent link="link_6"/>
+			<child link="tool0"/>
+		</joint>
+
+
+</robot>

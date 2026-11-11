@@ -21,6 +21,7 @@
 
 
 #include "dsr_controller2/dsr_controller2.hpp"
+#include "dsr_controller2/h2r_arrival.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 
 #include <stddef.h>
@@ -30,6 +31,10 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 #include <fstream>
+#include <cmath>
+#include <functional>
+#include <optional>
+#include <thread>
 
 #include "rclcpp/qos.hpp"
 #include "rclcpp/time.hpp"
@@ -103,6 +108,15 @@ controller_interface::CallbackReturn RobotController::on_init()
 
     if (!get_node()->has_parameter(PARAM_RT_TOPIC_KEYS)) {get_node()->declare_parameter<std::vector<std::string>>(PARAM_RT_TOPIC_KEYS,std::vector<std::string>{});}
     rt_topic_keys_ = get_node()->get_parameter(PARAM_RT_TOPIC_KEYS).as_string_array();
+
+    // Must stay below the controller's own 500 ms hold-to-run timeout.
+    const int h2r_timeout_ms = auto_declare<int>(PARAM_H2R_KEEPALIVE_TIMEOUT_MS, 200);
+    if (h2r_timeout_ms >= 1 && h2r_timeout_ms <= 400) {
+        h2r_keepalive_timeout_ = std::chrono::milliseconds(h2r_timeout_ms);
+    } else {
+        RCLCPP_WARN(get_node()->get_logger(), "%s must be within 1-400 ms, using %ld ms.",
+                PARAM_H2R_KEEPALIVE_TIMEOUT_MS, static_cast<long>(h2r_keepalive_timeout_.count()));
+    }
 
   return CallbackReturn::SUCCESS;
 }
@@ -358,6 +372,76 @@ bool rt_stream_task_is_valid(const float* vel, const float* acc, float time,
     RCLCPP_WARN_THROTTLE(logger, clock, 2000,
             "%s: ignoring command, time is 0 so vel[0] and acc[0] must be positive.", api);
     return false;
+}
+
+// Adapts an H2R action goal and DRFL to run_h2r_goal().
+template<typename ActionT>
+class H2rGoalOps
+{
+public:
+  using GoalHandle = rclcpp_action::ServerGoalHandle<ActionT>;
+  using Feedback = typename ActionT::Feedback;
+  // Fills the feedback from the robot and returns whether the goal has arrived.
+  using UpdateFeedback = std::function<bool(Feedback &)>;
+
+  H2rGoalOps(std::shared_ptr<GoalHandle> goal_handle, CDRFLEx * drfl, UpdateFeedback update_feedback)
+  : goal_handle_(std::move(goal_handle)), drfl_(drfl), update_feedback_(std::move(update_feedback)),
+    feedback_(std::make_shared<Feedback>()), result_(std::make_shared<typename ActionT::Result>()), rate_(100)
+  {}
+
+  bool ok() {return rclcpp::ok();}
+  H2rClock::time_point now() {return H2rClock::now();}
+  bool is_canceling() {return goal_handle_->is_canceling();}
+  bool update_and_check_arrived() {return update_feedback_(*feedback_);}
+  void hold2run() {drfl_->hold2run();}
+  void stop() {drfl_->stop(STOP_TYPE_QUICK);}
+  void canceled() {result_->success = true; goal_handle_->canceled(result_);}
+  void succeed() {result_->success = true; goal_handle_->succeed(result_);}
+  void abort()
+  {
+    result_->success = false;
+    try {
+      goal_handle_->abort(result_);
+    } catch (const std::exception &) {
+      // The goal can no longer be terminated once the context is shut down.
+    }
+  }
+  void publish_feedback() {goal_handle_->publish_feedback(feedback_);}
+  void sleep() {rate_.sleep();}
+
+private:
+  std::shared_ptr<GoalHandle> goal_handle_;
+  CDRFLEx * drfl_;
+  UpdateFeedback update_feedback_;
+  std::shared_ptr<Feedback> feedback_;
+  std::shared_ptr<typename ActionT::Result> result_;
+  rclcpp::Rate rate_;
+};
+
+void log_h2r_goal_end(const rclcpp::Logger & logger, const char * name, H2rGoalEnd end, std::chrono::milliseconds timeout)
+{
+  switch (end) {
+    case H2rGoalEnd::kCanceled:
+      RCLCPP_INFO(logger, "%s goal canceled", name);
+      break;
+    case H2rGoalEnd::kArrived:
+      RCLCPP_INFO(logger, "%s goal arrived", name);
+      break;
+    case H2rGoalEnd::kKeepAliveLost:
+      RCLCPP_WARN(logger, "%s: no keep-alive for this goal on motion/h2r_keepalive within %ld ms, robot stopped and goal aborted",
+              name, static_cast<long>(timeout.count()));
+      break;
+    case H2rGoalEnd::kStalled:
+      RCLCPP_ERROR(logger, "%s: goal loop did not refresh hold-to-run for over %ld ms, robot stopped and goal aborted",
+              name, static_cast<long>(kH2rStallLimit.count()));
+      break;
+    case H2rGoalEnd::kReleased:
+      RCLCPP_WARN(logger, "%s: goal released by controller deactivation, robot stopped and goal aborted", name);
+      break;
+    case H2rGoalEnd::kShutdown:
+      RCLCPP_WARN(logger, "%s: shutting down, robot stopped and goal aborted", name);
+      break;
+  }
 }
 
 controller_interface::CallbackReturn RobotController::on_activate(const rclcpp_lifecycle::State &)
@@ -785,6 +869,7 @@ auto jog_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Jog::Request> req, st
     if (m_model == "p3020" && req->jog_axis == JOG_AXIS_JOINT_4){
         RCLCPP_WARN(rclcpp::get_logger("dsr_controller2"),"The p3020 model does not support control of the 4th axis.");
         res->success = FALSE; 
+        return;
     }
 
     res->success = Drfl->jog((JOG_AXIS)req->jog_axis, (MOVE_REFERENCE)req->move_reference, req->speed);
@@ -2061,6 +2146,12 @@ auto disconnect_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Dis
     // res->success = Drfl->disconnect_rt_control();
 };
 
+auto set_rt_thread_priority_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetRtThreadPriority::Request> req,
+                                        std::shared_ptr<dsr_msgs2::srv::SetRtThreadPriority::Response> res) -> void
+{
+    res->success = Drfl->set_rt_thread_priority(req->policy, req->priority);
+};
+
 auto get_rt_control_output_version_list_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetRtControlOutputVersionList::Request> /*req*/, 
                                                     std::shared_ptr<dsr_msgs2::srv::GetRtControlOutputVersionList::Response> res) -> void 
 {
@@ -2600,6 +2691,7 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   // RT
   m_nh_connect_rt_control = get_node()->create_service<dsr_msgs2::srv::ConnectRtControl>(svc_prefix_ + "realtime/connect_rt_control", connect_rt_control_cb);
   m_nh_disconnect_rt_control = get_node()->create_service<dsr_msgs2::srv::DisconnectRtControl>(svc_prefix_ + "realtime/disconnect_rt_control", disconnect_rt_control_cb);
+  m_nh_set_rt_thread_priority = get_node()->create_service<dsr_msgs2::srv::SetRtThreadPriority>(svc_prefix_ + "realtime/set_rt_thread_priority", set_rt_thread_priority_cb);
   m_nh_get_rt_control_output_version_list = get_node()->create_service<dsr_msgs2::srv::GetRtControlOutputVersionList>(svc_prefix_ + "realtime/get_rt_control_output_version_list", get_rt_control_output_version_list_cb);
   m_nh_get_rt_control_input_version_list = get_node()->create_service<dsr_msgs2::srv::GetRtControlInputVersionList>(svc_prefix_ + "realtime/get_rt_control_input_version_list", get_rt_control_input_version_list_cb);
   m_nh_get_rt_control_input_data_list = get_node()->create_service<dsr_msgs2::srv::GetRtControlInputDataList>(svc_prefix_ + "realtime/get_rt_control_input_data_list", get_rt_control_input_data_list_cb);
@@ -2627,18 +2719,75 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
   m_nh_srv_get_output_register_float = get_node()->create_service<dsr_msgs2::srv::GetOutputRegisterFloat>(svc_prefix_ + "plc/get_output_register_float", get_output_register_float_cb);
 
   // H2R Action Servers
-  // MovejH2r and MovelH2r action type definitions
+  // One H2R goal runs at a time. Its thread sends hold2run() only while the client keeps publishing the goal id on motion/h2r_keepalive (see run_h2r_goal).
   using MovejH2r = dsr_msgs2::action::MovejH2r;
   using GoalHandleMovejH2r = rclcpp_action::ServerGoalHandle<MovejH2r>;
   using MovelH2r = dsr_msgs2::action::MovelH2r;
   using GoalHandleMovelH2r = rclcpp_action::ServerGoalHandle<MovelH2r>;
+  using JogH2r = dsr_msgs2::action::JogH2r;
+  using GoalHandleJogH2r = rclcpp_action::ServerGoalHandle<JogH2r>;
+
+  h2r_keepalive_cb_group_ = get_node()->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  rclcpp::SubscriptionOptions h2r_keepalive_options;
+  h2r_keepalive_options.callback_group = h2r_keepalive_cb_group_;
+  m_sub_h2r_keepalive = get_node()->create_subscription<unique_identifier_msgs::msg::UUID>(
+      svc_prefix_ + "motion/h2r_keepalive", rclcpp::QoS(rclcpp::KeepLast(10)).best_effort(),
+      [this](const std::shared_ptr<unique_identifier_msgs::msg::UUID> msg) {
+          h2r_keepalive_.feed(msg->uuid, H2rClock::now());
+      },
+      h2r_keepalive_options);
+
+  auto accept_unless_h2r_busy = [this](const char * name) {
+      if (h2r_keepalive_.any_active()) {
+          RCLCPP_WARN(get_node()->get_logger(), "%s: rejected, another H2R goal is active", name);
+          return rclcpp_action::GoalResponse::REJECT;
+      }
+      return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+  };
+
+  // The single H2R slot is taken here, once the goal exists, so every reservation has a goal thread that releases it. A goal accepted alongside another one is aborted.
+  auto claim_h2r_goal = [this](const auto & goal_handle, auto result, const char * name) {
+      if (h2r_keepalive_.try_begin(goal_handle->get_goal_id(), H2rClock::now())) {
+          return true;
+      }
+      RCLCPP_WARN(get_node()->get_logger(), "%s: aborted, another H2R goal is active", name);
+      result->success = false;
+      goal_handle->abort(result);
+      return false;
+  };
+
+  auto all_finite = [](const auto & values) {
+      return std::all_of(values.cbegin(), values.cend(), [](double v) { return std::isfinite(v); });
+  };
+
+  // Sends the motion command and runs the goal. A goal released before its command, or whose command fails, is aborted.
+  auto execute_h2r_goal = [this](auto & ops, const rclcpp_action::GoalUUID & id, const char * name, const auto & send_command) {
+      const std::optional<bool> is_started = h2r_keepalive_.send_if_active(id, send_command);
+      if (!is_started) {
+          RCLCPP_WARN(get_node()->get_logger(), "%s: goal released before its motion started, goal aborted", name);
+          ops.abort();
+          return;
+      }
+      if (!*is_started) {
+          RCLCPP_ERROR(get_node()->get_logger(), "Failed to start %s motion", name);
+          ops.stop();
+          h2r_keepalive_.finish(id);
+          ops.abort();
+          return;
+      }
+      const H2rGoalEnd end = run_h2r_goal(ops, h2r_keepalive_, id, h2r_keepalive_timeout_, H2rClock::now());
+      log_h2r_goal_end(get_node()->get_logger(), name, end, h2r_keepalive_timeout_);
+  };
 
   // MovejH2r action server callbacks
-  auto handle_goal_movej_h2r = [this](const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const MovejH2r::Goal> goal) {
+  auto handle_goal_movej_h2r = [this, accept_unless_h2r_busy, all_finite](const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const MovejH2r::Goal> goal) {
       RCLCPP_INFO(get_node()->get_logger(), "Received goal request for MovejH2r");
       (void)uuid;
-      (void)goal;
-      return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+      if (!all_finite(goal->target_pos) || !all_finite(goal->target_vel) || !all_finite(goal->target_acc)) {
+          RCLCPP_WARN(get_node()->get_logger(), "MovejH2r: rejected, target_pos, target_vel and target_acc must be finite");
+          return rclcpp_action::GoalResponse::REJECT;
+      }
+      return accept_unless_h2r_busy("MovejH2r");
   };
 
   auto handle_cancel_movej_h2r = [this](const std::shared_ptr<GoalHandleMovejH2r> goal_handle) {
@@ -2647,11 +2796,10 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
       return rclcpp_action::CancelResponse::ACCEPT;
   };
 
-  auto handle_accepted_movej_h2r = [this](const std::shared_ptr<GoalHandleMovejH2r> goal_handle) {
-      std::thread{ [this, goal_handle]() {
+  auto handle_accepted_movej_h2r = [this, claim_h2r_goal, execute_h2r_goal](const std::shared_ptr<GoalHandleMovejH2r> goal_handle) {
+      if (!claim_h2r_goal(goal_handle, std::make_shared<MovejH2r::Result>(), "MovejH2r")) return;
+      std::thread{ [this, goal_handle, execute_h2r_goal]() {
           const auto goal = goal_handle->get_goal();
-          auto feedback = std::make_shared<MovejH2r::Feedback>();
-          auto result = std::make_shared<MovejH2r::Result>();
           RCLCPP_INFO(get_node()->get_logger(), "Executing MovejH2r goal");
 
           std::array<float, 6> pos_f;
@@ -2663,62 +2811,30 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
             acc_f[i] = static_cast<float>(goal->target_acc[i]);
           }
 
-          // Execute Movej Motion
-          bool is_started = Drfl->movej_h2r(pos_f.data(), vel_f.data(), acc_f.data());
-          if (!is_started) {
-              RCLCPP_ERROR(get_node()->get_logger(), "Failed to start MovejH2r motion");
-              result->success = false;
-              goal_handle->abort(result);
-              return;
-          }
-
-          rclcpp::Rate loop_rate(100); // 100Hz feedback loop
-          // Keep loop until cancellation or arrival
-          while(rclcpp::ok()) {
-              if (goal_handle->is_canceling()) {
-                  Drfl->stop(STOP_TYPE_QUICK);
-                  result->success = true;
-                  goal_handle->canceled(result);
-                  RCLCPP_INFO(get_node()->get_logger(), "MovejH2r goal canceled");
-                  return;
-              }
-
-              // Update feedback with current robot pose
+          // Arrived when every joint is within 0.1 of the target
+          H2rGoalOps<MovejH2r> ops(goal_handle, Drfl, [this, goal](MovejH2r::Feedback & feedback) {
               LPROBOT_POSE cur_pos = Drfl->get_current_pose();
-              if(cur_pos) {
-                 for(int j=0; j<6; ++j) feedback->pos[j] = cur_pos->_fPosition[j];
-
-                 // Check if arrived at target position (within 0.1 tolerance)
-                 bool is_arrived = true;
-                 for(int i=0; i<6; i++) {
-                     if(std::abs(cur_pos->_fPosition[i] - goal->target_pos[i]) > 0.1) {
-                        is_arrived = false;
-                        break;
-                     }
-                 }
-
-                 if(is_arrived) {
-                     Drfl->stop(STOP_TYPE_QUICK);
-                     result->success = true;
-                     goal_handle->succeed(result);
-                     RCLCPP_INFO(get_node()->get_logger(), "MovejH2r goal arrived");
-                     return;
-                 }
+              if (!cur_pos) return false;
+              for (int j = 0; j < 6; ++j) feedback.pos[j] = cur_pos->_fPosition[j];
+              for (int i = 0; i < 6; ++i) {
+                  if (std::abs(cur_pos->_fPosition[i] - goal->target_pos[i]) > 0.1) return false;
               }
-
-              Drfl->hold2run(); // Update H2R internal state
-              goal_handle->publish_feedback(feedback);
-              loop_rate.sleep();
-          }
+              return true;
+          });
+          execute_h2r_goal(ops, goal_handle->get_goal_id(), "MovejH2r",
+                  [&] { return Drfl->movej_h2r(pos_f.data(), vel_f.data(), acc_f.data()); });
       }}.detach();
   };
 
   // MovelH2r action server callbacks
-  auto handle_goal_movel_h2r = [this](const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const MovelH2r::Goal> goal) {
+  auto handle_goal_movel_h2r = [this, accept_unless_h2r_busy, all_finite](const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const MovelH2r::Goal> goal) {
       RCLCPP_INFO(get_node()->get_logger(), "Received goal request for MovelH2r");
       (void)uuid;
-      (void)goal;
-      return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+      if (!all_finite(goal->target_pos) || !all_finite(goal->target_vel) || !all_finite(goal->target_acc)) {
+          RCLCPP_WARN(get_node()->get_logger(), "MovelH2r: rejected, target_pos, target_vel and target_acc must be finite");
+          return rclcpp_action::GoalResponse::REJECT;
+      }
+      return accept_unless_h2r_busy("MovelH2r");
   };
 
   auto handle_cancel_movel_h2r = [this](const std::shared_ptr<GoalHandleMovelH2r> goal_handle) {
@@ -2727,11 +2843,10 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
       return rclcpp_action::CancelResponse::ACCEPT;
   };
 
-  auto handle_accepted_movel_h2r = [this](const std::shared_ptr<GoalHandleMovelH2r> goal_handle) {
-      std::thread{ [this, goal_handle]() {
+  auto handle_accepted_movel_h2r = [this, claim_h2r_goal, execute_h2r_goal](const std::shared_ptr<GoalHandleMovelH2r> goal_handle) {
+      if (!claim_h2r_goal(goal_handle, std::make_shared<MovelH2r::Result>(), "MovelH2r")) return;
+      std::thread{ [this, goal_handle, execute_h2r_goal]() {
           const auto goal = goal_handle->get_goal();
-          auto feedback = std::make_shared<MovelH2r::Feedback>();
-          auto result = std::make_shared<MovelH2r::Result>();
           RCLCPP_INFO(get_node()->get_logger(), "Executing MovelH2r goal");
 
           std::array<float, 6> pos_f;
@@ -2741,53 +2856,80 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
             pos_f[i] = static_cast<float>(goal->target_pos[i]);
           }
 
-          // Execute Movel Motion
-          bool is_started = Drfl->movel_h2r(pos_f.data(), vel_f.data(), acc_f.data());
-          if (!is_started) {
-              RCLCPP_ERROR(get_node()->get_logger(), "Failed to start MovelH2r motion");
-              result->success = false;
-              goal_handle->abort(result);
-              return;
-          }
-
-          rclcpp::Rate loop_rate(100); // 100Hz feedback loop
-          // Keep loop until cancellation or arrival
-          while(rclcpp::ok()) {
-              if (goal_handle->is_canceling()) {
-                  Drfl->stop(STOP_TYPE_QUICK);
-                  result->success = true;
-                  goal_handle->canceled(result);
-                  RCLCPP_INFO(get_node()->get_logger(), "MovelH2r goal canceled");
-                  return;
-              }
-
-              // Update feedback with current robot pose (task space)
+          // Arrived when the position is within 0.3 mm and the orientation within 0.3 deg of the target. Both come from cached monitoring data. The orientation of get_current_pose(ROBOT_SPACE_TASK) does not always match the ZYZ posx form of the target (at ry = 180 it reports rx = rz = 180, ry = 0), so the rotation matrix is compared instead.
+          const Rotation target_rotation = zyz_to_rotation(&goal->target_pos[3]);
+          bool logged_rotation = false;
+          H2rGoalOps<MovelH2r> ops(goal_handle, Drfl, [this, goal, target_rotation, logged_rotation](MovelH2r::Feedback & feedback) mutable {
               LPROBOT_POSE cur_pos = Drfl->get_current_pose(ROBOT_SPACE_TASK);
-              if(cur_pos) {
-                 for(int j=0; j<6; ++j) feedback->pos[j] = cur_pos->_fPosition[j];
-
-                 // Check if arrived at target position (within 0.3 tolerance for linear motion)
-                 bool is_arrived = true;
-                 for(int i=0; i<6; i++) {
-                     if(std::abs(cur_pos->_fPosition[i] - goal->target_pos[i]) > 0.3) {
-                        is_arrived = false;
-                        break;
-                     }
-                 }
-
-                 if(is_arrived) {
-                     Drfl->stop(STOP_TYPE_QUICK);
-                     result->success = true;
-                     goal_handle->succeed(result);
-                     RCLCPP_INFO(get_node()->get_logger(), "MovelH2r goal arrived");
-                     return;
-                 }
+              if (!cur_pos) return false;
+              for (int j = 0; j < 6; ++j) feedback.pos[j] = cur_pos->_fPosition[j];
+              if (!task_position_reached(cur_pos->_fPosition, goal->target_pos.data(), 0.3)) return false;
+              float (*rotm)[3] = Drfl->get_current_rotm(COORDINATE_SYSTEM_BASE);
+              if (!rotm) return false;
+              const double angle = matrix_angle_between_deg(rotm, target_rotation);
+              if (!logged_rotation) {
+                  logged_rotation = true;
+                  RCLCPP_DEBUG(rclcpp::get_logger("dsr_controller2.h2r"),
+                          "MovelH2r position reached: rotm=[[%.5f %.5f %.5f] [%.5f %.5f %.5f] [%.5f %.5f %.5f]] target zyz=(%.3f %.3f %.3f) angle=%.3f deg, transposed angle=%.3f deg",
+                          rotm[0][0], rotm[0][1], rotm[0][2], rotm[1][0], rotm[1][1], rotm[1][2], rotm[2][0], rotm[2][1], rotm[2][2],
+                          goal->target_pos[3], goal->target_pos[4], goal->target_pos[5], angle,
+                          matrix_angle_between_deg(Rotation{{{rotm[0][0], rotm[1][0], rotm[2][0]}, {rotm[0][1], rotm[1][1], rotm[2][1]}, {rotm[0][2], rotm[1][2], rotm[2][2]}}}, target_rotation));
               }
+              return angle <= 0.3;
+          });
+          execute_h2r_goal(ops, goal_handle->get_goal_id(), "MovelH2r",
+                  [&] { return Drfl->movel_h2r(pos_f.data(), vel_f.data(), acc_f.data()); });
+      }}.detach();
+  };
 
-              Drfl->hold2run(); // Update H2R internal state
-              goal_handle->publish_feedback(feedback);
-              loop_rate.sleep();
-          }
+  // JogH2r action server callbacks
+  auto handle_goal_jog_h2r = [this, accept_unless_h2r_busy](const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const JogH2r::Goal> goal) {
+      RCLCPP_INFO(get_node()->get_logger(), "Received goal request for JogH2r");
+      (void)uuid;
+      const int axis = goal->jog_axis;
+      const int reference = goal->move_reference;
+      const bool axis_ok = axis >= JOG_AXIS_JOINT_1 && axis <= JOG_AXIS_TASK_RZ;
+      const bool reference_ok = (reference >= MOVE_REFERENCE_BASE && reference <= MOVE_REFERENCE_WORLD) ||
+          (reference >= MOVE_REFERENCE_USER_MIN && reference <= MOVE_REFERENCE_USER_MAX);
+      if (!axis_ok || !reference_ok) {
+          RCLCPP_WARN(get_node()->get_logger(), "JogH2r: rejected, jog_axis %d or move_reference %d is out of range",
+                  axis, reference);
+          return rclcpp_action::GoalResponse::REJECT;
+      }
+      if (m_model == "p3020" && goal->jog_axis == JOG_AXIS_JOINT_4) {
+          RCLCPP_WARN(get_node()->get_logger(), "JogH2r: the p3020 model does not support control of the 4th axis.");
+          return rclcpp_action::GoalResponse::REJECT;
+      }
+      if (!std::isfinite(goal->velocity) || goal->velocity == 0.0) {
+          RCLCPP_WARN(get_node()->get_logger(), "JogH2r: rejected, velocity must be finite and non-zero; cancel the goal to stop.");
+          return rclcpp_action::GoalResponse::REJECT;
+      }
+      return accept_unless_h2r_busy("JogH2r");
+  };
+
+  auto handle_cancel_jog_h2r = [this](const std::shared_ptr<GoalHandleJogH2r> goal_handle) {
+      RCLCPP_INFO(get_node()->get_logger(), "Received request to cancel JogH2r goal");
+      (void)goal_handle;
+      return rclcpp_action::CancelResponse::ACCEPT;
+  };
+
+  auto handle_accepted_jog_h2r = [this, claim_h2r_goal, execute_h2r_goal](const std::shared_ptr<GoalHandleJogH2r> goal_handle) {
+      if (!claim_h2r_goal(goal_handle, std::make_shared<JogH2r::Result>(), "JogH2r")) return;
+      std::thread{ [this, goal_handle, execute_h2r_goal]() {
+          const auto goal = goal_handle->get_goal();
+          RCLCPP_INFO(get_node()->get_logger(), "Executing JogH2r goal");
+
+          // A jog has no target, so it runs until cancellation or keep-alive loss. Joint axes report joint feedback, task axes task feedback.
+          const ROBOT_SPACE feedback_space = goal->jog_axis < JOG_AXIS_TASK_X ? ROBOT_SPACE_JOINT : ROBOT_SPACE_TASK;
+          H2rGoalOps<JogH2r> ops(goal_handle, Drfl, [this, feedback_space](JogH2r::Feedback & feedback) {
+              LPROBOT_POSE cur_pos = Drfl->get_current_pose(feedback_space);
+              if (cur_pos) {
+                  for (int j = 0; j < 6; ++j) feedback.pos[j] = cur_pos->_fPosition[j];
+              }
+              return false;
+          });
+          execute_h2r_goal(ops, goal_handle->get_goal_id(), "JogH2r",
+                  [&] { return Drfl->jog_h2r((JOG_AXIS)goal->jog_axis, (MOVE_REFERENCE)goal->move_reference, static_cast<float>(goal->velocity)); });
       }}.detach();
   };
 
@@ -2806,6 +2948,14 @@ auto torque_rt_cb = [this](const std::shared_ptr<dsr_msgs2::msg::TorqueRtStream>
       handle_goal_movel_h2r,
       handle_cancel_movel_h2r,
       handle_accepted_movel_h2r
+  );
+
+  m_nh_srv_jog_h2r = rclcpp_action::create_server<JogH2r>(
+      get_node(),
+      "motion/jog_h2r",
+      handle_goal_jog_h2r,
+      handle_cancel_jog_h2r,
+      handle_accepted_jog_h2r
   );
 
   g_stDrState = DR_STATE{}; // Using value-initialization instead of memset()
@@ -2828,6 +2978,9 @@ controller_interface::return_type RobotController::update(
 controller_interface::CallbackReturn RobotController::on_deactivate(const rclcpp_lifecycle::State &)
 {
   release_interfaces();
+  if (h2r_keepalive_.finish_all()) {
+    Drfl->stop(STOP_TYPE_QUICK);
+  }
 
   return CallbackReturn::SUCCESS;
 }

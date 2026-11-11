@@ -22,6 +22,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   ament_index_cpp
   yaml-cpp
   dsr_common2
+  unique_identifier_msgs
 )
 
 find_package(ament_cmake REQUIRED)
@@ -113,6 +114,14 @@ install(
 #   ARCHIVE DESTINATION lib
 #   LIBRARY DESTINATION lib
 # )
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gmock REQUIRED)
+  ament_add_gmock(test_h2r_keepalive test/test_h2r_keepalive.cpp)
+  target_include_directories(test_h2r_keepalive PRIVATE include)
+  ament_add_gmock(test_h2r_arrival test/test_h2r_arrival.cpp)
+  target_include_directories(test_h2r_arrival PRIVATE include)
+endif()
 
 ament_export_targets(export_dsr_controller2 HAS_LIBRARY_TARGET)
 # ament_export_targets(export_dsr_joint_trajectory HAS_LIBRARY_TARGET)

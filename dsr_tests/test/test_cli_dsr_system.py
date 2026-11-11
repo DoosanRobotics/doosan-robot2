@@ -1212,15 +1212,37 @@ class TestDsrSetCli(unittest.TestCase):
 	def test_alter_motion_cli(self):
 		print("Alter Motion Client Test are starting...") # Debug
 		alter_motion_cli = self.node.create_client(AlterMotion, "motion/alter_motion")
+		enable_cli = self.node.create_client(EnableAlterMotion, "motion/enable_alter_motion")
+		disable_cli = self.node.create_client(DisableAlterMotion, "motion/disable_alter_motion")
 		alter_motion_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
+
+		def call(cli, req):
+			future = cli.call_async(req)
+			rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
+			self.assertTrue(future.done(), f"{cli.srv_name} service working is not done.")
+			return future.result()
+
 		alter_motion_req = AlterMotion.Request()
 		alter_motion_req.pos = [10.0, 0.0, 0.0, 10.0, 0.0, 0.0]
-		alter_motion_future = alter_motion_cli.call_async(alter_motion_req)
-		rclpy.spin_until_future_complete(self.node, alter_motion_future, timeout_sec=SRV_CALL_TIMEOUT)
-		self.assertTrue(alter_motion_future.done(), "motion/alter_motion service working is not done.")
-		alter_motion_resp = alter_motion_future.result()
-		self.assertTrue(alter_motion_resp.success == True, "motion/alter_motion service is not working correctly.")
-		self.node.destroy_client(alter_motion_cli)
+
+		# DRFL 1.33.5 and later refuse alter_motion until enable_alter_motion succeeds.
+		call(disable_cli, DisableAlterMotion.Request())
+		self.assertFalse(call(alter_motion_cli, alter_motion_req).success, "motion/alter_motion succeeded without enable_alter_motion.")
+
+		enable_req = EnableAlterMotion.Request()
+		enable_req.n = 5
+		enable_req.mode = 0 # DR_DPOS : accumulation amount
+		enable_req.ref = 0 # DR_BASE
+		enable_req.limit_dpos = [50.0, 90.0]
+		enable_req.limit_dpos_per = [10.0, 10.0]
+		self.assertTrue(call(enable_cli, enable_req).success, "motion/enable_alter_motion service is not working correctly.")
+		try:
+			self.assertTrue(call(alter_motion_cli, alter_motion_req).success, "motion/alter_motion service is not working correctly.")
+		finally:
+			call(disable_cli, DisableAlterMotion.Request())
+			self.node.destroy_client(alter_motion_cli)
+			self.node.destroy_client(enable_cli)
+			self.node.destroy_client(disable_cli)
 
 
 	## FKin Test

@@ -29,6 +29,7 @@
   <depend>dsr_common2</depend>
   <depend>yaml-cpp</depend> 
   <depend>ament_index_cpp</depend>
+  <depend>unique_identifier_msgs</depend>
   <depend>libpoco-dev</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>

@@ -101,6 +101,10 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         } else if("rt_host" == parameter.first) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "rt_host : %s", parameter.second.c_str());
             drcf_rt_ip_ = parameter.second;
+        } else if("rt_thread_policy" == parameter.first) {
+            rt_thread_policy_ = parameter.second;
+        } else if("rt_thread_priority" == parameter.first) {
+            rt_thread_priority_ = parameter.second;
         } else if("port" == parameter.first) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "port : %s", parameter.second.c_str());
             drcf_port_ = std::stoi(parameter.second);
@@ -367,6 +371,27 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
                         "Set 'rt_host' if this controller uses a different address.",
                         m_nVersionDRCF, rt_ip.c_str());
             }
+        }
+        if (!rt_thread_policy_.empty()) {
+            int policy = 0;
+            int priority = 0;
+            try {
+                policy = std::stoi(rt_thread_policy_);
+                priority = rt_thread_priority_.empty() ? 0 : std::stoi(rt_thread_priority_);
+            } catch (const std::exception &) {
+                RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[RT] rt_thread_policy '%s' and rt_thread_priority '%s' must be integers",
+                        rt_thread_policy_.c_str(), rt_thread_priority_.c_str());
+                return CallbackReturn::FAILURE;
+            }
+            if (!m_Drfl.set_rt_thread_priority(policy, priority)) {
+                RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[RT] set_rt_thread_priority(%d, %d) refused. SCHED_FIFO (1) and SCHED_RR (2) need "
+                        "CAP_SYS_NICE or an RLIMIT_RTPRIO of at least the priority.", policy, priority);
+                return CallbackReturn::FAILURE;
+            }
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] RT thread scheduling: policy %d, priority %d", policy, priority);
         }
         RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
                 "[RT] connecting to %s:12347", rt_ip.c_str());

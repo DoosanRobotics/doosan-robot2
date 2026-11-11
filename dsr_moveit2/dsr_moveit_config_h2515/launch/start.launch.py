@@ -41,12 +41,14 @@ def generate_robot_description_action(context, *args, **kwargs):
     name = LaunchConfiguration('name').perform(context)
     host = LaunchConfiguration('host').perform(context)
     rt_host = LaunchConfiguration('rt_host').perform(context)
+    rt_thread_policy = LaunchConfiguration('rt_thread_policy').perform(context)
+    rt_thread_priority = LaunchConfiguration('rt_thread_priority').perform(context)
     port = LaunchConfiguration('port').perform(context)
     mode = LaunchConfiguration('mode').perform(context)
     update_rate = read_update_rate() # get update_rate from yaml
 
     # Parse URDF to extract active and passive joints
-    urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, name, host, rt_host, port, mode, update_rate)
+    urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, name, host, rt_host, port, mode, update_rate, rt_thread_policy=rt_thread_policy, rt_thread_priority=rt_thread_priority)
     print(f"[DEBUG] model={model}, color={color}, name={name}, host={host}, rt_host={rt_host}, port={port}, mode={mode}, update_rate={update_rate}")
     print(f"[DEBUG] active_joints={active_joints}")
     print(f"[DEBUG] passive_joints={passive_joints}")
@@ -219,6 +221,8 @@ def generate_launch_description():
         DeclareLaunchArgument('gui',   default_value='true', description='Start RViz2'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_thread_policy', default_value='', description='RT thread policy: 1 SCHED_FIFO, 2 SCHED_RR, 0 SCHED_OTHER, empty keeps the default'),
+        DeclareLaunchArgument('rt_thread_priority', default_value='', description='RT thread priority for rt_thread_policy (1-99 for FIFO/RR, 0 for OTHER)'),
         DeclareLaunchArgument('dynamic_yaml', default_value='false', description='Use dynamic controller.yaml'),
         DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotiq_2f85)'),
         DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),

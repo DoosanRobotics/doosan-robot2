@@ -101,7 +101,7 @@ _ros2_enable_alter_motion            = g_node.create_client(EnableAlterMotion,  
 _ros2_alter_motion                   = g_node.create_client(AlterMotion,                 _srv_name_prefix +"motion/alter_motion")
 _ros2_disable_alter_motion           = g_node.create_client(DisableAlterMotion,          _srv_name_prefix +"motion/disable_alter_motion")
 _ros2_set_singularity_handling       = g_node.create_client(SetSingularityHandling,      _srv_name_prefix +"motion/set_singularity_handling")
-_ros2_set_singular_handling_force    = g_node.create_client(SetSingularityHandlingForce, _srv_name_prefix +"motion/set_singularity_handling_force")
+_ros2_set_singular_handling_force    = g_node.create_client(SetSingularHandlingForce, _srv_name_prefix +"motion/set_singular_handling_force")
 
 
 # Auxiliary Control Operations
@@ -196,6 +196,7 @@ _ros2_get_drl_state              = g_node.create_client(GetDrlState,            
 # RT
 _ros2_connect_rt_control         = g_node.create_client(ConnectRtControl,       _srv_name_prefix + "realtime/connect_rt_control")
 _ros2_disconnect_rt_control      = g_node.create_client(DisconnectRtControl,    _srv_name_prefix + "realtime/disconnect_rt_control")
+_ros2_set_rt_thread_priority     = g_node.create_client(SetRtThreadPriority,    _srv_name_prefix + "realtime/set_rt_thread_priority")
 _ros2_get_rt_control_output_version_list = g_node.create_client(GetRtControlOutputVersionList, _srv_name_prefix + "realtime/get_rt_control_output_version_list")
 _ros2_get_rt_control_input_version_list = g_node.create_client(GetRtControlInputVersionList, _srv_name_prefix + "realtime/get_rt_control_input_version_list")
 _ros2_get_rt_control_input_data_list = g_node.create_client(GetRtControlInputDataList, _srv_name_prefix + "realtime/get_rt_control_input_data_list")
@@ -2111,6 +2112,35 @@ def disconnect_rt_control():
         else:
             if result is None:
                 g_node.get_logger().error('disconnect_rt_control Service call returned None')
+            else:
+                ret = 0 if result.success else -1
+    return ret
+
+def set_rt_thread_priority(policy, priority):
+    if type(policy) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for policy: expected int")
+    if type(priority) != int:
+        raise DR_Error(DR_ERROR_TYPE, "Invalid type for priority: expected int")
+
+    ret = -1
+    if __ROS2__:
+        req = SetRtThreadPriority.Request()
+        req.policy = policy
+        req.priority = priority
+
+        while not _ros2_set_rt_thread_priority.wait_for_service(timeout_sec=1.0):
+            g_node.get_logger().info("Set RT Thread Priority Service is not available, waiting for it to become available...")
+
+        future = _ros2_set_rt_thread_priority.call_async(req)
+        rclpy.spin_until_future_complete(g_node, future)
+
+        try:
+            result = future.result()
+        except Exception as e:
+            g_node.get_logger().error('set_rt_thread_priority Service call failed: %r' % (e,))
+        else:
+            if result is None:
+                g_node.get_logger().error('set_rt_thread_priority Service call returned None')
             else:
                 ret = 0 if result.success else -1
     return ret
@@ -6638,97 +6668,97 @@ class CDsrRobot:
         #rospy.wait_for_service(self._srv_name_prefix +"/motion/move_joint")
         
         # system Operations
-        self._ros2_set_robot_mode               = g_node.create_client(SetRobotMode, self._srv_name_prefix +"/system/set_robot_mode") ; self.req_SetRobotMode = SetRobotMode.Request()
-        self._ros2_get_robot_mode               = g_node.create_client(GetRobotMode, self._srv_name_prefix +"/system/get_robot_mode") ; self.req_GetRobotMode = GetRobotMode.Request()
-        self._ros2_set_robot_system             = g_node.create_client(SetRobotSystem, self._srv_name_prefix +"/system/set_robot_system") ; self.req_SetRobotSystem = SetRobotSystem.Request()
-        self._ros2_get_robot_system             = g_node.create_client(GetRobotSystem, self._srv_name_prefix +"/system/get_robot_system") ; self.req_GetRobotSystem = GetRobotSystem.Request()
-        self._ros2_get_robot_state              = g_node.create_client(GetRobotState, self._srv_name_prefix +"/system/get_robot_state") ; self.req_GetRobotState = GetRobotState.Request()
-        self._ros2_set_robot_speed_mode         = g_node.create_client(SetRobotSpeedMode, self._srv_name_prefix +"/system/set_robot_speed_mode") ; self.req_SetRobotSpeedMode = SetRobotSpeedMode.Request()
-        self._ros2_get_robot_speed_mode         = g_node.create_client(GetRobotSpeedMode, self._srv_name_prefix +"/system/get_robot_speed_mode") ; self.req_GetRobotSpeedMode = GetRobotSpeedMode.Request()
-        self._ros2_set_safe_stop_reset_type     = g_node.create_client(SetSafeStopResetType, self._srv_name_prefix +"/system/set_safe_stop_reset_type") ; self.req_SetSafeStopResetType = SetSafeStopResetType.Request()
-        self._ros2_get_last_alarm               = g_node.create_client(GetLastAlarm, self._srv_name_prefix +"/system/get_last_alarm") ; self.req_GetLastAlarm = GetLastAlarm.Request()
-        self._ros2_change_collision_sensitivity = g_node.create_client(ChangeCollisionSensitivity, self._srv_name_prefix +"/system/change_collision_sensitivity") ; self.req_ChangeCollisionSensitivity = ChangeCollisionSensitivity.Request()
-        self._ros2_get_current_pose             = g_node.create_client(GetCurrentPose, self._srv_name_prefix +"/system/get_current_pose") ; self.req_GetCurrentPose = GetCurrentPose.Request()
+        self._ros2_set_robot_mode               = g_node.create_client(SetRobotMode, self._srv_name_prefix +"system/set_robot_mode") ; self.req_SetRobotMode = SetRobotMode.Request()
+        self._ros2_get_robot_mode               = g_node.create_client(GetRobotMode, self._srv_name_prefix +"system/get_robot_mode") ; self.req_GetRobotMode = GetRobotMode.Request()
+        self._ros2_set_robot_system             = g_node.create_client(SetRobotSystem, self._srv_name_prefix +"system/set_robot_system") ; self.req_SetRobotSystem = SetRobotSystem.Request()
+        self._ros2_get_robot_system             = g_node.create_client(GetRobotSystem, self._srv_name_prefix +"system/get_robot_system") ; self.req_GetRobotSystem = GetRobotSystem.Request()
+        self._ros2_get_robot_state              = g_node.create_client(GetRobotState, self._srv_name_prefix +"system/get_robot_state") ; self.req_GetRobotState = GetRobotState.Request()
+        self._ros2_set_robot_speed_mode         = g_node.create_client(SetRobotSpeedMode, self._srv_name_prefix +"system/set_robot_speed_mode") ; self.req_SetRobotSpeedMode = SetRobotSpeedMode.Request()
+        self._ros2_get_robot_speed_mode         = g_node.create_client(GetRobotSpeedMode, self._srv_name_prefix +"system/get_robot_speed_mode") ; self.req_GetRobotSpeedMode = GetRobotSpeedMode.Request()
+        self._ros2_set_safe_stop_reset_type     = g_node.create_client(SetSafeStopResetType, self._srv_name_prefix +"system/set_safe_stop_reset_type") ; self.req_SetSafeStopResetType = SetSafeStopResetType.Request()
+        self._ros2_get_last_alarm               = g_node.create_client(GetLastAlarm, self._srv_name_prefix +"system/get_last_alarm") ; self.req_GetLastAlarm = GetLastAlarm.Request()
+        self._ros2_change_collision_sensitivity = g_node.create_client(ChangeCollisionSensitivity, self._srv_name_prefix +"system/change_collision_sensitivity") ; self.req_ChangeCollisionSensitivity = ChangeCollisionSensitivity.Request()
+        self._ros2_get_current_pose             = g_node.create_client(GetCurrentPose, self._srv_name_prefix +"system/get_current_pose") ; self.req_GetCurrentPose = GetCurrentPose.Request()
 
     
         #  motion Operations
-        self._ros2_movej                      = g_node.create_client(MoveJoint,              self._srv_name_prefix +"/motion/move_joint") ; self.req_MoveJoint = MoveJoint.Request()
-        self._ros2_movel                      = g_node.create_client(MoveLine,               self._srv_name_prefix +"/motion/move_line") ; self.req_MoveLine = MoveLine.Request()
-        self._ros2_movejx                     = g_node.create_client(MoveJointx,             self._srv_name_prefix +"/motion/move_jointx") ; self.req_MoveJointx = MoveJointx.Request()
-        self._ros2_movec                      = g_node.create_client(MoveCircle,             self._srv_name_prefix +"/motion/move_circle") ; self.req_MoveCircle = MoveCircle.Request()
-        self._ros2_movesj                     = g_node.create_client(MoveSplineJoint,        self._srv_name_prefix +"/motion/move_spline_joint") ; self.req_MoveSplineJoint = MoveSplineJoint.Request() 
-        self._ros2_movesx                     = g_node.create_client(MoveSplineTask,         self._srv_name_prefix +"/motion/move_spline_task") ; self.req_MoveSplineTask = MoveSplineTask.Request()
-        self._ros2_moveb                      = g_node.create_client(MoveBlending,           self._srv_name_prefix +"/motion/move_blending") ; self.req_MoveBlending = MoveBlending.Request()
-        self._ros2_move_spiral                = g_node.create_client(MoveSpiral,             self._srv_name_prefix +"/motion/move_spiral") ; self.req_MoveSpiral = MoveSpiral.Request()
-        self._ros2_move_periodic              = g_node.create_client(MovePeriodic,           self._srv_name_prefix +"/motion/move_periodic") ; self.req_MovePeriodic = MovePeriodic.Request()
-        self._ros2_move_wait                  = g_node.create_client(MoveWait,               self._srv_name_prefix +"/motion/move_wait") ; self.req_MoveWait = MoveWait.Request()
-        self._ros2_jog                        = g_node.create_client(Jog,                    self._srv_name_prefix +"/motion/jog") ; self.req_Jog = Jog.Request()
-        self._ros2_jog_multi                  = g_node.create_client(JogMulti,               self._srv_name_prefix +"/motion/jog_multi") ; self.req_JogMulti = JogMulti.Request()
-        self._ros2_trans                      = g_node.create_client(Trans,                  self._srv_name_prefix +"/motion/trans") ; self.req_Trans = Trans.Request()
+        self._ros2_movej                      = g_node.create_client(MoveJoint,              self._srv_name_prefix +"motion/move_joint") ; self.req_MoveJoint = MoveJoint.Request()
+        self._ros2_movel                      = g_node.create_client(MoveLine,               self._srv_name_prefix +"motion/move_line") ; self.req_MoveLine = MoveLine.Request()
+        self._ros2_movejx                     = g_node.create_client(MoveJointx,             self._srv_name_prefix +"motion/move_jointx") ; self.req_MoveJointx = MoveJointx.Request()
+        self._ros2_movec                      = g_node.create_client(MoveCircle,             self._srv_name_prefix +"motion/move_circle") ; self.req_MoveCircle = MoveCircle.Request()
+        self._ros2_movesj                     = g_node.create_client(MoveSplineJoint,        self._srv_name_prefix +"motion/move_spline_joint") ; self.req_MoveSplineJoint = MoveSplineJoint.Request() 
+        self._ros2_movesx                     = g_node.create_client(MoveSplineTask,         self._srv_name_prefix +"motion/move_spline_task") ; self.req_MoveSplineTask = MoveSplineTask.Request()
+        self._ros2_moveb                      = g_node.create_client(MoveBlending,           self._srv_name_prefix +"motion/move_blending") ; self.req_MoveBlending = MoveBlending.Request()
+        self._ros2_move_spiral                = g_node.create_client(MoveSpiral,             self._srv_name_prefix +"motion/move_spiral") ; self.req_MoveSpiral = MoveSpiral.Request()
+        self._ros2_move_periodic              = g_node.create_client(MovePeriodic,           self._srv_name_prefix +"motion/move_periodic") ; self.req_MovePeriodic = MovePeriodic.Request()
+        self._ros2_move_wait                  = g_node.create_client(MoveWait,               self._srv_name_prefix +"motion/move_wait") ; self.req_MoveWait = MoveWait.Request()
+        self._ros2_jog                        = g_node.create_client(Jog,                    self._srv_name_prefix +"motion/jog") ; self.req_Jog = Jog.Request()
+        self._ros2_jog_multi                  = g_node.create_client(JogMulti,               self._srv_name_prefix +"motion/jog_multi") ; self.req_JogMulti = JogMulti.Request()
+        self._ros2_trans                      = g_node.create_client(Trans,                  self._srv_name_prefix +"motion/trans") ; self.req_Trans = Trans.Request()
 
-        self._ros2_fkin                           = g_node.create_client(Fkin,                        self._srv_name_prefix +"/motion/fkin") ; self.req_Fkin = Fkin.Request()
-        self._ros2_ikin                           = g_node.create_client(Ikin,                        self._srv_name_prefix +"/motion/ikin") ; self.req_Ikin = Ikin.Request()
-        self._ros2_set_ref_coord                  = g_node.create_client(SetRefCoord,                 self._srv_name_prefix +"/motion/set_ref_coord") ; self.req_SetRefCoord = SetRefCoord.Request()
-        self._ros2_move_home                      = g_node.create_client(MoveHome,                    self._srv_name_prefix +"/motion/move_home") ; self.req_MoveHome = MoveHome.Request()
-        self._ros2_check_motion                   = g_node.create_client(CheckMotion,                 self._srv_name_prefix +"/motion/check_motion") ; self.req_CheckMotion = CheckMotion.Request()
-        self._ros2_change_operation_speed         = g_node.create_client(ChangeOperationSpeed,        self._srv_name_prefix +"/motion/change_operation_speed") ; self.req_ChangeOperationSpeed = ChangeOperationSpeed.Request()
-        self._ros2_enable_alter_motion            = g_node.create_client(EnableAlterMotion,           self._srv_name_prefix +"/motion/enable_alter_motion") ; self.req_EnableAlterMotion = EnableAlterMotion.Request()
-        self._ros2_alter_motion                   = g_node.create_client(AlterMotion,                 self._srv_name_prefix +"/motion/alter_motion") ; self.req_AlterMotion = AlterMotion.Request()
-        self._ros2_disable_alter_motion           = g_node.create_client(DisableAlterMotion,          self._srv_name_prefix +"/motion/disable_alter_motion") ; self.req_DisableAlterMotion = DisableAlterMotion.Request()
-        self._ros2_set_singularity_handling       = g_node.create_client(SetSingularityHandling,      self._srv_name_prefix +"/motion/set_singularity_handling") ; self.req_SetSingularityHandling = SetSingularityHandling.Request()
-        self._ros2_set_singular_handling_force    = g_node.create_client(SetSingularityHandlingForce, self._srv_name_prefix +"/motion/set_singularity_handling_force") ; self.req_SetSingularityHandlingForce = SetSingularityHandlingForce.Request()
+        self._ros2_fkin                           = g_node.create_client(Fkin,                        self._srv_name_prefix +"motion/fkin") ; self.req_Fkin = Fkin.Request()
+        self._ros2_ikin                           = g_node.create_client(Ikin,                        self._srv_name_prefix +"motion/ikin") ; self.req_Ikin = Ikin.Request()
+        self._ros2_set_ref_coord                  = g_node.create_client(SetRefCoord,                 self._srv_name_prefix +"motion/set_ref_coord") ; self.req_SetRefCoord = SetRefCoord.Request()
+        self._ros2_move_home                      = g_node.create_client(MoveHome,                    self._srv_name_prefix +"motion/move_home") ; self.req_MoveHome = MoveHome.Request()
+        self._ros2_check_motion                   = g_node.create_client(CheckMotion,                 self._srv_name_prefix +"motion/check_motion") ; self.req_CheckMotion = CheckMotion.Request()
+        self._ros2_change_operation_speed         = g_node.create_client(ChangeOperationSpeed,        self._srv_name_prefix +"motion/change_operation_speed") ; self.req_ChangeOperationSpeed = ChangeOperationSpeed.Request()
+        self._ros2_enable_alter_motion            = g_node.create_client(EnableAlterMotion,           self._srv_name_prefix +"motion/enable_alter_motion") ; self.req_EnableAlterMotion = EnableAlterMotion.Request()
+        self._ros2_alter_motion                   = g_node.create_client(AlterMotion,                 self._srv_name_prefix +"motion/alter_motion") ; self.req_AlterMotion = AlterMotion.Request()
+        self._ros2_disable_alter_motion           = g_node.create_client(DisableAlterMotion,          self._srv_name_prefix +"motion/disable_alter_motion") ; self.req_DisableAlterMotion = DisableAlterMotion.Request()
+        self._ros2_set_singularity_handling       = g_node.create_client(SetSingularityHandling,      self._srv_name_prefix +"motion/set_singularity_handling") ; self.req_SetSingularityHandling = SetSingularityHandling.Request()
+        self._ros2_set_singular_handling_force    = g_node.create_client(SetSingularHandlingForce, self._srv_name_prefix +"motion/set_singular_handling_force") ; self.req_SetSingularHandlingForce = SetSingularHandlingForce.Request()
 
 
         # Auxiliary Control Operations
-        self._ros2_get_control_mode               = g_node.create_client(GetControlMode,     self._srv_name_prefix +"/aux_control/get_control_mode") ; self.req_GetControlMode = GetControlMode.Request()
-        self._ros2_get_control_space              = g_node.create_client(GetControlSpace,    self._srv_name_prefix +"/aux_control/get_control_space") ; self.req_GetControlSpace = GetControlSpace.Request()
+        self._ros2_get_control_mode               = g_node.create_client(GetControlMode,     self._srv_name_prefix +"aux_control/get_control_mode") ; self.req_GetControlMode = GetControlMode.Request()
+        self._ros2_get_control_space              = g_node.create_client(GetControlSpace,    self._srv_name_prefix +"aux_control/get_control_space") ; self.req_GetControlSpace = GetControlSpace.Request()
     
-        self._ros2_get_current_posj               = g_node.create_client(GetCurrentPosj,     self._srv_name_prefix +"/aux_control/get_current_posj") ; self.req_GetCurrentPosj = GetCurrentPosj.Request()
-        self._ros2_get_current_velj               = g_node.create_client(GetCurrentVelj,     self._srv_name_prefix +"/aux_control/get_current_velj") ; self.req_GetCurrentVelj = GetCurrentVelj.Request()
-        self._ros2_get_desired_posj               = g_node.create_client(GetDesiredPosj,     self._srv_name_prefix +"/aux_control/get_desired_posj") ; self.req_GetDesiredPosj = GetDesiredPosj.Request()
-        self._ros2_get_desired_velj               = g_node.create_client(GetDesiredVelj,     self._srv_name_prefix +"/aux_control/get_desired_velj") ; self.req_GetDesiredVelj = GetDesiredVelj.Request()
+        self._ros2_get_current_posj               = g_node.create_client(GetCurrentPosj,     self._srv_name_prefix +"aux_control/get_current_posj") ; self.req_GetCurrentPosj = GetCurrentPosj.Request()
+        self._ros2_get_current_velj               = g_node.create_client(GetCurrentVelj,     self._srv_name_prefix +"aux_control/get_current_velj") ; self.req_GetCurrentVelj = GetCurrentVelj.Request()
+        self._ros2_get_desired_posj               = g_node.create_client(GetDesiredPosj,     self._srv_name_prefix +"aux_control/get_desired_posj") ; self.req_GetDesiredPosj = GetDesiredPosj.Request()
+        self._ros2_get_desired_velj               = g_node.create_client(GetDesiredVelj,     self._srv_name_prefix +"aux_control/get_desired_velj") ; self.req_GetDesiredVelj = GetDesiredVelj.Request()
     
-        self._ros2_get_current_posx               = g_node.create_client(GetCurrentPosx,     self._srv_name_prefix +"/aux_control/get_current_posx") ; self.req_GetCurrentPosx = GetCurrentPosx.Request()
-        self._ros2_get_current_velx               = g_node.create_client(GetCurrentVelx,     self._srv_name_prefix +"/aux_control/get_current_velx") ; self.req_GetCurrentVelx = GetCurrentVelx.Request()
-        self._ros2_get_desired_posx               = g_node.create_client(GetDesiredPosx,     self._srv_name_prefix +"/aux_control/get_desired_posx") ; self.req_GetDesiredPosx = GetDesiredPosx.Request()
-        self._ros2_get_desired_velx               = g_node.create_client(GetDesiredVelx,     self._srv_name_prefix +"/aux_control/get_desired_velx") ; self.req_GetDesiredVelx = GetDesiredVelx.Request()
+        self._ros2_get_current_posx               = g_node.create_client(GetCurrentPosx,     self._srv_name_prefix +"aux_control/get_current_posx") ; self.req_GetCurrentPosx = GetCurrentPosx.Request()
+        self._ros2_get_current_velx               = g_node.create_client(GetCurrentVelx,     self._srv_name_prefix +"aux_control/get_current_velx") ; self.req_GetCurrentVelx = GetCurrentVelx.Request()
+        self._ros2_get_desired_posx               = g_node.create_client(GetDesiredPosx,     self._srv_name_prefix +"aux_control/get_desired_posx") ; self.req_GetDesiredPosx = GetDesiredPosx.Request()
+        self._ros2_get_desired_velx               = g_node.create_client(GetDesiredVelx,     self._srv_name_prefix +"aux_control/get_desired_velx") ; self.req_GetDesiredVelx = GetDesiredVelx.Request()
      
-        self._ros2_get_current_tool_flange_posx   = g_node.create_client(GetCurrentToolFlangePosx,   self._srv_name_prefix +"/aux_control/get_current_tool_flange_posx") ; self.req_GetCurrentToolFlangePosx = GetCurrentToolFlangePosx.Request()
+        self._ros2_get_current_tool_flange_posx   = g_node.create_client(GetCurrentToolFlangePosx,   self._srv_name_prefix +"aux_control/get_current_tool_flange_posx") ; self.req_GetCurrentToolFlangePosx = GetCurrentToolFlangePosx.Request()
      
-        self._ros2_get_current_solution_space     = g_node.create_client(GetCurrentSolutionSpace,    self._srv_name_prefix +"/aux_control/get_current_solution_space") ; self.req_GetCurrentSolutionSpace = GetCurrentSolutionSpace.Request()
-        self._ros2_get_current_rotm               = g_node.create_client(GetCurrentRotm,             self._srv_name_prefix +"/aux_control/get_current_rotm") ; self.req_GetCurrentRotm = GetCurrentRotm.Request()
-        self._ros2_get_joint_torque               = g_node.create_client(GetJointTorque,             self._srv_name_prefix +"/aux_control/get_joint_torque") ; self.req_GetJointTorque = GetJointTorque.Request()
-        self._ros2_get_external_torque            = g_node.create_client(GetExternalTorque,          self._srv_name_prefix +"/aux_control/get_external_torque") ; self.req_GetExternalTorque = GetExternalTorque.Request()
-        self._ros2_get_tool_force                 = g_node.create_client(GetToolForce,               self._srv_name_prefix +"/aux_control/get_tool_force") ; self.req_GetToolForce = GetToolForce.Request()
-        self._ros2_get_solution_space             = g_node.create_client(GetSolutionSpace,           self._srv_name_prefix +"/aux_control/get_solution_space") ; self.req_GetSolutionSpace = GetSolutionSpace.Request()
-        self._ros2_get_orientation_error          = g_node.create_client(GetOrientationError,        self._srv_name_prefix +"/aux_control/get_orientation_error") ; self.req_GetOrientationError = GetOrientationError.Request()
-        self._ros2_get_robot_link_info            = g_node.create_client(GetRobotLinkInfo,           self._srv_name_prefix +"/aux_control/get_robot_link_info") ; self.req_GetRobotLinkInfo = GetRobotLinkInfo.Request()
+        self._ros2_get_current_solution_space     = g_node.create_client(GetCurrentSolutionSpace,    self._srv_name_prefix +"aux_control/get_current_solution_space") ; self.req_GetCurrentSolutionSpace = GetCurrentSolutionSpace.Request()
+        self._ros2_get_current_rotm               = g_node.create_client(GetCurrentRotm,             self._srv_name_prefix +"aux_control/get_current_rotm") ; self.req_GetCurrentRotm = GetCurrentRotm.Request()
+        self._ros2_get_joint_torque               = g_node.create_client(GetJointTorque,             self._srv_name_prefix +"aux_control/get_joint_torque") ; self.req_GetJointTorque = GetJointTorque.Request()
+        self._ros2_get_external_torque            = g_node.create_client(GetExternalTorque,          self._srv_name_prefix +"aux_control/get_external_torque") ; self.req_GetExternalTorque = GetExternalTorque.Request()
+        self._ros2_get_tool_force                 = g_node.create_client(GetToolForce,               self._srv_name_prefix +"aux_control/get_tool_force") ; self.req_GetToolForce = GetToolForce.Request()
+        self._ros2_get_solution_space             = g_node.create_client(GetSolutionSpace,           self._srv_name_prefix +"aux_control/get_solution_space") ; self.req_GetSolutionSpace = GetSolutionSpace.Request()
+        self._ros2_get_orientation_error          = g_node.create_client(GetOrientationError,        self._srv_name_prefix +"aux_control/get_orientation_error") ; self.req_GetOrientationError = GetOrientationError.Request()
+        self._ros2_get_robot_link_info            = g_node.create_client(GetRobotLinkInfo,           self._srv_name_prefix +"aux_control/get_robot_link_info") ; self.req_GetRobotLinkInfo = GetRobotLinkInfo.Request()
 
         # Force/Stiffness Control & others Operations
-        self._ros2_get_workpiece_weight        = g_node.create_client(GetWorkpieceWeight,            self._srv_name_prefix +"/force/get_workpiece_weight") ; self.req_GetWorkpieceWeight = GetWorkpieceWeight.Request()
-        self._ros2_reset_workpiece_weight      = g_node.create_client(ResetWorkpieceWeight,          self._srv_name_prefix +"/force/reset_workpiece_weight") ; self.req_ResetWorkpieceWeight = ResetWorkpieceWeight.Request()
+        self._ros2_get_workpiece_weight        = g_node.create_client(GetWorkpieceWeight,            self._srv_name_prefix +"force/get_workpiece_weight") ; self.req_GetWorkpieceWeight = GetWorkpieceWeight.Request()
+        self._ros2_reset_workpiece_weight      = g_node.create_client(ResetWorkpieceWeight,          self._srv_name_prefix +"force/reset_workpiece_weight") ; self.req_ResetWorkpieceWeight = ResetWorkpieceWeight.Request()
 
-        self._ros2_parallel_axis1              = g_node.create_client(ParallelAxis1,                 self._srv_name_prefix +"/force/parallel_axis1") ; self.req_ParallelAxis1 = ParallelAxis1.Request()
-        self._ros2_parallel_axis2              = g_node.create_client(ParallelAxis2,                 self._srv_name_prefix +"/force/parallel_axis2") ; self.req_ParallelAxis2 = ParallelAxis2.Request()
-        self._ros2_align_axis1                 = g_node.create_client(AlignAxis1,                    self._srv_name_prefix +"/force/align_axis1") ; self.req_AlignAxis1 = AlignAxis1.Request()
-        self._ros2_align_axis2                 = g_node.create_client(AlignAxis2,                    self._srv_name_prefix +"/force/align_axis2") ; self.req_AlignAxis2 = AlignAxis2.Request()
-        self._ros2_is_done_bolt_tightening     = g_node.create_client(IsDoneBoltTightening,          self._srv_name_prefix +"/force/is_done_bolt_tightening") ; self.req_IsDoneBoltTightening = IsDoneBoltTightening.Request()
-        self._ros2_release_compliance_ctrl     = g_node.create_client(ReleaseComplianceCtrl,         self._srv_name_prefix +"/force/release_compliance_ctrl") ; self.req_ReleaseComplianceCtrl = ReleaseComplianceCtrl.Request()
-        self._ros2_task_compliance_ctrl        = g_node.create_client(TaskComplianceCtrl,            self._srv_name_prefix +"/force/task_compliance_ctrl") ; self.req_TaskComplianceCtrl = TaskComplianceCtrl.Request()
-        self._ros2_set_stiffnessx              = g_node.create_client(SetStiffnessx,                 self._srv_name_prefix +"/force/set_stiffnessx") ; self.req_SetStiffnessx = SetStiffnessx.Request()
-        self._ros2_calc_coord                  = g_node.create_client(CalcCoord,                     self._srv_name_prefix +"/force/calc_coord") ; self.req_CalcCoord = CalcCoord.Request()
-        self._ros2_set_user_cart_coord1        = g_node.create_client(SetUserCartCoord1,             self._srv_name_prefix +"/force/set_user_cart_coord1") ; self.req_SetUserCartCoord1 = SetUserCartCoord1.Request()
-        self._ros2_set_user_cart_coord2        = g_node.create_client(SetUserCartCoord2,             self._srv_name_prefix +"/force/set_user_cart_coord2") ; self.req_SetUserCartCoord2 = SetUserCartCoord2.Request()
-        self._ros2_set_user_cart_coord3        = g_node.create_client(SetUserCartCoord3,             self._srv_name_prefix +"/force/set_user_cart_coord3") ; self.req_SetUserCartCoord3 = SetUserCartCoord3.Request()
-        self._ros2_overwrite_user_cart_coord   = g_node.create_client(OverwriteUserCartCoord,        self._srv_name_prefix +"/force/overwrite_user_cart_coord") ; self.req_OverwriteUserCartCoord = OverwriteUserCartCoord.Request()
-        self._ros2_get_user_cart_coord         = g_node.create_client(GetUserCartCoord,              self._srv_name_prefix +"/force/get_user_cart_coord") ; self.req_GetUserCartCoord = GetUserCartCoord.Request()
-        self._ros2_set_desired_force           = g_node.create_client(SetDesiredForce,               self._srv_name_prefix +"/force/set_desired_force") ; self.req_SetDesiredForce = SetDesiredForce.Request()
-        self._ros2_release_force               = g_node.create_client(ReleaseForce,                  self._srv_name_prefix +"/force/release_force") ; self.req_ReleaseForce = ReleaseForce.Request()
-        self._ros2_check_position_condition    = g_node.create_client(CheckPositionCondition,        self._srv_name_prefix +"/force/check_position_condition") ; self.req_CheckPositionCondition = CheckPositionCondition.Request()
-        self._ros2_check_force_condition       = g_node.create_client(CheckForceCondition,           self._srv_name_prefix +"/force/check_force_condition") ; self.req_CheckForceCondition = CheckForceCondition.Request()
-        self._ros2_check_orientation_condition1= g_node.create_client(CheckOrientationCondition1,    self._srv_name_prefix +"/force/check_orientation_condition1") ; self.req_CheckOrientationCondition1 = CheckOrientationCondition1.Request()
-        self._ros2_check_orientation_condition2= g_node.create_client(CheckOrientationCondition2,    self._srv_name_prefix +"/force/check_orientation_condition2") ; self.req_CheckOrientationCondition2 = CheckOrientationCondition2.Request()
-        self._ros2_coord_transform             = g_node.create_client(CoordTransform,                self._srv_name_prefix +"/force/coord_transform") ; self.req_CoordTransform = CoordTransform.Request()
+        self._ros2_parallel_axis1              = g_node.create_client(ParallelAxis1,                 self._srv_name_prefix +"force/parallel_axis1") ; self.req_ParallelAxis1 = ParallelAxis1.Request()
+        self._ros2_parallel_axis2              = g_node.create_client(ParallelAxis2,                 self._srv_name_prefix +"force/parallel_axis2") ; self.req_ParallelAxis2 = ParallelAxis2.Request()
+        self._ros2_align_axis1                 = g_node.create_client(AlignAxis1,                    self._srv_name_prefix +"force/align_axis1") ; self.req_AlignAxis1 = AlignAxis1.Request()
+        self._ros2_align_axis2                 = g_node.create_client(AlignAxis2,                    self._srv_name_prefix +"force/align_axis2") ; self.req_AlignAxis2 = AlignAxis2.Request()
+        self._ros2_is_done_bolt_tightening     = g_node.create_client(IsDoneBoltTightening,          self._srv_name_prefix +"force/is_done_bolt_tightening") ; self.req_IsDoneBoltTightening = IsDoneBoltTightening.Request()
+        self._ros2_release_compliance_ctrl     = g_node.create_client(ReleaseComplianceCtrl,         self._srv_name_prefix +"force/release_compliance_ctrl") ; self.req_ReleaseComplianceCtrl = ReleaseComplianceCtrl.Request()
+        self._ros2_task_compliance_ctrl        = g_node.create_client(TaskComplianceCtrl,            self._srv_name_prefix +"force/task_compliance_ctrl") ; self.req_TaskComplianceCtrl = TaskComplianceCtrl.Request()
+        self._ros2_set_stiffnessx              = g_node.create_client(SetStiffnessx,                 self._srv_name_prefix +"force/set_stiffnessx") ; self.req_SetStiffnessx = SetStiffnessx.Request()
+        self._ros2_calc_coord                  = g_node.create_client(CalcCoord,                     self._srv_name_prefix +"force/calc_coord") ; self.req_CalcCoord = CalcCoord.Request()
+        self._ros2_set_user_cart_coord1        = g_node.create_client(SetUserCartCoord1,             self._srv_name_prefix +"force/set_user_cart_coord1") ; self.req_SetUserCartCoord1 = SetUserCartCoord1.Request()
+        self._ros2_set_user_cart_coord2        = g_node.create_client(SetUserCartCoord2,             self._srv_name_prefix +"force/set_user_cart_coord2") ; self.req_SetUserCartCoord2 = SetUserCartCoord2.Request()
+        self._ros2_set_user_cart_coord3        = g_node.create_client(SetUserCartCoord3,             self._srv_name_prefix +"force/set_user_cart_coord3") ; self.req_SetUserCartCoord3 = SetUserCartCoord3.Request()
+        self._ros2_overwrite_user_cart_coord   = g_node.create_client(OverwriteUserCartCoord,        self._srv_name_prefix +"force/overwrite_user_cart_coord") ; self.req_OverwriteUserCartCoord = OverwriteUserCartCoord.Request()
+        self._ros2_get_user_cart_coord         = g_node.create_client(GetUserCartCoord,              self._srv_name_prefix +"force/get_user_cart_coord") ; self.req_GetUserCartCoord = GetUserCartCoord.Request()
+        self._ros2_set_desired_force           = g_node.create_client(SetDesiredForce,               self._srv_name_prefix +"force/set_desired_force") ; self.req_SetDesiredForce = SetDesiredForce.Request()
+        self._ros2_release_force               = g_node.create_client(ReleaseForce,                  self._srv_name_prefix +"force/release_force") ; self.req_ReleaseForce = ReleaseForce.Request()
+        self._ros2_check_position_condition    = g_node.create_client(CheckPositionCondition,        self._srv_name_prefix +"force/check_position_condition") ; self.req_CheckPositionCondition = CheckPositionCondition.Request()
+        self._ros2_check_force_condition       = g_node.create_client(CheckForceCondition,           self._srv_name_prefix +"force/check_force_condition") ; self.req_CheckForceCondition = CheckForceCondition.Request()
+        self._ros2_check_orientation_condition1= g_node.create_client(CheckOrientationCondition1,    self._srv_name_prefix +"force/check_orientation_condition1") ; self.req_CheckOrientationCondition1 = CheckOrientationCondition1.Request()
+        self._ros2_check_orientation_condition2= g_node.create_client(CheckOrientationCondition2,    self._srv_name_prefix +"force/check_orientation_condition2") ; self.req_CheckOrientationCondition2 = CheckOrientationCondition2.Request()
+        self._ros2_coord_transform             = g_node.create_client(CoordTransform,                self._srv_name_prefix +"force/coord_transform") ; self.req_CoordTransform = CoordTransform.Request()
 
         #  GPIO Operations
         self._ros2_set_digital_output         = g_node.create_client(SetCtrlBoxDigitalOutput,        self._srv_name_prefix +"io/set_ctrl_box_digital_output") ; self.req_SetCtrlBoxDigitalOutput = SetCtrlBoxDigitalOutput.Request()
@@ -6743,30 +6773,30 @@ class CDsrRobot:
         self._ros2_get_tool_digital_output    = g_node.create_client(GetToolDigitalOutput,           self._srv_name_prefix +"io/get_tool_digital_output") ; self.req_GetToolDigitalOutput = GetToolDigitalOutput.Request()
 
         #  Modbus Operations, 
-        self._ros2_set_modbus_output          = g_node.create_client(SetModbusOutput,                self._srv_name_prefix +"/modbus/set_modbus_output") ; self.req_SetModbusOutput = SetModbusOutput.Request()
-        self._ros2_get_modbus_input           = g_node.create_client(GetModbusInput,                 self._srv_name_prefix +"/modbus/get_modbus_input") ; self.req_GetModbusInput = GetModbusInput.Request()
-        self._ros2_add_modbus_signal          = g_node.create_client(ConfigCreateModbus,             self._srv_name_prefix +"/modbus/config_create_modbus") ; self.req_ConfigCreateModbus = ConfigCreateModbus.Request()
-        self._ros2_del_modbus_signal          = g_node.create_client(ConfigDeleteModbus,             self._srv_name_prefix +"/modbus/config_delete_modbus") ; self.req_ConfigDeleteModbus = ConfigDeleteModbus.Request()
+        self._ros2_set_modbus_output          = g_node.create_client(SetModbusOutput,                self._srv_name_prefix +"modbus/set_modbus_output") ; self.req_SetModbusOutput = SetModbusOutput.Request()
+        self._ros2_get_modbus_input           = g_node.create_client(GetModbusInput,                 self._srv_name_prefix +"modbus/get_modbus_input") ; self.req_GetModbusInput = GetModbusInput.Request()
+        self._ros2_add_modbus_signal          = g_node.create_client(ConfigCreateModbus,             self._srv_name_prefix +"modbus/config_create_modbus") ; self.req_ConfigCreateModbus = ConfigCreateModbus.Request()
+        self._ros2_del_modbus_signal          = g_node.create_client(ConfigDeleteModbus,             self._srv_name_prefix +"modbus/config_delete_modbus") ; self.req_ConfigDeleteModbus = ConfigDeleteModbus.Request()
 
         # TCP Operations, 
-        self._ros2_set_current_tcp            = g_node.create_client(SetCurrentTcp,                  self._srv_name_prefix +"/tcp/set_current_tcp") ; self.req_SetCurrentTcp = SetCurrentTcp.Request()
-        self._ros2_get_current_tcp            = g_node.create_client(GetCurrentTcp,                  self._srv_name_prefix +"/tcp/get_current_tcp") ; self.req_GetCurrentTcp = GetCurrentTcp.Request()
-        self._ros2_config_create_tcp          = g_node.create_client(ConfigCreateTcp,                self._srv_name_prefix +"/tcp/config_create_tcp") ; self.req_ConfigCreateTcp = ConfigCreateTcp.Request()
-        self._ros2_config_delete_tcp          = g_node.create_client(ConfigDeleteTcp,                self._srv_name_prefix +"/tcp/config_delete_tcp") ; self.req_ConfigDeleteTcp = ConfigDeleteTcp.Request()
+        self._ros2_set_current_tcp            = g_node.create_client(SetCurrentTcp,                  self._srv_name_prefix +"tcp/set_current_tcp") ; self.req_SetCurrentTcp = SetCurrentTcp.Request()
+        self._ros2_get_current_tcp            = g_node.create_client(GetCurrentTcp,                  self._srv_name_prefix +"tcp/get_current_tcp") ; self.req_GetCurrentTcp = GetCurrentTcp.Request()
+        self._ros2_config_create_tcp          = g_node.create_client(ConfigCreateTcp,                self._srv_name_prefix +"tcp/config_create_tcp") ; self.req_ConfigCreateTcp = ConfigCreateTcp.Request()
+        self._ros2_config_delete_tcp          = g_node.create_client(ConfigDeleteTcp,                self._srv_name_prefix +"tcp/config_delete_tcp") ; self.req_ConfigDeleteTcp = ConfigDeleteTcp.Request()
  
         # Tool Operations, 
-        self._ros2_set_current_tool           = g_node.create_client(SetCurrentTool,                 self._srv_name_prefix +"/tool/set_current_tool") ; self.req_SetCurrentTool = SetCurrentTool.Request()
-        self._ros2_get_current_tool           = g_node.create_client(GetCurrentTool,                 self._srv_name_prefix +"/tool/get_current_tool") ; self.req_GetCurrentTool = GetCurrentTool.Request()
-        self._ros2_config_create_tool         = g_node.create_client(ConfigCreateTool,               self._srv_name_prefix +"/tool/config_create_tool") ; self.req_ConfigCreateTool = ConfigCreateTool.Request()
-        self._ros2_config_delete_tool         = g_node.create_client(ConfigDeleteTool,               self._srv_name_prefix +"/tool/config_delete_tool") ; self.req_ConfigDeleteTool = ConfigDeleteTool.Request()
-        self._ros2_set_tool_shape             = g_node.create_client(SetToolShape,                   self._srv_name_prefix +"/tool/set_tool_shape") ; self.req_SetToolShape = SetToolShape.Request()
+        self._ros2_set_current_tool           = g_node.create_client(SetCurrentTool,                 self._srv_name_prefix +"tool/set_current_tool") ; self.req_SetCurrentTool = SetCurrentTool.Request()
+        self._ros2_get_current_tool           = g_node.create_client(GetCurrentTool,                 self._srv_name_prefix +"tool/get_current_tool") ; self.req_GetCurrentTool = GetCurrentTool.Request()
+        self._ros2_config_create_tool         = g_node.create_client(ConfigCreateTool,               self._srv_name_prefix +"tool/config_create_tool") ; self.req_ConfigCreateTool = ConfigCreateTool.Request()
+        self._ros2_config_delete_tool         = g_node.create_client(ConfigDeleteTool,               self._srv_name_prefix +"tool/config_delete_tool") ; self.req_ConfigDeleteTool = ConfigDeleteTool.Request()
+        self._ros2_set_tool_shape             = g_node.create_client(SetToolShape,                   self._srv_name_prefix +"tool/set_tool_shape") ; self.req_SetToolShape = SetToolShape.Request()
 
         # DRL Operations, 
-        self._ros2_drl_pause                  = g_node.create_client(DrlPause,                       self._srv_name_prefix +"/drl/drl_pause") ; self.req_DrlPause = DrlPause.Request()
-        self._ros2_drl_resume                 = g_node.create_client(DrlResume,                      self._srv_name_prefix +"/drl/drl_resume") ; self.req_DrlResume = DrlResume.Request()
-        self._ros2_drl_start                  = g_node.create_client(DrlStart,                       self._srv_name_prefix +"/drl/drl_start") ; self.req_DrlStart = DrlStart.Request()
-        self._ros2_drl_stop                   = g_node.create_client(DrlStop,                        self._srv_name_prefix +"/drl/drl_stop") ; self.req_DrlStop = DrlStop.Request()
-        self._ros2_get_drl_state              = g_node.create_client(GetDrlState,                    self._srv_name_prefix +"/drl/get_drl_state") ; self.req_GetDrlState = GetDrlState.Request()
+        self._ros2_drl_pause                  = g_node.create_client(DrlPause,                       self._srv_name_prefix +"drl/drl_pause") ; self.req_DrlPause = DrlPause.Request()
+        self._ros2_drl_resume                 = g_node.create_client(DrlResume,                      self._srv_name_prefix +"drl/drl_resume") ; self.req_DrlResume = DrlResume.Request()
+        self._ros2_drl_start                  = g_node.create_client(DrlStart,                       self._srv_name_prefix +"drl/drl_start") ; self.req_DrlStart = DrlStart.Request()
+        self._ros2_drl_stop                   = g_node.create_client(DrlStop,                        self._srv_name_prefix +"drl/drl_stop") ; self.req_DrlStop = DrlStop.Request()
+        self._ros2_get_drl_state              = g_node.create_client(GetDrlState,                    self._srv_name_prefix +"drl/get_drl_state") ; self.req_GetDrlState = GetDrlState.Request()
 
         ########################################################################################################################################
 

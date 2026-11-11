@@ -85,6 +85,9 @@ protected:
 private:
     std::string drcf_ip_;
     std::string drcf_rt_ip_;
+    // Empty policy keeps the DRFL default scheduling for the RT threads.
+    std::string rt_thread_policy_;
+    std::string rt_thread_priority_;
     std::string mode_;
     // Freshness tracking for the RT stream (see read()).
     double      last_rt_time_stamp_ = -1.0;

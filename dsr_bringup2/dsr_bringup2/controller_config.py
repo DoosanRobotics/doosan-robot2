@@ -53,7 +53,8 @@ def adjust_dsr_controller_yaml(yaml_path, active_joints, passive_joints):
     return temp_yaml
 
 
-def parse_joints_from_urdf(model, color=None, name=None, host=None, rt_host=None, port=None, mode=None, update_rate=None):
+def parse_joints_from_urdf(model, color=None, name=None, host=None, rt_host=None, port=None, mode=None, update_rate=None,
+                           rt_thread_policy=None, rt_thread_priority=None):
     if color is None:
         color = "white"
 
@@ -76,6 +77,7 @@ def parse_joints_from_urdf(model, color=None, name=None, host=None, rt_host=None
             f'model:={model}',
             f'update_rate:={update_rate}',
         ]
+        + [f'{key}:={value}' for key, value in (('rt_thread_policy', rt_thread_policy), ('rt_thread_priority', rt_thread_priority)) if value]
     ).decode('utf-8')
 
     robot_model = URDF.from_xml_string(urdf_xml)

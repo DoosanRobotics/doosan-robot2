@@ -3,8 +3,14 @@
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+from unique_identifier_msgs.msg import UUID
 from dsr_msgs2.action import MovelH2r
 import sys
+import uuid
+
+# The server keeps a hold-to-run goal moving only while this goal id keeps arriving on motion/h2r_keepalive. If this client stops publishing (crash, hang, network loss), the robot stops.
+KEEPALIVE_HZ = 20.0
 
 class MovelH2rActionClient(Node):
 
@@ -13,6 +19,10 @@ class MovelH2rActionClient(Node):
         self._action_client = ActionClient(self, MovelH2r, 'dsr01/motion/movel_h2r')
         self._goal_future = None
         self._goal_handle = None
+        self._keepalive_pub = self.create_publisher(
+            UUID, 'dsr01/motion/h2r_keepalive', QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT))
+        self._goal_uuid = None
+        self._keepalive_timer = None
 
     def send_goal(self, target_pos, target_vel, target_acc):
         goal_msg = MovelH2r.Goal()
@@ -25,9 +35,13 @@ class MovelH2rActionClient(Node):
 
         self.get_logger().info('Sending goal request...')
 
+        self._goal_uuid = UUID(uuid=list(uuid.uuid4().bytes))
+        self._keepalive_timer = self.create_timer(1.0 / KEEPALIVE_HZ, self.publish_keepalive)
+
         self._send_goal_future = self._action_client.send_goal_async(
             goal_msg,
-            feedback_callback=self.feedback_callback
+            feedback_callback=self.feedback_callback,
+            goal_uuid=self._goal_uuid
         )
 
         self._send_goal_future.add_done_callback(self.goal_response_callback)
@@ -36,6 +50,7 @@ class MovelH2rActionClient(Node):
         self._goal_handle = future.result()
         if not self._goal_handle.accepted:
             self.get_logger().info('Goal rejected :(')
+            self.stop_keepalive()
             return
 
         self.get_logger().info('Goal accepted :)')
@@ -43,7 +58,16 @@ class MovelH2rActionClient(Node):
         self._get_result_future = self._goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
+    def publish_keepalive(self):
+        self._keepalive_pub.publish(self._goal_uuid)
+
+    def stop_keepalive(self):
+        if self._keepalive_timer is not None:
+            self._keepalive_timer.cancel()
+            self._keepalive_timer = None
+
     def get_result_callback(self, future):
+        self.stop_keepalive()
         try:
             result = future.result().result
             self.get_logger().info(f'Result: {result.success}')
@@ -88,6 +112,7 @@ def main(args=None):
         action_client.get_logger().info('Keyboard Interrupt (SIGINT)')
         action_client.cancel_goal()
     finally:
+        action_client.stop_keepalive()
         if rclpy.ok():
             rclpy.shutdown()
 

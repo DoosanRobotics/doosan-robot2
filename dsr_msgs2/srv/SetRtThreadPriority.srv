@@ -1,0 +1,11 @@
+#____________________________________________________________________________________________
+# set_rt_thread_priority
+# Scheduling of the threads that receive RT data and run RT callbacks, applied from the next connect_rt_control.
+# Linux: policy 1 (SCHED_FIFO) or 2 (SCHED_RR) with priority 1-99, or 0 (SCHED_OTHER) with priority 0. policy -1 restores the default.
+# Fails while the RT stream is connected.
+#____________________________________________________________________________________________
+
+int32      policy
+int32      priority
+---
+bool       success

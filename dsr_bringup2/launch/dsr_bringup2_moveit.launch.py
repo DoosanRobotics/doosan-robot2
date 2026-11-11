@@ -53,6 +53,8 @@ def include_launch_description(context):
             'host': LaunchConfiguration('host'),
             'port': LaunchConfiguration('port'),
             'rt_host': LaunchConfiguration('rt_host'),
+            'rt_thread_policy': LaunchConfiguration('rt_thread_policy'),
+            'rt_thread_priority': LaunchConfiguration('rt_thread_priority'),
             'gripper': LaunchConfiguration('gripper'), # [modified]
         }.items(),
     )]
@@ -67,6 +69,8 @@ def generate_launch_description():
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_thread_policy', default_value='', description='RT thread policy: 1 SCHED_FIFO, 2 SCHED_RR, 0 SCHED_OTHER, empty keeps the default'),
+        DeclareLaunchArgument('rt_thread_priority', default_value='', description='RT thread priority for rt_thread_policy (1-99 for FIFO/RR, 0 for OTHER)'),
         DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotique)'), # [modified]
     ]
 

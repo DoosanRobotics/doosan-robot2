@@ -211,6 +211,7 @@
 //RT
 #include "dsr_msgs2/srv/connect_rt_control.hpp"
 #include "dsr_msgs2/srv/disconnect_rt_control.hpp"
+#include "dsr_msgs2/srv/set_rt_thread_priority.hpp"
 #include "dsr_msgs2/srv/get_rt_control_input_data_list.hpp"
 #include "dsr_msgs2/srv/get_rt_control_input_version_list.hpp"
 #include "dsr_msgs2/srv/get_rt_control_output_data_list.hpp"
@@ -231,6 +232,8 @@
 #include "dsr_msgs2/action/jog_h2r.hpp"
 #include "dsr_msgs2/action/movej_h2r.hpp"
 #include "dsr_msgs2/action/movel_h2r.hpp"
+#include "unique_identifier_msgs/msg/uuid.hpp"
+#include "dsr_controller2/h2r_keepalive.hpp"
 
 #include "std_msgs/msg/float32_multi_array.hpp"
 
@@ -744,6 +747,7 @@ protected:
   //----- RT
   rclcpp::Service<dsr_msgs2::srv::ConnectRtControl>::SharedPtr              m_nh_connect_rt_control;
   rclcpp::Service<dsr_msgs2::srv::DisconnectRtControl>::SharedPtr           m_nh_disconnect_rt_control;
+  rclcpp::Service<dsr_msgs2::srv::SetRtThreadPriority>::SharedPtr           m_nh_set_rt_thread_priority;
   rclcpp::Service<dsr_msgs2::srv::GetRtControlOutputVersionList>::SharedPtr m_nh_get_rt_control_output_version_list;
   rclcpp::Service<dsr_msgs2::srv::GetRtControlInputVersionList>::SharedPtr  m_nh_get_rt_control_input_version_list;
   rclcpp::Service<dsr_msgs2::srv::GetRtControlInputDataList>::SharedPtr     m_nh_get_rt_control_input_data_list;
@@ -764,6 +768,12 @@ protected:
   rclcpp_action::Server<dsr_msgs2::action::MovejH2r>::SharedPtr             m_nh_srv_movej_h2r;
   rclcpp_action::Server<dsr_msgs2::action::MovelH2r>::SharedPtr             m_nh_srv_movel_h2r;
 
+  // Holds the single active H2R goal; its thread refreshes the controller's deadman only while the client keeps publishing the goal id on motion/h2r_keepalive.
+  rclcpp::CallbackGroup::SharedPtr                                          h2r_keepalive_cb_group_;
+  rclcpp::Subscription<unique_identifier_msgs::msg::UUID>::SharedPtr        m_sub_h2r_keepalive;
+  dsr_controller2::H2rKeepAlive                                             h2r_keepalive_;
+  std::chrono::milliseconds                                                 h2r_keepalive_timeout_{200};
+
   // Real-time data publishing members and parameters for periodic Float64MultiArray topic output.
   bool use_rt_topic_pub_{false};
   std::vector<std::string> rt_topic_keys_;
@@ -777,6 +787,7 @@ private:
   static constexpr const char* PARAM_USE_RT_TOPIC_PUB = "use_rt_topic_pub";
   static constexpr const char* PARAM_RT_TOPIC_KEYS    = "rt_topic_keys";
   static constexpr const char* PARAM_RT_TIMER_MS      = "rt_timer_ms";
+  static constexpr const char* PARAM_H2R_KEEPALIVE_TIMEOUT_MS = "h2r_keepalive_timeout_ms";
 };
 }  // namespace dsr_controller2
 
