@@ -63,6 +63,10 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 		} else if("rt_host" == parameter.first) {
 			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "rt_host : %s", parameter.second.c_str());
 			drcf_rt_ip = parameter.second;
+		} else if("rt_thread_policy" == parameter.first) {
+			rt_thread_policy = parameter.second;
+		} else if("rt_thread_priority" == parameter.first) {
+			rt_thread_priority = parameter.second;
 		} else if("port" == parameter.first) {
 			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "port : %s", parameter.second.c_str());
 			drcf_port = std::stoi(parameter.second);
@@ -81,7 +85,8 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 			 	key : %s, value : %s",parameter.first.c_str(), parameter.second.c_str());
 		}
 	}
-	if(info.hardware_parameters.size() != 6) {
+	// rt_thread_policy and rt_thread_priority are optional, so only a missing key is an error.
+	if(info.hardware_parameters.size() < 6) {
 		RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter Size ...");
 		return CallbackReturn::ERROR;
 	}
@@ -308,6 +313,27 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 	if(mode != "virtual") {
 		if(m_nVersionDRCF >= 3000000 && m_nVersionDRCF < 3040000) {
 			drcf_rt_ip = drcf_ip;
+		}
+		if (!rt_thread_policy.empty()) {
+			int policy = 0;
+			int priority = 0;
+			try {
+				policy = std::stoi(rt_thread_policy);
+				priority = rt_thread_priority.empty() ? 0 : std::stoi(rt_thread_priority);
+			} catch (const std::exception &) {
+				RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+					"[RT] rt_thread_policy '%s' and rt_thread_priority '%s' must be integers",
+					rt_thread_policy.c_str(), rt_thread_priority.c_str());
+				return CallbackReturn::FAILURE;
+			}
+			if (!Drfl.set_rt_thread_priority(policy, priority)) {
+				RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+					"[RT] set_rt_thread_priority(%d, %d) refused. SCHED_FIFO (1) and SCHED_RR (2) need "
+					"CAP_SYS_NICE or an RLIMIT_RTPRIO of at least the priority.", policy, priority);
+				return CallbackReturn::FAILURE;
+			}
+			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+				"[RT] RT thread scheduling: policy %d, priority %d", policy, priority);
 		}
 		if (!Drfl.connect_rt_control(drcf_ip)) {
 			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");

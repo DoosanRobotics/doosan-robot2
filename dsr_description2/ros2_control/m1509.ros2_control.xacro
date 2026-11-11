@@ -5,6 +5,8 @@
   name
   host:=0.0.0.0
   rt_host:=0.0.0.0
+  rt_thread_policy:=''
+  rt_thread_priority:=''
   port:=12345
   mode:=real
   model:=m1509
@@ -16,6 +18,8 @@
         <plugin>dsr_hardware2/DRHWInterface</plugin>
         <param name="host">${host}</param>
         <param name="rt_host">${rt_host}</param>
+        <param name="rt_thread_policy">${rt_thread_policy}</param>
+        <param name="rt_thread_priority">${rt_thread_priority}</param>
         <param name="port">${port}</param>
         <param name="mode">${mode}</param>
         <param name="model">${model}</param>

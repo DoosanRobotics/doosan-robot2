@@ -9,6 +9,8 @@
   <xacro:arg name="host" default=""/>
   <xacro:arg name="port" default=""/>
   <xacro:arg name="rt_host" default=""/>
+  <xacro:arg name="rt_thread_policy"  default=""/>
+  <xacro:arg name="rt_thread_priority"  default=""/>
   <xacro:arg name="mode" default=""/>
   <xacro:arg name="model" default=""/>
   <xacro:arg name="update_rate" default=""/>
@@ -20,6 +22,8 @@
   <xacro:property name="mj" value="$(arg use_mujoco)"/>
   <xacro:property name="host" value="$(arg host)"/>
   <xacro:property name="rt_host" value="$(arg rt_host)"/>
+  <xacro:property name="rt_thread_policy" value="$(arg rt_thread_policy)"/>
+  <xacro:property name="rt_thread_priority" value="$(arg rt_thread_priority)"/>
   <xacro:property name="port" value="$(arg port)"/>
   <xacro:property name="mode" value="$(arg mode)"/>
   <xacro:property name="model" value="$(arg model)"/>
@@ -58,6 +62,8 @@
         name="p3020"
         host="${host}"
         rt_host="${rt_host}"
+        rt_thread_policy="${rt_thread_policy}"
+        rt_thread_priority="${rt_thread_priority}"
         port="${port}"
         mode="${mode}"
         model="${model}"

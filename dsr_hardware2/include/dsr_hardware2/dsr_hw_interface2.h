@@ -91,6 +91,9 @@ protected:
 private:
 		std::string drcf_ip;	
 		std::string drcf_rt_ip;
+		// Empty policy keeps the DRFL default scheduling for the RT threads.
+		std::string rt_thread_policy;
+		std::string rt_thread_priority;
 		std::string mode;
 		std::string model;
 		int drcf_port;

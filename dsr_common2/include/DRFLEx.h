@@ -143,6 +143,7 @@ namespace DRAFramework
 
         DRFL_API bool _connect_rt_control(LPROBOTCONTROL pCtrl, const char* lpszIpAddr = "192.168.137.100", unsigned int usPort = 12347);
         DRFL_API bool _disconnect_rt_control(LPROBOTCONTROL pCtrl);
+        DRFL_API bool _set_rt_thread_priority(LPROBOTCONTROL pCtrl, int nPolicy, int nPriority);
 
         ////////////////////////////////////////////////////////////////////////////
         // RT Control                                                             //
@@ -807,6 +808,9 @@ namespace DRAFramework
         DRFL_API bool _get_input_register_bit(LPROBOTCONTROL ctrl, unsigned short address, int* out_val, int timeout_ms);
         DRFL_API bool _get_input_register_int(LPROBOTCONTROL ctrl, unsigned short address, int* out_val, int timeout_ms);
         DRFL_API bool _get_input_register_float(LPROBOTCONTROL ctrl, unsigned short address, float* out_val, int timeout_ms);
+
+        // _ikin_add_iter_threshold with the reference-pose option; a separate name because these exports are extern "C".
+        DRFL_API LPINVERSE_KINEMATIC_RESPONSE _ikin_add_iter_threshold_ex(LPROBOTCONTROL pCtrl, float fSourcePos[NUM_TASK], unsigned char iSolutionSpace, COORDINATE_SYSTEM eTargetRef, float fIterThreshold[2], unsigned char iRefPosOpt);
 #ifdef __cplusplus
     };
 #endif
@@ -1532,6 +1536,10 @@ namespace DRAFramework
         //brief(294) :set_welding_cockpit_setting_time_setting
         void set_welding_cockpit_setting_time_setting(int time) { return _set_welding_cockpit_setting_time_setting(_rbtCtrl, time); };
 #endif
+
+        // Scheduling of the threads that receive RT data and run RT callbacks, from the next connect_rt_control(); false while RT is connected; nPolicy -1 restores the default.
+        // Linux: SCHED_FIFO/SCHED_RR with priority, or SCHED_OTHER with 0. Windows: nPolicy 0 and a THREAD_PRIORITY_* level.
+        bool set_rt_thread_priority(int nPolicy, int nPriority) { return _set_rt_thread_priority(_rbtCtrlUDP, nPolicy, nPriority); };
 
 protected:
         LPROBOTCONTROL _rbtCtrlUDP;

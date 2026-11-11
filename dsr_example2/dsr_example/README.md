@@ -54,3 +54,13 @@ ros2 run dsr_example single_robot_simple
 ```
 
 [Screencast from 2024년 09월 26일 13시 21분 53초.webm](https://github.com/user-attachments/assets/c9b19447-0f7e-42b2-824a-a744db24079e)
+
+### Run Hold-to-Run (H2R) Action Examples
+```shell
+ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=virtual host:=127.0.0.1 port:=12345 model:=m1013
+ros2 run dsr_example test_action_movej_h2r
+ros2 run dsr_example test_action_movel_h2r
+ros2 run dsr_example test_action_jog_h2r
+```
+
+The `motion/movej_h2r`, `motion/movel_h2r` and `motion/jog_h2r` actions move the robot only while the client holds the motion. An H2R action client must publish its goal UUID (`unique_identifier_msgs/msg/UUID`, the same id it passes as `goal_uuid` when sending the goal) on `motion/h2r_keepalive` at 10 Hz or faster for as long as it wants the robot to move. If no keep-alive for the goal arrives within `h2r_keepalive_timeout_ms` (default 200 ms, controller parameter), the robot is stopped and the goal is aborted. Only one H2R goal can be active at a time. The examples above show the pattern.
