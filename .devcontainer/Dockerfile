@@ -1,4 +1,4 @@
-FROM osrf/ros:jazzy-desktop
+FROM osrf/ros:lyrical-desktop
 
 # Arguments
 ARG USERNAME=doosan-robotics
@@ -33,17 +33,16 @@ RUN apt-get update && apt-get install -y \
 
 # Install ROS2 packages
 RUN apt-get update && apt-get install -y \
-    ros-jazzy-control-msgs \
-    ros-jazzy-realtime-tools \
-    ros-jazzy-xacro \
-    ros-jazzy-joint-state-publisher-gui \
-    ros-jazzy-ros2-control \
-    ros-jazzy-ros2-controllers \
-    ros-jazzy-gazebo-msgs \
-    ros-jazzy-moveit-msgs \
-    ros-jazzy-ros-gz-sim \
-    ros-jazzy-moveit-configs-utils \
-    ros-jazzy-moveit-ros-move-group \
+    ros-lyrical-control-msgs \
+    ros-lyrical-realtime-tools \
+    ros-lyrical-xacro \
+    ros-lyrical-joint-state-publisher-gui \
+    ros-lyrical-ros2-control \
+    ros-lyrical-ros2-controllers \
+    ros-lyrical-moveit-msgs \
+    ros-lyrical-ros-gz-sim \
+    ros-lyrical-moveit-configs-utils \
+    ros-lyrical-moveit-ros-move-group \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Docker for emulator
@@ -62,7 +61,7 @@ RUN apt-get update && apt-get install -y \
 RUN usermod -aG docker $USERNAME || true
 
 # Setup environment
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /home/$USERNAME/.bashrc \
+RUN echo "source /opt/ros/lyrical/setup.bash" >> /home/$USERNAME/.bashrc \
     && echo "if [ -f ${WORKSPACE}/install/setup.bash ]; then source ${WORKSPACE}/install/setup.bash; fi" >> /home/$USERNAME/.bashrc \
     && chown -R $USER_UID:$USER_GID /home/$USERNAME
 

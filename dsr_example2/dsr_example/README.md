@@ -11,7 +11,7 @@ A simple dsr_example package for using a Doosan Robot with the DSR ROS 2 `dsr_co
 
 ## Requirements
 
-- ROS 2 Jazzy release
+- ROS 2 Lyrical release
 - DSR ROS 2 Package Setting
 
 ## Build instructions

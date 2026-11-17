@@ -8,7 +8,7 @@
 
 ## Overview
     
-This package provides the function to control all models of Doosan robots in the ROS2(Jazzy) environment.
+This package provides the function to control all models of Doosan robots in the ROS2(Lyrical) environment.
 
 
 ## Installation
@@ -24,11 +24,11 @@ Before installing the package, ensure that the necessary dependencies are instal
 ```bash
 sudo apt-get update
 sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget \
-                        ros-jazzy-control-msgs ros-jazzy-realtime-tools ros-jazzy-xacro \
-                        ros-jazzy-joint-state-publisher-gui ros-jazzy-ros2-control \
-                        ros-jazzy-ros2-controllers ros-jazzy-gazebo-msgs ros-jazzy-moveit-msgs \
-                        dbus-x11 ros-jazzy-moveit-configs-utils ros-jazzy-moveit-ros-move-group \
-                        ros-jazzy-example-interfaces
+                        ros-lyrical-control-msgs ros-lyrical-realtime-tools ros-lyrical-xacro \
+                        ros-lyrical-joint-state-publisher-gui ros-lyrical-ros2-control \
+                        ros-lyrical-ros2-controllers ros-lyrical-moveit-msgs \
+                        dbus-x11 ros-lyrical-moveit-configs-utils ros-lyrical-moveit-ros-move-group \
+                        ros-lyrical-example-interfaces
 
 
 ```
@@ -36,15 +36,13 @@ sudo apt-get install -y libpoco-dev libyaml-cpp-dev wget \
 ### Install Gazebo Simulation
 
 ```bash
-sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
-wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 sudo apt-get update
-sudo apt-get install -y ros-jazzy-gazebo-msgs ros-jazzy-ros-gz ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
+sudo apt-get install -y ros-lyrical-ros-gz ros-lyrical-gz-ros2-control
 ```
 
 ### Package Installation
 
-Ensure that you have installed **ros-jazzy-desktop** using `apt-get`. We recommend placing the package inside:
+Ensure that you have installed **ros-lyrical-desktop** using `apt-get`. We recommend placing the package inside:
 
 ```bash
 mkdir -p ~/ros2_ws/src
@@ -54,7 +52,7 @@ cd ~/ros2_ws/src
 Clone the required repositories:
 
 ```bash
-git clone -b jazzy https://github.com/doosan-robotics/doosan-robot2.git
+git clone -b lyrical https://github.com/DoosanRobotics/doosan-robot2.git
 ```
 
 Install dependencies:

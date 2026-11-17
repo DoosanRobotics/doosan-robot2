@@ -2,7 +2,7 @@
 
 ## Overview
 
-This package provides the function to control **m1013** model of Doosan robots in the ROS2(Jazzy) environment. It offers a way to use the realtime control function of the Doosan API **through ROS2's Service and Topic communication interfaces**.
+This package provides the function to control **m1013** model of Doosan robots in the ROS2(Lyrical) environment. It offers a way to use the realtime control function of the Doosan API **through ROS2's Service and Topic communication interfaces**.
 
 ## Notice
 
