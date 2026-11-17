@@ -289,6 +289,7 @@ DR_COND_NONE = -10000
 # digital I/O
 DR_DIO_MIN_INDEX = 1
 DR_DIO_MAX_INDEX = 16   #8 16개로 확장됨 2017/08/18  
+DR_DI_MAX_INDEX = 20
 
 # tool digital I/O
 DR_TDIO_MIN_INDEX = 1
@@ -857,6 +858,8 @@ def get_last_alarm():
 def change_collision_sensitivity(sensitivity):
     if type(sensitivity) != int:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : sensitivity")
+    if sensitivity < 1 or sensitivity > 100:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : sensitivity({0})".format(sensitivity))
     
     # ROS2 service call
     if __ROS2__:
@@ -3925,8 +3928,8 @@ def enable_alter_motion(n, mode, ref=None, limit_dPOS=None, limit_dPOS_per=None)
     # n
     if type(n) != int:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : n")
-    if n < 0:
-        raise DR_Error(DR_ERROR_TYPE, "Invalid type : (n>=0)")
+    if n < 1 or n > 254:
+        raise DR_Error(DR_ERROR_VALUE, "Invalid value : n({0}), (1 <= n <= 254)".format(n))
     _n = n #*20
 
     # mode
@@ -4653,9 +4656,6 @@ def is_done_bolt_tightening(m=0, timeout=0, axis=None):
     # timeout
     if type(timeout) != int and type(timeout) != float:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : timeout")
-
-    if timeout < 0:
-        raise DR_Error(DR_ERROR_VALUE, "Invalid value : timeout({0})".format(timeout))
 
     # axis
     if type(axis) != int:
@@ -5806,7 +5806,7 @@ def get_digital_input(index):
     if type(index) != int:
         raise DR_Error(DR_ERROR_TYPE, "Invalid type : index")
 
-    if index < DR_DIO_MIN_INDEX or index > DR_DIO_MAX_INDEX:
+    if index < DR_DIO_MIN_INDEX or index > DR_DI_MAX_INDEX:
         raise DR_Error(DR_ERROR_VALUE, "Invalid value : index")
 
     if __ROS2__:
@@ -5823,6 +5823,8 @@ def get_digital_input(index):
         else:
             if result == None:
                 ret = -1    
+            elif result.success == False:
+                raise DR_Error(DR_ERROR_RUNTIME, "get_digital_input failed : index({0})".format(index))
             else:        
                 ret = result.value 
 
@@ -7059,6 +7061,8 @@ class CDsrRobot:
     def change_collision_sensitivity(self, sensitivity):
         if type(sensitivity) != int:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : sensitivity")
+        if sensitivity < 1 or sensitivity > 100:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : sensitivity({0})".format(sensitivity))
         
         # ROS2 service call
         if __ROS2__:
@@ -9058,8 +9062,8 @@ class CDsrRobot:
         # n
         if type(n) != int:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : n")
-        if n < 0:
-            raise DR_Error(DR_ERROR_TYPE, "Invalid type : (n>=0)")
+        if n < 1 or n > 254:
+            raise DR_Error(DR_ERROR_VALUE, "Invalid value : n({0}), (1 <= n <= 254)".format(n))
         _n = n #*20
 
         # mode
@@ -9786,9 +9790,6 @@ class CDsrRobot:
         # timeout
         if type(timeout) != int and type(timeout) != float:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : timeout")
-
-        if timeout < 0:
-            raise DR_Error(DR_ERROR_VALUE, "Invalid value : timeout({0})".format(timeout))
 
         # axis
         if type(axis) != int:
@@ -10938,7 +10939,7 @@ class CDsrRobot:
         if type(index) != int:
             raise DR_Error(DR_ERROR_TYPE, "Invalid type : index")
 
-        if index < DR_DIO_MIN_INDEX or index > DR_DIO_MAX_INDEX:
+        if index < DR_DIO_MIN_INDEX or index > DR_DI_MAX_INDEX:
             raise DR_Error(DR_ERROR_VALUE, "Invalid value : index")
 
         if __ROS2__:
@@ -10955,6 +10956,8 @@ class CDsrRobot:
             else:
                 if result == None:
                     ret = -1    
+                elif result.success == False:
+                    raise DR_Error(DR_ERROR_RUNTIME, "get_digital_input failed : index({0})".format(index))
                 else:        
                     ret = result.value 
 

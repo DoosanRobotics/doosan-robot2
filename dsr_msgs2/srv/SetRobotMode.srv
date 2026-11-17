@@ -3,7 +3,9 @@
 # Change the robot-mode
 # 0 : ROBOT_MODE_MANUAL
 # 1 : ROBOT_MODE_AUTONOMOUS
-# 2 :ROBOT_MODE_MEASURE
+# 2 : ROBOT_MODE_RECOVERY
+# 4 : ROBOT_MODE_MEASURE
+# Other values (3 : ROBOT_MODE_BACKDRIVE, 5 : ROBOT_MODE_INITIALIZE) are refused and success is false.
 # drfl.SetRobotMode()
 #____________________________________________________________________________________________
 

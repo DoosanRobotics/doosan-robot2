@@ -5,6 +5,16 @@
   <xacro:arg name="color"          default="white"/>
   <xacro:arg name="namespace"      default=""/>
 
+  <!-- controller connection per arm -->
+  <xacro:arg name="host"             default="127.0.0.1"/>
+  <xacro:arg name="port"             default="12345"/>
+  <xacro:arg name="rt_host"          default=""/>
+  <xacro:arg name="update_rate"      default="100"/>
+  <xacro:arg name="arm2_host"        default="127.0.0.1"/>
+  <xacro:arg name="arm2_port"        default="12348"/>
+  <xacro:arg name="arm2_rt_host"     default=""/>
+  <xacro:arg name="arm2_update_rate" default="100"/>
+
   <!-- gripper control argument -->
   <xacro:arg name="gripper"              default="none"/>         <!-- none | robotiq_2f85 -->
   <xacro:arg name="left_gripper_prefix"  default="left_"/>
@@ -185,8 +195,10 @@
         <param name="rate">100</param>
         <param name="standby">5000</param>
         <param name="command">true</param>
-        <param name="host">127.0.0.1</param>
-        <param name="port">12345</param>
+        <param name="host">$(arg host)</param>
+        <param name="port">$(arg port)</param>
+        <param name="rt_host">$(arg rt_host)</param>
+        <param name="update_rate">$(arg update_rate)</param>
         <param name="mode">$(arg mode)</param>
         <param name="model">m1013</param>
         <param name="gripper">$(arg gripper)</param>
@@ -257,8 +269,10 @@
         <param name="rate">100</param>
         <param name="standby">5000</param>
         <param name="command">true</param>
-        <param name="host">127.0.0.1</param>
-        <param name="port">12348</param>
+        <param name="host">$(arg arm2_host)</param>
+        <param name="port">$(arg arm2_port)</param>
+        <param name="rt_host">$(arg arm2_rt_host)</param>
+        <param name="update_rate">$(arg arm2_update_rate)</param>
         <param name="mode">$(arg mode)</param>
         <param name="model">m1013</param>
         <param name="gripper">$(arg gripper)</param>

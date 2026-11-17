@@ -41,7 +41,8 @@ def merge_gripper(arm_xml: Path,
         raise RuntimeError(f"Body {flange_body} not found in {arm_xml}")
 
     # Works whether or not tool XML has <worldbody>
-    for body in (tool_root.find("worldbody") or tool_root).findall("body"):
+    tool_worldbody = tool_root.find("worldbody")
+    for body in (tool_worldbody if tool_worldbody is not None else tool_root).findall("body"):
         flange.append(body)
 
     # Ensure output_dir exists

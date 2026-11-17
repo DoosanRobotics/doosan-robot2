@@ -98,7 +98,8 @@ private:
     rclcpp::Clock rt_log_clock_{RCL_STEADY_TIME};
     std::string model_;
     int drcf_port_;
-    int update_rate_;
+    // Matches the shipped dsr_controller2.yaml rate, for xacros that omit update_rate.
+    int update_rate_ = 100;
     std::unordered_set<size_t> ignored_joints_;
 };
 }

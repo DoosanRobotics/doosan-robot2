@@ -236,6 +236,7 @@
 #include "dsr_controller2/h2r_keepalive.hpp"
 
 #include "std_msgs/msg/float32_multi_array.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 
 
 #include "../../../dsr_common2/include/DRFLEx.h"
@@ -322,7 +323,13 @@
 
 // digital I/O
 #define DR_DIO_MIN_INDEX    1
-#define DR_DIO_MAX_INDEX    20 // Input IO :16 -> 20 , Output IO : 16   
+// Control box digital inputs: 16 on v2 controllers, 20 on v3.
+#if DRCF_VERSION == 2
+#define DR_DI_MAX_INDEX     16
+#else
+#define DR_DI_MAX_INDEX     20
+#endif
+#define DR_DO_MAX_INDEX     16
 
 // tool digital I/O
 #define DR_TDIO_MIN_INDEX   1
@@ -533,6 +540,7 @@ namespace DRFL_CALLBACKS {
   void OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/);
   void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO);
   void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO);
+  void OnMonitoringCtrlIOEx2CB (const LPMONITORING_CTRLIO_EX2 pCtrlIO);
   void OnMonitoringDataCB(const LPMONITORING_DATA pData);
   void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
   void OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus);
@@ -782,6 +790,10 @@ protected:
       rt_pub_map_;  rclcpp::TimerBase::SharedPtr rt_timer_;
   void publish_read_data_rt_selected();
   static bool extract_field(LPRT_OUTPUT_DATA_LIST temp,const std::string& key,std::vector<float>& out);
+
+  rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr ctrl_io_pub_;
+  rclcpp::TimerBase::SharedPtr ctrl_io_timer_;
+  void publish_ctrl_io_state();
 
 private:
   static constexpr const char* PARAM_USE_RT_TOPIC_PUB = "use_rt_topic_pub";

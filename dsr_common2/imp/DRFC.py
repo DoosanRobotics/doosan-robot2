@@ -97,7 +97,10 @@ ROBOT_SYSTEM_VIRTUAL                  = 1
 #                                     
 ROBOT_MODE_MANUAL                     = 0
 ROBOT_MODE_AUTONOMOUS                 = 1
-ROBOT_MODE_MEASURE                    = 2
+ROBOT_MODE_RECOVERY                   = 2
+ROBOT_MODE_BACKDRIVE                  = 3
+ROBOT_MODE_MEASURE                    = 4
+ROBOT_MODE_INITIALIZE                 = 5
 
 #                                     
 # safety mode

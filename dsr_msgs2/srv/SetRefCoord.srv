@@ -2,7 +2,7 @@
 # set_ref_coord 
 #____________________________________________________________________________________________
 
-int8       coord            # DR_BASE(0), DR_TOOL(1), DR_WORLD(2), user coord(101~200)
+int16      coord            # DR_BASE(0), DR_TOOL(1), DR_WORLD(2), user coord(101~200)
                             # <DR_WORLD is only available in M2.40 or later> 
 ---
 bool success

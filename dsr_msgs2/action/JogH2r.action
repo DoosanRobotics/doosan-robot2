@@ -1,6 +1,6 @@
 # Goal
 int8 jog_axis
-int8 move_reference
+int16 move_reference
 float64 velocity
 ---
 # Result

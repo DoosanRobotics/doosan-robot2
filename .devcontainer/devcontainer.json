@@ -36,8 +36,7 @@
 				"ms-python.python",
 				"ms-vscode.cpptools",
 				"twxs.cmake",
-				"ms-azuretools.vscode-docker",
-				"anthropic.claude-code"
+				"ms-azuretools.vscode-docker"
 			]
 		}
 	}

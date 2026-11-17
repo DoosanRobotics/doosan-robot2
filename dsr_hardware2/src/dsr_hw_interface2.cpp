@@ -63,6 +63,30 @@ constexpr double g_k_dt_window_hi = 1.5;
 // 100 Hz default rate. Scaled up for slower loops where one period is longer.
 constexpr double g_k_rt_stale_timeout_s = 0.1;
 
+// Parses a whole decimal integer, so "1.5", "2x" and "" are rejected.
+static bool parse_whole_int(const std::string& text, int& value)
+{
+    if (text.empty()) return false;
+    try {
+        size_t used = 0;
+        const int parsed = std::stoi(text, &used);
+        if (used != text.size()) return false;
+        value = parsed;
+        return true;
+    } catch (const std::exception &) {
+        return false;
+    }
+}
+
+// The rt_thread_policy and rt_thread_priority pairs DRFL accepts on Linux.
+static bool rt_thread_sched_in_range(int policy, int priority)
+{
+    if (policy == -1) return true;                                    // restore the default
+    if (policy == 0) return priority == 0;                            // SCHED_OTHER
+    if (policy == 1 || policy == 2) return priority >= 1 && priority <= 99;  // SCHED_FIFO, SCHED_RR
+    return false;
+}
+
 std::map<std::string, CDRFLEx*> g_drfl_instances;
 std::mutex g_drfl_map_mutex;
 CDRFLEx* g_active_drfl = nullptr;
@@ -122,6 +146,50 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         } else {
             RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter....\
                  key : %s, value : %s",parameter.first.c_str(), parameter.second.c_str());
+        }
+    }
+    if(mode_ != "real" && mode_ != "virtual") {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                "[on_init] Invalid 'mode' : '%s'. Use mode:=real or mode:=virtual.", mode_.c_str());
+        return CallbackReturn::ERROR;
+    }
+    // DRFL stores the RT thread scheduling here and applies it when connect_rt_control starts the RT
+    // threads, so a value it refuses fails before the driver takes control authority or changes the robot mode.
+    if (!rt_thread_policy_.empty() || !rt_thread_priority_.empty()) {
+        int policy = -1;
+        int priority = 0;
+        if (rt_thread_policy_.empty()) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] rt_thread_priority '%s' is set without rt_thread_policy. Set rt_thread_policy to "
+                    "1 (SCHED_FIFO), 2 (SCHED_RR) or 0 (SCHED_OTHER).", rt_thread_priority_.c_str());
+            return CallbackReturn::ERROR;
+        }
+        if (!parse_whole_int(rt_thread_policy_, policy) ||
+            (!rt_thread_priority_.empty() && !parse_whole_int(rt_thread_priority_, priority))) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] rt_thread_policy '%s' and rt_thread_priority '%s' must be whole integers",
+                    rt_thread_policy_.c_str(), rt_thread_priority_.c_str());
+            return CallbackReturn::ERROR;
+        }
+        if (!rt_thread_sched_in_range(policy, priority)) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] rt_thread_policy %d with rt_thread_priority %d is not valid. Use 1 (SCHED_FIFO) or "
+                    "2 (SCHED_RR) with priority 1-99, 0 (SCHED_OTHER) with priority 0, or -1 for the default.",
+                    policy, priority);
+            return CallbackReturn::ERROR;
+        }
+        if (mode_ == "virtual") {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] RT thread scheduling (policy %d, priority %d) is not used in virtual mode, which does "
+                    "not connect RT.", policy, priority);
+        } else if (!m_Drfl.set_rt_thread_priority(policy, priority)) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] set_rt_thread_priority(%d, %d) refused. SCHED_FIFO (1) and SCHED_RR (2) need "
+                    "CAP_SYS_NICE or an RLIMIT_RTPRIO of at least the priority.", policy, priority);
+            return CallbackReturn::ERROR;
+        } else {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] RT thread scheduling: policy %d, priority %d, applied when RT connects", policy, priority);
         }
     }
     const size_t expected_num_joints = (model_ == "p3020") ? g_k_p3020_num_joint : g_k_default_num_joint;
@@ -295,7 +363,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         // pass silently as a pre-3.0 controller.
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
                 "Controller version came back empty; assuming %d. The RT stream "
-                "address is chosen from this value - set 'rt_host' explicitly.",
+                "address is chosen from this value, so RT connects to 'host'.",
                 m_nVersionDRCF);
     }
                  
@@ -355,15 +423,21 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     if(mode_ != "virtual") {
         // Where the RT stream is reachable depends on the controller generation:
         //   < 3.0    rt_host is ignored, RT is reachable on the robot IP.
-        //   3.0-3.3  RT is reachable at 192.168.137.50 by default.
-        //   >= 3.4   RT is reachable on the robot IP, so an unset rt_host follows host.
-        // An explicit rt_host always wins from 3.0 up.
+        //   3.0-3.3  RT is reachable at rt_host, 192.168.137.50 when unset.
+        //   >= 3.4   rt_host is ignored, RT is reachable on the robot IP.
         const bool rt_ip_set = !drcf_rt_ip_.empty() && drcf_rt_ip_ != g_k_unset_rt_ip;
         std::string rt_ip = drcf_ip_;
-        if(m_nVersionDRCF >= g_k_drcf_v3) {
+        if(m_nVersionDRCF >= g_k_drcf_v3_4) {
+            if(rt_ip_set && drcf_rt_ip_ != drcf_ip_) {
+                RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[RT] controller %d serves the RT stream on the robot IP. "
+                        "'rt_host' (%s) is ignored, connecting to %s.",
+                        m_nVersionDRCF, drcf_rt_ip_.c_str(), rt_ip.c_str());
+            }
+        } else if(m_nVersionDRCF >= g_k_drcf_v3) {
             if(rt_ip_set) {
                 rt_ip = drcf_rt_ip_;
-            } else if(m_nVersionDRCF < g_k_drcf_v3_4) {
+            } else {
                 rt_ip = g_k_legacy_rt_ip;
                 RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
                         "[RT] controller %d is older than 3.4, where the RT stream is not "
@@ -371,27 +445,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
                         "Set 'rt_host' if this controller uses a different address.",
                         m_nVersionDRCF, rt_ip.c_str());
             }
-        }
-        if (!rt_thread_policy_.empty()) {
-            int policy = 0;
-            int priority = 0;
-            try {
-                policy = std::stoi(rt_thread_policy_);
-                priority = rt_thread_priority_.empty() ? 0 : std::stoi(rt_thread_priority_);
-            } catch (const std::exception &) {
-                RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
-                        "[RT] rt_thread_policy '%s' and rt_thread_priority '%s' must be integers",
-                        rt_thread_policy_.c_str(), rt_thread_priority_.c_str());
-                return CallbackReturn::FAILURE;
-            }
-            if (!m_Drfl.set_rt_thread_priority(policy, priority)) {
-                RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
-                        "[RT] set_rt_thread_priority(%d, %d) refused. SCHED_FIFO (1) and SCHED_RR (2) need "
-                        "CAP_SYS_NICE or an RLIMIT_RTPRIO of at least the priority.", policy, priority);
-                return CallbackReturn::FAILURE;
-            }
-            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
-                    "[RT] RT thread scheduling: policy %d, priority %d", policy, priority);
         }
         RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
                 "[RT] connecting to %s:12347", rt_ip.c_str());

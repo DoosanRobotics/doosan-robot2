@@ -3,7 +3,10 @@
 # Return to current robot-mode
 # 0 : ROBOT_MODE_MANUAL
 # 1 : ROBOT_MODE_AUTONOMOUS
-# 2 : ROBOT_MODE_MEASURE
+# 2 : ROBOT_MODE_RECOVERY
+# 3 : ROBOT_MODE_BACKDRIVE
+# 4 : ROBOT_MODE_MEASURE
+# 5 : ROBOT_MODE_INITIALIZE
 # drfl.GetRobotMode()
 #____________________________________________________________________________________________
 

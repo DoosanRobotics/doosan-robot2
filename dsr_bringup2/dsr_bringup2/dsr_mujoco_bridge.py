@@ -29,7 +29,7 @@ class MuJoCoBridge(Node):
         # The MuJoCo controller starts after this node, so repeat the last command in case the first was dropped
         self.create_timer(1.0, self.republish_last_command)
         
-        self.get_logger().info(f"Publishing joint commands to: /dsr_position_controller/commands")
+        self.get_logger().info(f"Publishing joint commands to: {self.mujoco_cmd_pub.topic_name}")
 
     def listener_callback(self, msg):
         sorted_indices = self.sort_joint_states(msg)
