@@ -4,6 +4,6 @@
 #____________________________________________________________________________________________
 
 int8       index   # flange digital output port(1 ~ 6)
-int8       value   # 0 : ON, 1 : OFF
+int8       value   # 0 : OFF, 1 : ON
 ---
 bool       success

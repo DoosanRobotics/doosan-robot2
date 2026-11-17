@@ -82,9 +82,9 @@ uint16[2]                    external_encoder_count
 float64[6]                   goal_joint_position
 # final goal tcp position (reserved) 
 float64[6]                   goal_tcp_position
-# ROBOT_MODE_MANUAL(0), ROBOT_MODE_AUTONOMOUS(1), ROBOT_MODE_MEASURE(2) 
+# ROBOT_MODE_MANUAL(0), ROBOT_MODE_AUTONOMOUS(1), ROBOT_MODE_RECOVERY(2), ROBOT_MODE_BACKDRIVE(3), ROBOT_MODE_MEASURE(4), ROBOT_MODE_INITIALIZE(5) 
 uint8                        robot_mode
-# STATE_INITIALIZING(0), STATE_STANDBY(1), STATE_MOVING(2), STATE_SAFE_OFF(3), STATE_TEACHING(4), STATE_SAFE_STOP(5), STATE_EMERGENCY_STOP, STATE_HOMMING, STATE_RECOVERY, STATE_SAFE_STOP2, STATE_SAFE_OFF2, 
+# STATE_INITIALIZING(0), STATE_STANDBY(1), STATE_MOVING(2), STATE_SAFE_OFF(3), STATE_TEACHING(4), STATE_SAFE_STOP(5), STATE_EMERGENCY_STOP(6), STATE_HOMMING(7), STATE_RECOVERY(8), STATE_SAFE_STOP2(9), STATE_SAFE_OFF2(10), STATE_RESERVED1~4(11~14), STATE_NOT_READY(15)
 uint8                        robot_state
 # position control mode, torque mode 
 uint16                       control_mode

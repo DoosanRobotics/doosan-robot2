@@ -46,15 +46,22 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -eo pipefail
-          version=$(curl -sSf -H "Authorization: Bearer $GH_TOKEN" \
-            https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest \
-            | grep -F '"tag_name"' | awk -F'"' '{print $4}')
-          [ -n "$version" ] || { echo "could not resolve the ros-apt-source version"; exit 1; }
+          fetch() { curl -sSfL --connect-timeout 20 --retry 6 --retry-delay 15 --retry-all-errors "$@"; }
           codename=$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
-          curl -sSfL --retry 3 --retry-delay 2 -o /tmp/ros2-apt-source.deb \
-            "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${version}/ros2-apt-source_${version}.${codename}_all.deb"
-          sudo dpkg -i /tmp/ros2-apt-source.deb
-          rm -f /tmp/ros2-apt-source.deb
+          version=$(fetch -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest \
+            | grep -F '"tag_name"' | awk -F'"' '{print $4}') || true
+          if [ -n "$version" ] && fetch -o /tmp/ros2-apt-source.deb \
+            "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${version}/ros2-apt-source_${version}.${codename}_all.deb"; then
+            sudo dpkg -i /tmp/ros2-apt-source.deb
+            rm -f /tmp/ros2-apt-source.deb
+          else
+            echo "::warning::the ros2-apt-source package could not be downloaded, using the key from ros/rosdistro"
+            fetch -o /tmp/ros2-archive-keyring.gpg https://raw.githubusercontent.com/ros/rosdistro/master/ros.key
+            sudo install -m 644 /tmp/ros2-archive-keyring.gpg /usr/share/keyrings/ros2-archive-keyring.gpg
+            printf 'Types: deb\nURIs: http://packages.ros.org/ros2/ubuntu\nSuites: %s\nComponents: main\nSigned-By: /usr/share/keyrings/ros2-archive-keyring.gpg\n' "$codename" \
+              | sudo tee /etc/apt/sources.list.d/ros2.sources > /dev/null
+          fi
 
       - name: Install ROS 2 and the build tooling
         run: |

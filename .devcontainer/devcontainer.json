@@ -3,7 +3,7 @@
 	"dockerFile": "Dockerfile",
 	"build": {
 		"args": {
-			"WORKSPACE": "${containerWorkspaceFolder}",
+			"WORKSPACE": "/workspace/doosan_ws",
 		}
 	},
 	"remoteUser": "doosan-robotics",

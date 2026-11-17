@@ -13,6 +13,11 @@ find_package(dsr_msgs2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(dsr_common2 REQUIRED)
 
+if(NOT DEFINED DRCF_VER)
+        set(DRCF_VER 2)
+endif()
+message(DRCF_VERSION : ${DRCF_VER})
+
 
 include_directories(
   include
@@ -21,6 +26,7 @@ include_directories(
 )
 
 add_executable(dsr_realtime_control src/realtime_control.cpp)
+target_compile_definitions(dsr_realtime_control PUBLIC DRCF_VERSION=${DRCF_VER})
 target_link_libraries(dsr_realtime_control dsr_common2::drfl)
 ament_target_dependencies(dsr_realtime_control rclcpp dsr_msgs2)
 

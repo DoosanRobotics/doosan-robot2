@@ -23,7 +23,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # Default workspace when building with devcontainer.
 # see https://code.visualstudio.com/remote/advancedcontainers/change-default-source-mount
-ARG WORKSPACE=/workspaces/doosan_ws
+ARG WORKSPACE=/workspace/doosan_ws
 RUN echo "if [ -f ${WORKSPACE}/install/setup.bash ]; then source ${WORKSPACE}/install/setup.bash; fi" >> /home/$USERNAME/.bashrc
 
 # Preferred deps.

@@ -1,7 +1,8 @@
 #____________________________________________________________________________________________
 # get_workpiece_weight
+# The measurement sends a slow stop, which stops any motion in progress.
 #____________________________________________________________________________________________
 
 ---
-float32       weight               # Measured weight, Negative value if error
+float32       weight               # Measured weight [kg], 0 if the measurement fails
 bool          success

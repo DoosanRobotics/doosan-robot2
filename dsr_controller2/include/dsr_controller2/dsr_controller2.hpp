@@ -309,7 +309,13 @@
 
 // digital I/O
 #define DR_DIO_MIN_INDEX    1
-#define DR_DIO_MAX_INDEX    20 // Input IO :16 -> 20 , Output IO : 16   
+// Control box digital inputs: 16 on v2 controllers, 20 on v3.
+#if DRCF_VERSION == 2
+#define DR_DI_MAX_INDEX     16
+#else
+#define DR_DI_MAX_INDEX     20
+#endif
+#define DR_DO_MAX_INDEX     16
 
 // tool digital I/O
 #define DR_TDIO_MIN_INDEX   1
@@ -520,6 +526,7 @@ namespace DRFL_CALLBACKS {
   void OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/);
   void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO);
   void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO);
+  void OnMonitoringCtrlIOEx2CB (const LPMONITORING_CTRLIO_EX2 pCtrlIO);
   void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
   void OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus);
   void OnMonitoringStateCB(const ROBOT_STATE eState);

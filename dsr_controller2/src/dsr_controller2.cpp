@@ -42,6 +42,8 @@ extern bool g_bIsEmulatorMode;
 extern std::string g_model;
 int g_nAnalogOutputModeCh1;
 int g_nAnalogOutputModeCh2;
+int g_nAnalogInputModeCh1;
+int g_nAnalogInputModeCh2;
 
 
 dsr_controller2::RobotController *instance;
@@ -122,6 +124,11 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 	Drfl->set_on_program_stopped(DRFL_CALLBACKS::OnProgramStoppedCB);
 	Drfl->set_on_monitoring_modbus(DRFL_CALLBACKS::OnMonitoringModbusCB);
 	Drfl->set_on_monitoring_ctrl_io(DRFL_CALLBACKS::OnMonitoringCtrlIOCB);
+#if DRCF_VERSION == 2
+	Drfl->set_on_monitoring_ctrl_io_ex(DRFL_CALLBACKS::OnMonitoringCtrlIOExCB);
+#elif DRCF_VERSION == 3
+	Drfl->set_on_monitoring_ctrl_io_ex(DRFL_CALLBACKS::OnMonitoringCtrlIOEx2CB);
+#endif
 	Drfl->set_on_monitoring_state(DRFL_CALLBACKS::OnMonitoringStateCB);
 	Drfl->set_on_monitoring_access_control(DRFL_CALLBACKS::OnMonitoringAccessControlCB);
 	Drfl->set_on_log_alarm(DRFL_CALLBACKS::OnLogAlarm);
@@ -146,7 +153,7 @@ controller_interface::CallbackReturn RobotController::on_configure(const rclcpp_
 
     // IO state topic publisher: publishes ctrl-box DI[16] + DO[16] at 10 Hz.
     // Works in both virtual and real mode via the g_stDrState cache populated by
-    // OnMonitoringCtrlIOCB. Layout: data[0..15] = DI[1..16], data[16..31] = DO[1..16]
+    // the ctrl-box IO monitoring callbacks. Layout: data[0..15] = DI[1..16], data[16..31] = DO[1..16]
     ctrl_io_pub_ = get_node()->create_publisher<std_msgs::msg::UInt8MultiArray>(
         "io/ctrl_box_digital_input_state", rclcpp::SystemDefaultsQoS());
     ctrl_io_timer_ = get_node()->create_wall_timer(
@@ -180,7 +187,7 @@ void RobotController::publish_read_data_rt_selected() {
   }
 }
 
-// Publishes ctrl-box digital IO state from g_stDrState (populated by OnMonitoringCtrlIOCB).
+// Publishes ctrl-box digital IO state from g_stDrState (populated by the ctrl-box IO monitoring callbacks).
 // data[0..15]  = DI[1..16] (controller_digital_input, 1-based index)
 // data[16..31] = DO[1..16] (controller_digital_output, 1-based index)
 // Works in both virtual and real mode; values are 0 when no monitoring data received yet.
@@ -304,7 +311,7 @@ bool RobotController::extract_field(LPRT_OUTPUT_DATA_LIST temp, const std::strin
     // Single scalar values
     if (key == "time_stamp")               return copy_scalar_d  (temp->time_stamp);
     if (key == "solution_space")           return copy_scalar_i32(temp->solution_space);
-    if (key == "singularity")              return copy_scalar_i32(temp->singularity);
+    if (key == "singularity")              return copy_scalar_d  (temp->singularity);
     if (key == "operation_speed_rate")     return copy_scalar_d  (temp->operation_speed_rate);
     if (key == "controller_digital_input") return copy_scalar_u32(temp->controller_digital_input);
     if (key == "controller_digital_output")return copy_scalar_u32(temp->controller_digital_output);
@@ -510,9 +517,8 @@ auto get_current_pose_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetCurre
 
 auto set_safe_stop_reset_type_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetSafeStopResetType::Request> req, std::shared_ptr<dsr_msgs2::srv::SetSafeStopResetType::Response> res)-> void   
 {
-    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_safe_stop_reset_type_cb() called and calling Drfl->SetSafeStopResetType(%d)",req->reset_type);
-    Drfl->SetSafeStopResetType((SAFE_STOP_RESET_TYPE)req->reset_type);
-    res->success = true;                           
+    RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_safe_stop_reset_type_cb() called and calling Drfl->set_safe_stop_reset_type(%d)",req->reset_type);
+    res->success = Drfl->set_safe_stop_reset_type((SAFE_STOP_RESET_TYPE)req->reset_type);
 };
 
 auto get_last_alarm_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetLastAlarm::Request> /*req*/, std::shared_ptr<dsr_msgs2::srv::GetLastAlarm::Response> res)-> void
@@ -531,29 +537,25 @@ auto get_last_alarm_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetLastAla
 auto servo_off_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ServoOff::Request> req, std::shared_ptr<dsr_msgs2::srv::ServoOff::Response> res) -> void
 {
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"servo_off_cb() called and calling Drfl->servo_off()");
-    Drfl->servo_off((STOP_TYPE)req->stop_type);
-    res->success = true;
+    res->success = (Drfl->servo_off((STOP_TYPE)req->stop_type) != 0);
 };
 
 auto set_robot_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetRobotControl::Request> req, std::shared_ptr<dsr_msgs2::srv::SetRobotControl::Response> res) -> void
 {
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_robot_control_cb() called and calling Drfl->set_robot_control_cb()");
-    Drfl->set_robot_control((ROBOT_CONTROL)req->robot_control);
-    res->success = true;
+    res->success = Drfl->set_robot_control((ROBOT_CONTROL)req->robot_control);
 };
 
 auto change_collision_sensitivity_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ChangeCollisionSensitivity::Request> req, std::shared_ptr<dsr_msgs2::srv::ChangeCollisionSensitivity::Response> res)-> void
 {
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"change_collision_sensitivity_cb() called and calling Drfl->change_collision_sensitivity_cb()");
-    Drfl->change_collision_sensitivity((float)req->sensitivity);
-    res->success = true;
+    res->success = Drfl->change_collision_sensitivity((float)req->sensitivity);
 };
 
 auto set_safety_mode_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetSafetyMode::Request> req, std::shared_ptr<dsr_msgs2::srv::SetSafetyMode::Response> res) -> void
 {
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_safety_mode() called and calling Drfl->set_safety_mode()");
-    Drfl->set_safety_mode((SAFETY_MODE)req->safety_mode, (SAFETY_MODE_EVENT)req->safety_event);
-    res->success = true;
+    res->success = Drfl->set_safety_mode((SAFETY_MODE)req->safety_mode, (SAFETY_MODE_EVENT)req->safety_event);
 };
 
 //----- MOTION Service Call-back functions ------------------------------------------------------------
@@ -598,7 +600,6 @@ auto movejx_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveJointx::Reques
 {
     std::array<float, NUM_TASK> target_pos;
     std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
-    check_dsr_model(target_pos);
     if(req->sync_type == 0){
         RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"movejx_cb() called and calling Drfl->movejx");
         res->success = Drfl->movejx(target_pos.data(), req->sol, req->vel, req->acc, req->time, (MOVE_MODE)req->mode, (MOVE_REFERENCE)req->ref, req->radius, (BLENDING_SPEED_TYPE)req->blend_type);    
@@ -619,10 +620,6 @@ auto movec_cb = [this](const std::shared_ptr<dsr_msgs2::srv::MoveCircle::Request
             std_msgs::msg::Float64MultiArray pos = req->pos.at(i);
             fTargetPos[i][j] = pos.data[j];
         }
-        std::array<float, NUM_JOINT> target_pos;
-        std::copy(std::begin(fTargetPos[i]), std::end(fTargetPos[i]), target_pos.begin());
-        check_dsr_model(target_pos);
-        std::copy(target_pos.begin(), target_pos.end(), std::begin(fTargetPos[i]));
         
         fTargetVel[i] = req->vel[i];
         fTargetAcc[i] = req->acc[i];
@@ -869,7 +866,6 @@ auto jog_multi_cb = [this](const std::shared_ptr<dsr_msgs2::srv::JogMulti::Reque
 
     std::array<float, NUM_JOINT> target_jog;
     std::copy(req->jog_axis.cbegin(), req->jog_axis.cend(), target_jog.begin());
-    check_dsr_model(target_jog);
     res->success = Drfl->multi_jog(target_jog.data(), (MOVE_REFERENCE)req->move_reference, req->speed);
 };
 
@@ -893,6 +889,8 @@ auto trans_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Trans::Request> req
     res->success = false;
     std::array<float, NUM_TASK> target_pos;
     std::array<float, NUM_TASK> delta_pos;
+    std::copy(req->pos.cbegin(), req->pos.cend(), target_pos.begin());
+    std::copy(req->delta.cbegin(), req->delta.cend(), delta_pos.begin());
     LPROBOT_POSE robot_pos = Drfl->trans(target_pos.data(), delta_pos.data(), (COORDINATE_SYSTEM)req->ref, (COORDINATE_SYSTEM)req->ref_out);
     for(int i=0; i<NUM_TASK; i++){
         res->trans_pos[i] = robot_pos->_fPosition[i];
@@ -1539,7 +1537,7 @@ auto set_user_cart_coord1_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetU
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    ref = %d",req->ref);
 #endif
     res->id = Drfl->set_user_cart_coord(0, task_pos.data(), (COORDINATE_SYSTEM)req->ref);  
-    res->success = true;
+    res->success = (res->id > 0);
 };
 
 auto set_user_cart_coord2_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetUserCartCoord2::Request> req, std::shared_ptr<dsr_msgs2::srv::SetUserCartCoord2::Response> res)-> void           
@@ -1571,7 +1569,7 @@ auto set_user_cart_coord2_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetU
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    ref = %d",req->ref);
 #endif
     res->id = Drfl->set_user_cart_coord(fTargetPos, fTargetOrg, (COORDINATE_SYSTEM)req->ref);
-    res->success = true;        
+    res->success = (res->id > 0);
 };
 
 auto set_user_cart_coord3_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetUserCartCoord3::Request> req, std::shared_ptr<dsr_msgs2::srv::SetUserCartCoord3::Response> res) -> void   
@@ -1597,7 +1595,7 @@ auto set_user_cart_coord3_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetU
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    ref = %d",req->ref);
 #endif
     res->id = Drfl->set_user_cart_coord(fTargetVec, fTargetOrg, (COORDINATE_SYSTEM)req->ref);
-    res->success = true;
+    res->success = (res->id > 0);
 };
 
 auto overwrite_user_cart_coord_cb = [this](const std::shared_ptr<dsr_msgs2::srv::OverwriteUserCartCoord::Request> req, std::shared_ptr<dsr_msgs2::srv::OverwriteUserCartCoord::Response> res)-> void     
@@ -1613,7 +1611,7 @@ auto overwrite_user_cart_coord_cb = [this](const std::shared_ptr<dsr_msgs2::srv:
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"    ref = %d",req->ref);
 #endif
     res->id = Drfl->overwrite_user_cart_coord(0, req->id, task_pos.data(), (COORDINATE_SYSTEM)req->ref);  //0=AUTO 
-    res->success = true;
+    res->success = (res->id > 0);
 };
 
 auto get_user_cart_coord_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetUserCartCoord::Request> req, std::shared_ptr<dsr_msgs2::srv::GetUserCartCoord::Response> res)-> void       
@@ -1763,8 +1761,8 @@ auto coord_transform_cb = [this](const std::shared_ptr<dsr_msgs2::srv::CoordTran
 auto set_digital_output_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetCtrlBoxDigitalOutput::Request> req, std::shared_ptr<dsr_msgs2::srv::SetCtrlBoxDigitalOutput::Response> res)-> void   
 {
     res->success = false;
-    if((req->index < DR_DIO_MIN_INDEX) || (req->index > DR_DIO_MAX_INDEX)){
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_digital_output(index=%d, value=%d): index(%d) is out of range. (normal range: %d ~ %d)",req->index ,req->value ,req->index, DR_DIO_MIN_INDEX, DR_DIO_MAX_INDEX);
+    if((req->index < DR_DIO_MIN_INDEX) || (req->index > DR_DO_MAX_INDEX)){
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_digital_output(index=%d, value=%d): index(%d) is out of range. (normal range: %d ~ %d)",req->index ,req->value ,req->index, DR_DIO_MIN_INDEX, DR_DO_MAX_INDEX);
     }       
     else if((req->value < 0) || (req->value > 1)){
         RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"set_digital_output(index=%d, value=%d): value(%d) is out of range. [normal range: 0 or 1]",req->index ,req->value ,req->value);
@@ -1778,8 +1776,8 @@ auto set_digital_output_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetCtr
 auto get_digital_output_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetCtrlBoxDigitalOutput::Request> req, std::shared_ptr<dsr_msgs2::srv::GetCtrlBoxDigitalOutput::Response> res)-> void
 {
     res->success = false;
-    if((req->index < DR_DIO_MIN_INDEX) || (req->index > DR_DIO_MAX_INDEX)){
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_digital_output(index=%d): index(%d) is out of range. (normal range: %d ~ %d)",req->index ,req->index, DR_DIO_MIN_INDEX, DR_DIO_MAX_INDEX);
+    if((req->index < DR_DIO_MIN_INDEX) || (req->index > DR_DO_MAX_INDEX)){
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_digital_output(index=%d): index(%d) is out of range. (normal range: %d ~ %d)",req->index ,req->index, DR_DIO_MIN_INDEX, DR_DO_MAX_INDEX);
     }       
     else{
         req->index -=1;
@@ -1792,8 +1790,8 @@ auto get_digital_input_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetCtrl
 {
     //ROS_INFO("get_digital_input_cb() called and calling Drfl->GetCtrlBoxDigitalInput");
     res->success = false;
-    if((req->index < DR_DIO_MIN_INDEX) || (req->index > DR_DIO_MAX_INDEX)){
-        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_digital_input(index=%d): index(%d) is out of range. [normal range: %d ~ %d]",req->index ,req->index, DR_DIO_MIN_INDEX, DR_DIO_MAX_INDEX);
+    if((req->index < DR_DIO_MIN_INDEX) || (req->index > DR_DI_MAX_INDEX)){
+        RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_digital_input(index=%d): index(%d) is out of range. [normal range: %d ~ %d]",req->index ,req->index, DR_DIO_MIN_INDEX, DR_DI_MAX_INDEX);
     }       
     else{
         req->index -=1;
@@ -1914,14 +1912,14 @@ auto get_analog_input_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetCtrlB
     }       
     else{
         if(req->channel == 1){
-            if(g_nAnalogOutputModeCh1 == -1){
-                RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_analog_input(channel=%d): Analog output mode(ch%d) is not set",req->channel ,req->channel);
+            if(g_nAnalogInputModeCh1 == -1){
+                RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_analog_input(channel=%d): Analog input mode(ch%d) is not set",req->channel ,req->channel);
                 bIsError = 1;
             }                                    
         }
         if(req->channel == 2){
-            if(g_nAnalogOutputModeCh2 == -1){
-                RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_analog_input(channel=%d): Analog output mode(ch%d) is not set",req->channel ,req->channel);
+            if(g_nAnalogInputModeCh2 == -1){
+                RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_analog_input(channel=%d): Analog input mode(ch%d) is not set",req->channel ,req->channel);
                 bIsError = 1;
             }                                    
         }
@@ -1968,8 +1966,8 @@ auto set_analog_input_type_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Set
     else{
         res->success = Drfl->set_mode_analog_input((GPIO_CTRLBOX_ANALOG_INDEX)(req->channel - 1), (GPIO_ANALOG_TYPE)req->mode);
         if(res->success) {
-            if(req->channel == 1)   g_nAnalogOutputModeCh1 = req->mode;
-            else if(req->channel == 2)  g_nAnalogOutputModeCh2 = req->mode;    
+            if(req->channel == 1)   g_nAnalogInputModeCh1 = req->mode;
+            else if(req->channel == 2)  g_nAnalogInputModeCh2 = req->mode;    
         }        
     }
 };
@@ -1986,6 +1984,7 @@ auto get_modbus_input_cb = [this](const std::shared_ptr<dsr_msgs2::srv::GetModbu
 {
     RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"get_modbus_input_cb() called and calling Drfl->get_modbus_input");
     res->value = Drfl->get_modbus_input(req->name);
+    res->success = true;
 };
 
 auto config_create_modbus_cb = [this](const std::shared_ptr<dsr_msgs2::srv::ConfigCreateModbus::Request> req, std::shared_ptr<dsr_msgs2::srv::ConfigCreateModbus::Response> res)-> void
@@ -2117,7 +2116,7 @@ auto config_delete_tool_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Config
 
 auto set_tool_shape_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetToolShape::Request> req, std::shared_ptr<dsr_msgs2::srv::SetToolShape::Response> res) -> void
 {
-    res->success = Drfl->set_tool(req->name);
+    res->success = Drfl->set_tool_shape(req->name);
 };
 
 // RT control
@@ -2130,7 +2129,11 @@ auto connect_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::Connec
 auto disconnect_rt_control_cb = [this](const std::shared_ptr<dsr_msgs2::srv::DisconnectRtControl::Request> /*req*/, 
                                        std::shared_ptr<dsr_msgs2::srv::DisconnectRtControl::Response> res) -> void 
 {
-    res->success = Drfl->disconnect_rt_control();
+    // The hardware interface's RT session runs on this same DRFL handle, and DRFL cannot reconnect it once closed.
+    RCLCPP_ERROR(get_node()->get_logger(),
+                 "disconnect_rt_control refused: the driver's hardware interface owns the RT session "
+                 "and closing it would stop /joint_states and RT commands. Stopping the driver closes it.");
+    res->success = false;
 };
 
 auto set_rt_thread_priority_cb = [this](const std::shared_ptr<dsr_msgs2::srv::SetRtThreadPriority::Request> req,
@@ -2920,6 +2923,8 @@ auto set_output_register_float_cb = [this](const std::shared_ptr<dsr_msgs2::srv:
 
   g_nAnalogOutputModeCh1 = -1;
   g_nAnalogOutputModeCh2 = -1;
+  g_nAnalogInputModeCh1 = -1;
+  g_nAnalogInputModeCh2 = -1;
   
 
   return CallbackReturn::SUCCESS;
@@ -3005,33 +3010,29 @@ void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO)
 }
 
 // M3.0 or higher
-// void OnMonitoringCtrlIOEx2CB (const LPMONITORING_CTRLIO_EX2 pCtrlIO) 
-// {
-//     //RCLCPP_INFO(rclcpp::get_logger("dsr_controller2"),"OnMonitoringCtrlIOExCB");
+void OnMonitoringCtrlIOEx2CB (const LPMONITORING_CTRLIO_EX2 pCtrlIO)
+{
+    if (!pCtrlIO) return;
 
-//     for (int i = 0; i < NUM_DIGITAL; i++){
-//         if(pCtrlIO){  
-//             g_stDrState.bCtrlBoxDigitalOutput[i] = pCtrlIO->_tOutput._iTargetDO[i];  
-//             g_stDrState.bCtrlBoxDigitalInput[i]  = pCtrlIO->_tInput._iActualDI[i];  
-//         }
-//     }
+    for (int i = 0; i < NUM_DIGITAL; i++){
+        g_stDrState.bCtrlBoxDigitalOutput[i] = pCtrlIO->_tOutput._iTargetDO[i];
+        g_stDrState.bCtrlBoxDigitalInput[i]  = pCtrlIO->_tInput._iActualDI[i];
+    }
 
-//     //----- In M3.0 version or higher The following variables were added -----
-//     for (int i = 0; i < 3; i++)
-//         g_stDrState.bActualSW[i] = pCtrlIO->_tInput._iActualSW[i];
+    for (int i = 0; i < 3; i++)
+        g_stDrState.bActualSW[i] = pCtrlIO->_tInput._iActualSW[i];
 
-//     for (int i = 0; i < 2; i++){
-//         g_stDrState.bActualSI[i] = pCtrlIO->_tInput._iActualSI[i];
-//         g_stDrState.fActualAI[i] = pCtrlIO->_tInput._fActualAI[i];
-//         g_stDrState.iActualAT[i] = pCtrlIO->_tInput._iActualAT[i];
-//         g_stDrState.fTargetAO[i] = pCtrlIO->_tOutput._fTargetAO[i];
-//         g_stDrState.iTargetAT[i] = pCtrlIO->_tOutput._iTargetAT[i];
-//         g_stDrState.bActualES[i] = pCtrlIO->_tEncoder._iActualES[i];
-//         g_stDrState.iActualED[i] = pCtrlIO->_tEncoder._iActualED[i];
-//         g_stDrState.bActualER[i] = pCtrlIO->_tEncoder._iActualER[i];
-//     }  
-//     //-------------------------------------------------------------------------
-// }
+    for (int i = 0; i < 2; i++){
+        g_stDrState.bActualSI[i] = pCtrlIO->_tInput._iActualSI[i];
+        g_stDrState.fActualAI[i] = pCtrlIO->_tInput._fActualAI[i];
+        g_stDrState.iActualAT[i] = pCtrlIO->_tInput._iActualAT[i];
+        g_stDrState.fTargetAO[i] = pCtrlIO->_tOutput._fTargetAO[i];
+        g_stDrState.iTargetAT[i] = pCtrlIO->_tOutput._iTargetAT[i];
+        g_stDrState.bActualES[i] = pCtrlIO->_tEncoder._iActualES[i];
+        g_stDrState.iActualED[i] = pCtrlIO->_tEncoder._iActualED[i];
+        g_stDrState.bActualER[i] = pCtrlIO->_tEncoder._iActualER[i];
+    }
+}
 
 // M2.5 or higher
 void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO) 

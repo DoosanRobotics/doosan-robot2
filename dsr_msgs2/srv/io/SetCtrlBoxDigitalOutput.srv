@@ -3,6 +3,6 @@
 #____________________________________________________________________________________________
 
 int8       index    # ctrlbox digital output port(1 ~ 16)
-int8       value    # 0 : ON, 1 : OFF
+int8       value    # 0 : OFF, 1 : ON
 ---
 bool        success

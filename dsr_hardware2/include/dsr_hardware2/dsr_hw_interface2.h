@@ -97,7 +97,8 @@ private:
 		std::string mode;
 		std::string model;
 		int drcf_port;
-		int update_rate;
+		// Matches the shipped dsr_controller2.yaml rate, for xacros that omit update_rate.
+		int update_rate = 100;
 };
 
 }

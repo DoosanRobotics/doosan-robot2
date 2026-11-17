@@ -34,6 +34,10 @@ ARGUMENTS = [
     ),
     DeclareLaunchArgument('name',  default_value = '',     description = 'NAME_SPACE'     ),
     DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
+    DeclareLaunchArgument('host',  default_value = '127.0.0.1', description = 'ROBOT_IP'       ),
+    DeclareLaunchArgument('port',  default_value = '12345',     description = 'ROBOT_PORT'     ),
+    DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
+    DeclareLaunchArgument('update_rate', default_value = '100', description = 'CONTROLLER UPDATE RATE (Hz), matching dsr_controller2.yaml'),
     ]	
 
 def generate_launch_description():
@@ -49,6 +53,12 @@ def generate_launch_description():
                     "m1013.urdf.xacro",
                 ]
             ),
+            " color:=", LaunchConfiguration('color'),
+            " host:=", LaunchConfiguration('host'),
+            " port:=", LaunchConfiguration('port'),
+            " mode:=", LaunchConfiguration('mode'),
+            " model:=", LaunchConfiguration('model'),
+            " update_rate:=", LaunchConfiguration('update_rate'),
         ]
     )
 

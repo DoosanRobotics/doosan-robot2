@@ -30,7 +30,7 @@ class MuJoCoBridge(Node):
         self.previous_positions = []
         self.first_callback = True
         
-        self.get_logger().info(f"Publishing joint commands to: /dsr_position_controller/commands")
+        self.get_logger().info(f"Publishing joint commands to: {self.mujoco_cmd_pub.topic_name}")
 
     def listener_callback(self, msg):
         sorted_indices = self.sort_joint_states(msg)

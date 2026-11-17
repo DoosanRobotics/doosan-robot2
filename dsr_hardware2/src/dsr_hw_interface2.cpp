@@ -41,6 +41,36 @@ int m_nVersionDRCF;
 // write() accepts a cycle only when its period lands inside this window around the nominal control period.
 constexpr double g_k_dt_window_lo = 0.3;
 constexpr double g_k_dt_window_hi = 1.5;
+// Controller generations that changed where the RT stream is reachable.
+constexpr int g_k_drcf_v3   = 3000000;	// 3.0.0: rt_host starts being used
+constexpr int g_k_drcf_v3_4 = 3040000;	// 3.4.0: RT is reachable on the robot IP
+constexpr const char* g_k_legacy_rt_ip = "192.168.137.50";
+// The ros2_control xacro files default rt_host to this, and it is a wildcard bind address, never somewhere the RT stream can be dialled. Treat it as unset.
+constexpr const char* g_k_unset_rt_ip = "0.0.0.0";
+
+// Parses a whole decimal integer, so "1.5", "2x" and "" are rejected.
+static bool parse_whole_int(const std::string& text, int& value)
+{
+	if (text.empty()) return false;
+	try {
+		size_t used = 0;
+		const int parsed = std::stoi(text, &used);
+		if (used != text.size()) return false;
+		value = parsed;
+		return true;
+	} catch (const std::exception &) {
+		return false;
+	}
+}
+
+// The rt_thread_policy and rt_thread_priority pairs DRFL accepts on Linux.
+static bool rt_thread_sched_in_range(int policy, int priority)
+{
+	if (policy == -1) return true;									// restore the default
+	if (policy == 0) return priority == 0;							// SCHED_OTHER
+	if (policy == 1 || policy == 2) return priority >= 1 && priority <= 99;	// SCHED_FIFO, SCHED_RR
+	return false;
+}
 
 void* get_drfl(){
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"[DRFL address] %p", &Drfl);
@@ -83,6 +113,49 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 		} else {
 			RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"), "Unexpected Parameter....\
 			 	key : %s, value : %s",parameter.first.c_str(), parameter.second.c_str());
+		}
+	}
+	if(mode != "real" && mode != "virtual") {
+		RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+				"[on_init] Invalid 'mode' : '%s'. Use mode:=real or mode:=virtual.", mode.c_str());
+		return CallbackReturn::ERROR;
+	}
+	// DRFL stores the RT thread scheduling here and applies it when connect_rt_control starts the RT threads, so a value it refuses fails before the driver takes control authority or changes the robot mode.
+	if (!rt_thread_policy.empty() || !rt_thread_priority.empty()) {
+		int policy = -1;
+		int priority = 0;
+		if (rt_thread_policy.empty()) {
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+				"[RT] rt_thread_priority '%s' is set without rt_thread_policy. Set rt_thread_policy to "
+				"1 (SCHED_FIFO), 2 (SCHED_RR) or 0 (SCHED_OTHER).", rt_thread_priority.c_str());
+			return CallbackReturn::ERROR;
+		}
+		if (!parse_whole_int(rt_thread_policy, policy) ||
+			(!rt_thread_priority.empty() && !parse_whole_int(rt_thread_priority, priority))) {
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+				"[RT] rt_thread_policy '%s' and rt_thread_priority '%s' must be whole integers",
+				rt_thread_policy.c_str(), rt_thread_priority.c_str());
+			return CallbackReturn::ERROR;
+		}
+		if (!rt_thread_sched_in_range(policy, priority)) {
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+				"[RT] rt_thread_policy %d with rt_thread_priority %d is not valid. Use 1 (SCHED_FIFO) or "
+				"2 (SCHED_RR) with priority 1-99, 0 (SCHED_OTHER) with priority 0, or -1 for the default.",
+				policy, priority);
+			return CallbackReturn::ERROR;
+		}
+		if (mode == "virtual") {
+			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+				"[RT] RT thread scheduling (policy %d, priority %d) is not used in virtual mode, which does "
+				"not connect RT.", policy, priority);
+		} else if (!Drfl.set_rt_thread_priority(policy, priority)) {
+			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+				"[RT] set_rt_thread_priority(%d, %d) refused. SCHED_FIFO (1) and SCHED_RR (2) need "
+				"CAP_SYS_NICE or an RLIMIT_RTPRIO of at least the priority.", policy, priority);
+			return CallbackReturn::ERROR;
+		} else {
+			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+				"[RT] RT thread scheduling: policy %d, priority %d, applied when RT connects", policy, priority);
 		}
 	}
 	// rt_thread_policy and rt_thread_priority are optional, so only a missing key is an error.
@@ -233,6 +306,13 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 	// _szController format: "GV0121200" (prefix 2 chars + version digits)
 	// ex> "GV0120400" = M2.40, "GV0120500" = M2.50, "GV0121200" = M2.12
 	m_nVersionDRCF = atol(&tSysVerion._szController[2]);
+	if(strlen(tSysVerion._szController) == 0) {
+		// RT address selection below keys off this value, so a failed read must not pass silently as a pre-3.0 controller.
+		RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+				"Controller version came back empty; assuming %d. The RT stream "
+				"address is chosen from this value, so RT connects to 'host'.",
+				m_nVersionDRCF);
+	}
 
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRCF version = %s",tSysVerion._szController);
 	RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"    DRFL version = %s",Drfl.get_library_version());
@@ -311,31 +391,34 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
 	Drfl.set_auto_servo_off(0, 5.0);
 	// Virtual controller doesn't support real time connection.
 	if(mode != "virtual") {
-		if(m_nVersionDRCF >= 3000000 && m_nVersionDRCF < 3040000) {
-			drcf_rt_ip = drcf_ip;
-		}
-		if (!rt_thread_policy.empty()) {
-			int policy = 0;
-			int priority = 0;
-			try {
-				policy = std::stoi(rt_thread_policy);
-				priority = rt_thread_priority.empty() ? 0 : std::stoi(rt_thread_priority);
-			} catch (const std::exception &) {
-				RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
-					"[RT] rt_thread_policy '%s' and rt_thread_priority '%s' must be integers",
-					rt_thread_policy.c_str(), rt_thread_priority.c_str());
-				return CallbackReturn::FAILURE;
+		// Where the RT stream is reachable depends on the controller generation:
+		//   < 3.0    rt_host is ignored, RT is reachable on the robot IP.
+		//   3.0-3.3  RT is reachable at rt_host, 192.168.137.50 when unset.
+		//   >= 3.4   rt_host is ignored, RT is reachable on the robot IP.
+		const bool rt_ip_set = !drcf_rt_ip.empty() && drcf_rt_ip != g_k_unset_rt_ip;
+		std::string rt_ip = drcf_ip;
+		if(m_nVersionDRCF >= g_k_drcf_v3_4) {
+			if(rt_ip_set && drcf_rt_ip != drcf_ip) {
+				RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+					"[RT] controller %d serves the RT stream on the robot IP. "
+					"'rt_host' (%s) is ignored, connecting to %s.",
+					m_nVersionDRCF, drcf_rt_ip.c_str(), rt_ip.c_str());
 			}
-			if (!Drfl.set_rt_thread_priority(policy, priority)) {
-				RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
-					"[RT] set_rt_thread_priority(%d, %d) refused. SCHED_FIFO (1) and SCHED_RR (2) need "
-					"CAP_SYS_NICE or an RLIMIT_RTPRIO of at least the priority.", policy, priority);
-				return CallbackReturn::FAILURE;
+		} else if(m_nVersionDRCF >= g_k_drcf_v3) {
+			if(rt_ip_set) {
+				rt_ip = drcf_rt_ip;
+			} else {
+				rt_ip = g_k_legacy_rt_ip;
+				RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+					"[RT] controller %d is older than 3.4, where the RT stream is not "
+					"reachable on the robot IP. 'rt_host' is unset, falling back to %s. "
+					"Set 'rt_host' if this controller uses a different address.",
+					m_nVersionDRCF, rt_ip.c_str());
 			}
-			RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
-				"[RT] RT thread scheduling: policy %d, priority %d", policy, priority);
 		}
-		if (!Drfl.connect_rt_control(drcf_ip)) {
+		RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+			"[RT] connecting to %s:12347", rt_ip.c_str());
+		if (!Drfl.connect_rt_control(rt_ip)) {
 			RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), "Unable to connect RT control stream");
 			return CallbackReturn::FAILURE;
 		}

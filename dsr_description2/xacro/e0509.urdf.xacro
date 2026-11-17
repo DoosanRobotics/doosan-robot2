@@ -35,7 +35,7 @@
     <xacro:include filename="$(find dsr_description2)/xacro/macro.e0509.white.xacro"/>
   </xacro:if>
   <xacro:if value="${cr == 'blue'}">
-    <xacro:include filename="$(find dsr_description2)/xacro/macro.e0509.blue.xacro"/>
+    ${xacro.fatal("e0509 has only the white visual model. Use color:=white.")}
   </xacro:if>
 
   <xacro:e0509 namespace="$(arg namespace)"/>

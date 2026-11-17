@@ -7,7 +7,7 @@ import threading
 import time
 from dsr_msgs2.srv import *
 import rclpy.duration
-from std_msgs.msg import Float64MultiArray, MultiArrayDimension
+from std_msgs.msg import Float64MultiArray, MultiArrayDimension, UInt8MultiArray
 import rclpy.type_support
 import os
 
@@ -193,6 +193,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		req = MoveJoint.Request()
 		req.pos = target_pos
 		req.time = 5.0
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_joint future task")
@@ -204,6 +205,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		## TODO: fix hard code section 
 		# (replace 'space_type=0' with 'space_type=Request.ROBOT_SPACE_JOINT')
 		req = GetCurrentPose.Request(space_type=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "system/get_current_pose task")
@@ -228,6 +230,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		cli = self.node.create_client(MoveLine, "motion/move_line")
 		target_pos = [400.0, 500.0, 500.0, 0.0, 180.0, 0.0]
 		req = MoveLine.Request(pos=target_pos, time=5.0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_line future task")
@@ -238,6 +241,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		""" Get Current PosX"""
 		cli = self.node.create_client(GetCurrentPosx, "aux_control/get_current_posx")
 		req = GetCurrentPosx.Request(ref=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "aux_control/get_current_posx task")
@@ -253,6 +257,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		req.vel = 30.0
 		req.acc = 60.0
 		req.sol = int(resp.task_pos_info[0].data[6])
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_jointx future task")
@@ -263,6 +268,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		""" Get Current PosX"""
 		cli = self.node.create_client(GetCurrentPosx, "aux_control/get_current_posx")
 		req = GetCurrentPosx.Request(ref=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "aux_control/get_current_posx task")
@@ -361,6 +367,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		cli = self.node.create_client(MoveJoint, "motion/move_joint")
 		target_pos = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]
 		req = MoveJoint.Request(pos=target_pos, vel=30., acc=30.)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_joint future task")
@@ -373,6 +380,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		## TODO: fix hard code section 
 		# (replace 'space_type=0' with 'space_type=Request.ROBOT_SPACE_JOINT')
 		req = GetCurrentPose.Request(space_type=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "system/get_current_pose task")
@@ -392,6 +400,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		cli = self.node.create_client(MoveLine, "motion/move_line")
 		target_pos = [400.0, 500.0, 800.0, 0.0, 180.0, 0.0]
 		req = MoveLine.Request(pos=target_pos, time=5.0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_line future task")
@@ -401,6 +410,7 @@ class TestDsrMoveCli(unittest.TestCase):
 
 		cli = self.node.create_client(GetCurrentPosx, "aux_control/get_current_posx")
 		req = GetCurrentPosx.Request(ref=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "aux_control/get_current_posx task")
@@ -423,6 +433,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		cli = self.node.create_client(MoveJoint, "motion/move_joint")
 		target_pos = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]
 		req = MoveJoint.Request(pos=target_pos, vel=30., acc=30.)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_joint future task")
@@ -456,6 +467,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		req = MoveCircle.Request()
 		req.pos = pos_list
 		req.time = 5.0
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_circle task")
@@ -466,6 +478,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		""" Current Pose """
 		cli = self.node.create_client(GetCurrentPosx, "aux_control/get_current_posx")
 		req = GetCurrentPosx.Request(ref=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "aux_control/get_current_posx task")
@@ -537,6 +550,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		req.pos = pos_list
 		req.pos_cnt = 5
 		req.time = 10.0
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_spline_joint task")
@@ -549,6 +563,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		## TODO: fix hard code section 
 		# (replace 'space_type=0' with 'space_type=Request.ROBOT_SPACE_JOINT')
 		req = GetCurrentPose.Request(space_type=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "system/get_current_pose task")
@@ -573,6 +588,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		cli = self.node.create_client(MoveLine, "motion/move_line")
 		target_pos = [600.0, 43.0, 500.0, 0.0, 180.0, 0.0]
 		req = MoveLine.Request(pos=target_pos, time=5.0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_line future task")
@@ -641,6 +657,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		req.pos = pos_list
 		req.pos_cnt = 6
 		req.time = 20.0
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_spline_joint task")
@@ -651,6 +668,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		""" Current Pose """
 		cli = self.node.create_client(GetCurrentPosx, "aux_control/get_current_posx")
 		req = GetCurrentPosx.Request(ref=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "aux_control/get_current_posx task")
@@ -680,6 +698,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		req.time = 10.0
 		req.task_axis = 2
 		req.ref = 1
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "motion/move_spiral future task")
@@ -700,6 +719,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		move_req.pos = target_pos
 		move_req.time = 5.0
 		move_req.sync_type = 1
+		move_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		move_future = move_cli.call_async(move_req)
 		rclpy.spin_until_future_complete(self.node, move_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(move_future.done(), "motion/move joint future task")
@@ -710,6 +730,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		""" Move Pause """
 		pause_cli = self.node.create_client(MovePause, "motion/move_pause")
 		pause_req = MovePause.Request()
+		pause_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		pause_future = pause_cli.call_async(pause_req)
 		rclpy.spin_until_future_complete(self.node, pause_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(pause_future.done(), "motion/move_pause future task")
@@ -720,6 +741,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		""" Check Motion """
 		check_cli = self.node.create_client(CheckMotion, "motion/check_motion")
 		check_req = CheckMotion.Request()
+		check_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		check_future = check_cli.call_async(check_req)
 		rclpy.spin_until_future_complete(self.node, check_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(check_future.done(), "motion/check_motion future task")
@@ -730,6 +752,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		""" Move Resume """
 		resume_cli = self.node.create_client(MoveResume, "motion/move_resume")
 		resume_req = MoveResume.Request()
+		resume_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		resume_future = resume_cli.call_async(resume_req)
 		rclpy.spin_until_future_complete(self.node, resume_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(resume_future.done(), "motion/move_resume future task")
@@ -740,6 +763,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		""" Check Motion """
 		check_cli = self.node.create_client(CheckMotion, "motion/check_motion")
 		check_req = CheckMotion.Request()
+		check_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		check_future = check_cli.call_async(check_req)
 		rclpy.spin_until_future_complete(self.node, check_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(check_future.done(), "motion/check_motion future task")
@@ -805,6 +829,7 @@ class TestDsrMoveCli(unittest.TestCase):
 	 	## TODO: fix hard code section 
 		# (replace 'space_type=0' with 'space_type=Request.ROBOT_SPACE_JOINT')
 		req = GetCurrentPose.Request(space_type=0)
+		cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		future = cli.call_async(req)
 		rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(future.done(), "system/get_current_pose task")
@@ -876,6 +901,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		period_req.acc = 0.2
 		period_req.repeat = 5
 		period_req.ref = 1
+		period_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		period_future = period_cli.call_async(period_req)
 		rclpy.spin_until_future_complete(self.node, period_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(period_future.done(), "motion/move_periodic future task")
@@ -895,6 +921,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		move_req.pos = target_pos
 		move_req.vel = 30.0
 		move_req.acc = 60.0
+		move_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		move_future = move_cli.call_async(move_req)
 		rclpy.spin_until_future_complete(self.node, move_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(move_future.done(), "motion/move joint future task")
@@ -904,6 +931,7 @@ class TestDsrMoveCli(unittest.TestCase):
 
 		""" Get Current Posj """
 		get_current_posj_cli = self.node.create_client(GetCurrentPosj, "aux_control/get_current_posj")
+		get_current_posj_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_current_posj_future = get_current_posj_cli.call_async(GetCurrentPosj.Request())
 		rclpy.spin_until_future_complete(self.node, get_current_posj_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_current_posj_future.done(), "aux_control/get_current_posj service working is not done.")
@@ -928,6 +956,7 @@ class TestDsrMoveCli(unittest.TestCase):
 			move_line_req.pos = [370.0, 420.0, 650.0, 0.0, 180.0, 0.0]
 			move_line_req.vel = [150.0, 150.0]
 			move_line_req.acc = [250.0, 250.0]
+			move_line_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 			move_line_future = move_line_cli.call_async(move_line_req)
 			rclpy.spin_until_future_complete(self.node, move_line_future, timeout_sec=SRV_CALL_TIMEOUT)
 			self.assertTrue(move_line_future.done(), "motion/move_line service working is not done.")
@@ -937,6 +966,7 @@ class TestDsrMoveCli(unittest.TestCase):
 
 			""" Get Current Posx """
 			get_current_posx_cli = self.node.create_client(GetCurrentPosx, "aux_control/get_current_posx")
+			get_current_posx_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 			get_current_posx_future = get_current_posx_cli.call_async(GetCurrentPosx.Request())
 			rclpy.spin_until_future_complete(self.node, get_current_posx_future, timeout_sec=SRV_CALL_TIMEOUT)
 			self.assertTrue(get_current_posx_future.done(), "aux_control/get_current_posj service working is not done.")
@@ -1009,6 +1039,7 @@ class TestDsrMoveCli(unittest.TestCase):
 
 				move_blend_req.segment = segment_pos
 
+				move_blend_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 				move_blend_future = move_blend_cli.call_async(move_blend_req)
 				rclpy.spin_until_future_complete(self.node, move_blend_future, timeout_sec=SRV_CALL_TIMEOUT)
 				self.assertTrue(move_blend_future.done(), "motion/move_blending service working is not done.")
@@ -1019,6 +1050,7 @@ class TestDsrMoveCli(unittest.TestCase):
 				if(move_blend_resp.success == True):
 					""" Get Current Posj """
 					get_current_posj_cli = self.node.create_client(GetCurrentPosj, "aux_control/get_current_posj")
+					get_current_posj_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 					get_current_posj_future = get_current_posj_cli.call_async(GetCurrentPosj.Request())
 					rclpy.spin_until_future_complete(self.node, get_current_posj_future, timeout_sec=SRV_CALL_TIMEOUT)
 					self.assertTrue(get_current_posj_future.done(), "aux_control/get_current_posj service working is not done.")
@@ -1069,6 +1101,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		jog_req.jog_axis = 0
 		jog_req.move_reference = 0
 		jog_req.speed = 60.0
+		jog_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		jog_future = jog_cli.call_async(jog_req)
 		rclpy.spin_until_future_complete(self.node, jog_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(jog_future.done(), "motion/jog service working is not done.")
@@ -1080,6 +1113,7 @@ class TestDsrMoveCli(unittest.TestCase):
 		stop_cli = self.node.create_client(MoveStop, "motion/move_stop")
 		stop_req = MoveStop.Request()
 		stop_req.stop_mode = 0
+		stop_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		stop_future = stop_cli.call_async(stop_req)
 		rclpy.spin_until_future_complete(self.node, stop_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(stop_future.done(), "motion/move_stop future task")
@@ -1117,6 +1151,7 @@ class TestDsrSetCli(unittest.TestCase):
 		set_ref_coord_cli = self.node.create_client(SetRefCoord, "motion/set_ref_coord")
 		set_ref_coord_req = SetRefCoord.Request()
 		set_ref_coord_req.coord = 1 # DR_TOOL
+		set_ref_coord_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_ref_coord_future = set_ref_coord_cli.call_async(set_ref_coord_req)
 		rclpy.spin_until_future_complete(self.node, set_ref_coord_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_ref_coord_future.done(), "motion/set_ref_coord service working is not done.")
@@ -1132,6 +1167,7 @@ class TestDsrSetCli(unittest.TestCase):
 		singularity_handle_cli = self.node.create_client(SetSingularityHandling, "motion/set_singularity_handling")
 		singularity_handle_req = SetSingularityHandling.Request()
 		singularity_handle_req.mode = 1
+		singularity_handle_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		singularity_handle_future = singularity_handle_cli.call_async(singularity_handle_req)
 		rclpy.spin_until_future_complete(self.node, singularity_handle_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(singularity_handle_future.done(), "motion/set_singularity_handling service working is not done.")
@@ -1149,6 +1185,7 @@ class TestDsrSetCli(unittest.TestCase):
 		change_operation_speed_cli = self.node.create_client(ChangeOperationSpeed, "motion/change_operation_speed")
 		change_operation_speed_req = ChangeOperationSpeed.Request()
 		change_operation_speed_req.speed = 10
+		change_operation_speed_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		change_operation_speed_future = change_operation_speed_cli.call_async(change_operation_speed_req)
 		rclpy.spin_until_future_complete(self.node, change_operation_speed_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(change_operation_speed_future.done(), "motion/change_operation_speed service working is not done.")
@@ -1169,6 +1206,7 @@ class TestDsrSetCli(unittest.TestCase):
 		enable_alter_motion_req.ref = 0 # DR_BASE
 		enable_alter_motion_req.limit_dpos = [50.0, 90.0]
 		enable_alter_motion_req.limit_dpos_per = [10.0, 10.0]
+		enable_alter_motion_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		enable_alter_motion_future = enable_alter_motion_cli.call_async(enable_alter_motion_req)
 		rclpy.spin_until_future_complete(self.node, enable_alter_motion_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(enable_alter_motion_future.done(), "motion/enable_alter_motion service working is not doen.")
@@ -1182,6 +1220,7 @@ class TestDsrSetCli(unittest.TestCase):
 		print("Disable Alter Motion Client Test are starting...") # Debug
 		""" Disable Alter Motion """
 		disable_alter_motion_cli = self.node.create_client(DisableAlterMotion, "motion/disable_alter_motion")
+		disable_alter_motion_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		disable_alter_motion_future = disable_alter_motion_cli.call_async(DisableAlterMotion.Request())
 		rclpy.spin_until_future_complete(self.node, disable_alter_motion_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(disable_alter_motion_future.done(), "motion/disable_alter_motion service working is not done.")
@@ -1199,6 +1238,7 @@ class TestDsrSetCli(unittest.TestCase):
 		alter_motion_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 
 		def call(cli, req):
+			cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 			future = cli.call_async(req)
 			rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
 			self.assertTrue(future.done(), f"{cli.srv_name} service working is not done.")
@@ -1235,6 +1275,7 @@ class TestDsrSetCli(unittest.TestCase):
 		fkin_req = Fkin.Request()
 		fkin_req.pos = [30.0, 0.0, 90.0, 0.0, 90.0, 0.0]
 		fkin_req.ref = 2
+		fkin_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		fkin_future = fkin_cli.call_async(fkin_req)
 		rclpy.spin_until_future_complete(self.node, fkin_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(fkin_future.done(), "motion/fkin service working is not done.")
@@ -1261,6 +1302,7 @@ class TestDsrSetCli(unittest.TestCase):
 		ikin_req.pos = [370.9, 719.7, 651.5, 90.0, -180.0, 0.0]
 		ikin_req.sol_space = 2
 		ikin_req.ref = 0
+		ikin_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		ikin_future = ikin_cli.call_async(ikin_req)
 		rclpy.spin_until_future_complete(self.node, ikin_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(ikin_future.done(), "motion/ikin service working is not done.")
@@ -1315,6 +1357,7 @@ class TestDsrSysCli(unittest.TestCase):
 		move_req.pos = target_pos
 		move_req.time = 5.0
 		move_req.sync_type = 1
+		move_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		move_future = move_cli.call_async(move_req)
 		rclpy.spin_until_future_complete(self.node, move_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(move_future.done(), "motion/move joint future task")
@@ -1325,6 +1368,7 @@ class TestDsrSysCli(unittest.TestCase):
 		""" Get Robot State """
 		get_state_cli = self.node.create_client(GetRobotState, "system/get_robot_state")
 		get_state_req = GetRobotState.Request()
+		get_state_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_state_future = get_state_cli.call_async(get_state_req)
 		rclpy.spin_until_future_complete(self.node, get_state_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_state_future.done(), "system/get_robot_mode future task")
@@ -1340,7 +1384,8 @@ class TestDsrSysCli(unittest.TestCase):
 		print("Set Robot Control Client Test are starting...") # Debug
 		""" Set Robot Control(State) """
 		set_control_cli = self.node.create_client(SetRobotControl, "system/set_robot_control")
-		set_control_req = SetRobotControl.Request(robot_control=0)
+		set_control_req = SetRobotControl.Request(robot_control=3)
+		set_control_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_control_future = set_control_cli.call_async(set_control_req)
 		rclpy.spin_until_future_complete(self.node, set_control_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_control_future.done(), "system/set_robot_control future task is not done.")
@@ -1355,6 +1400,7 @@ class TestDsrSysCli(unittest.TestCase):
 		""" Get Robot Mode """
 		get_mode_cli = self.node.create_client(GetRobotMode, "system/get_robot_mode")
 		get_mode_req = GetRobotMode.Request()
+		get_mode_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_mode_future = get_mode_cli.call_async(get_mode_req)
 		rclpy.spin_until_future_complete(self.node, get_mode_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_mode_future.done(), "system/get_robot_mode future task done")
@@ -1370,6 +1416,7 @@ class TestDsrSysCli(unittest.TestCase):
 		set_mode_cli = self.node.create_client(SetRobotMode, "system/set_robot_mode")
 		set_mode_req = SetRobotMode.Request()
 		set_mode_req.robot_mode = 1
+		set_mode_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_mode_future = set_mode_cli.call_async(set_mode_req)
 		rclpy.spin_until_future_complete(self.node, set_mode_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_mode_future.done(), "system/set_robot_mode Service is not done.")
@@ -1381,6 +1428,7 @@ class TestDsrSysCli(unittest.TestCase):
 			""" Get Robot Mode """
 			get_mode_cli = self.node.create_client(GetRobotMode, "system/get_robot_mode")
 			get_mode_req = GetRobotMode.Request()
+			get_mode_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 			get_mode_future = get_mode_cli.call_async(get_mode_req)
 			rclpy.spin_until_future_complete(self.node, get_mode_future, timeout_sec=SRV_CALL_TIMEOUT)
 			self.assertTrue(get_mode_future.done(), "system/get_robot_mode future task done")
@@ -1395,6 +1443,7 @@ class TestDsrSysCli(unittest.TestCase):
 		""" Get Robot Speed Mode """
 		get_speed_mode_cli = self.node.create_client(GetRobotSpeedMode, "system/get_robot_speed_mode")
 		get_speed_mode_req = GetRobotSpeedMode.Request()
+		get_speed_mode_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_speed_mode_future = get_speed_mode_cli.call_async(get_speed_mode_req)
 		rclpy.spin_until_future_complete(self.node, get_speed_mode_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_speed_mode_future.done(), "system/get_robot_speed_mode future task is not done")
@@ -1410,6 +1459,7 @@ class TestDsrSysCli(unittest.TestCase):
 		set_speed_mode_cli = self.node.create_client(SetRobotSpeedMode, "system/set_robot_speed_mode")
 		set_speed_mode_req = SetRobotSpeedMode.Request()
 		set_speed_mode_req.speed_mode = 1
+		set_speed_mode_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_speed_mode_future = set_speed_mode_cli.call_async(set_speed_mode_req)
 		rclpy.spin_until_future_complete(self.node, set_speed_mode_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_speed_mode_future.done(), "system/set_robot_speed_mode future task is not done.")
@@ -1419,6 +1469,7 @@ class TestDsrSysCli(unittest.TestCase):
 		if(set_speed_mode_resp.success == True):
 			get_speed_mode_cli = self.node.create_client(GetRobotSpeedMode, "system/get_robot_speed_mode")
 			get_speed_mode_req = GetRobotSpeedMode.Request()
+			get_speed_mode_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 			get_speed_mode_future = get_speed_mode_cli.call_async(get_speed_mode_req)
 			rclpy.spin_until_future_complete(self.node, get_speed_mode_future, timeout_sec=SRV_CALL_TIMEOUT)
 			self.assertTrue(get_speed_mode_future.done(), "system/get_robot_speed_mode future task is not done")
@@ -1433,6 +1484,7 @@ class TestDsrSysCli(unittest.TestCase):
 		""" Get Robot System """
 		get_system_cli = self.node.create_client(GetRobotSystem, "system/get_robot_system")
 		get_system_req = GetRobotSystem.Request()
+		get_system_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_system_future = get_system_cli.call_async(get_system_req)
 		rclpy.spin_until_future_complete(self.node, get_system_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_system_future.done(), "system/get_robot_system future task is not done.")
@@ -1448,6 +1500,7 @@ class TestDsrSysCli(unittest.TestCase):
 		set_system_cli = self.node.create_client(SetRobotSystem, "system/set_robot_system")
 		set_system_req = SetRobotSystem.Request()
 		set_system_req.robot_system = 0
+		set_system_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_system_future = set_system_cli.call_async(set_system_req)
 		rclpy.spin_until_future_complete(self.node, set_system_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_system_future.done(), "system/set_robot_system Service is not done.")
@@ -1457,6 +1510,7 @@ class TestDsrSysCli(unittest.TestCase):
 		if(set_system_resp.success == True):
 			get_system_cli = self.node.create_client(GetRobotSystem, "system/get_robot_system")
 			get_system_req = GetRobotSystem.Request()
+			get_system_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 			get_system_future = get_system_cli.call_async(get_system_req)
 			rclpy.spin_until_future_complete(self.node, get_system_future, timeout_sec=SRV_CALL_TIMEOUT)
 			self.assertTrue(get_system_future.done(), "system/get_robot_system future task is not done.")
@@ -1472,6 +1526,7 @@ class TestDsrSysCli(unittest.TestCase):
 		servo_off_cli = self.node.create_client(ServoOff, "system/servo_off")
 		servo_off_req = ServoOff.Request()
 		servo_off_req.stop_type = 0
+		servo_off_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		servo_off_future = servo_off_cli.call_async(servo_off_req)
 		rclpy.spin_until_future_complete(self.node, servo_off_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(servo_off_future.done(), "system/servo_off future task is not done.")
@@ -1486,6 +1541,7 @@ class TestDsrSysCli(unittest.TestCase):
 		set_safestopreset_cli = self.node.create_client(SetSafeStopResetType, "system/set_safe_stop_reset_type")
 		set_safestopreset_req = SetSafeStopResetType.Request()
 		set_safestopreset_req.reset_type = 1
+		set_safestopreset_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_safestopreset_future = set_safestopreset_cli.call_async(set_safestopreset_req)
 		rclpy.spin_until_future_complete(self.node, set_safestopreset_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_safestopreset_future.done(), "system/set_safe_stop_reset_type service is not done.")
@@ -1509,11 +1565,29 @@ class TestDsrSysCli(unittest.TestCase):
 		self.node.destroy_client(change_collision_sense_cli)
 
 
+	## Set RT Thread Priority Test
+	def test_set_rt_thread_priority_cli(self):
+		print("Set RT Thread Priority Client Test are starting...") # Debug
+		cli = self.node.create_client(SetRtThreadPriority, "realtime/set_rt_thread_priority")
+		self.assertTrue(cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT), "realtime/set_rt_thread_priority service is not available.")
+		# Virtual mode never connects RT, so DRFL validates and stores the value. None of these cases need CAP_SYS_NICE; -1 runs last and restores the default.
+		cases = [(3, 0, False), (1, 0, False), (0, 5, False), (0, 0, True), (-1, 0, True)]
+		for policy, priority, expected in cases:
+			req = SetRtThreadPriority.Request()
+			req.policy = policy
+			req.priority = priority
+			future = cli.call_async(req)
+			rclpy.spin_until_future_complete(self.node, future, timeout_sec=SRV_CALL_TIMEOUT)
+			self.assertTrue(future.done(), "realtime/set_rt_thread_priority service working is not done.")
+			self.assertEqual(future.result().success, expected, f"realtime/set_rt_thread_priority({policy}, {priority}) returned {future.result().success}.")
+		self.node.destroy_client(cli)
+
 	## Get Last Alarm Test
 	def test_get_last_alarm_cli(self):
 		print("Get Last Alarm Client Test are starting...") # Debug
 		get_last_alarm_cli = self.node.create_client(GetLastAlarm, "system/get_last_alarm")
 		get_last_alarm_req = GetLastAlarm.Request()
+		get_last_alarm_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_last_alarm_future = get_last_alarm_cli.call_async(get_last_alarm_req)
 		rclpy.spin_until_future_complete(self.node, get_last_alarm_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_last_alarm_future.done(), "system/get_last_alarm is not done.")
@@ -1565,6 +1639,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Control Space Client Test are starting...") # Debug
 		""" Get Control Space """
 		get_control_space_cli = self.node.create_client(GetControlSpace, "aux_control/get_control_space")
+		get_control_space_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_control_space_future = get_control_space_cli.call_async(GetControlSpace.Request())
 		rclpy.spin_until_future_complete(self.node, get_control_space_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_control_space_future.done(), "aux_control/get_control_space service working is not done.")
@@ -1579,6 +1654,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Current Rotation Matrix Client Test are starting...") # Debug
 		""" Get Current Rotm """
 		get_current_rotm_cli = self.node.create_client(GetCurrentRotm, "aux_control/get_current_rotm")
+		get_current_rotm_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_current_rotm_future = get_current_rotm_cli.call_async(GetCurrentRotm.Request(ref=0))
 		rclpy.spin_until_future_complete(self.node, get_current_rotm_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_current_rotm_future.done(), "aux_control/get_current_rotm service working is not done.")
@@ -1593,6 +1669,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Current Solution Space Client Test are starting...") # Debug
 		""" Get Current Rotm """
 		get_current_solution_space_cli = self.node.create_client(GetCurrentSolutionSpace, "aux_control/get_current_solution_space")
+		get_current_solution_space_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_current_solution_space_future = get_current_solution_space_cli.call_async(GetCurrentSolutionSpace.Request())
 		rclpy.spin_until_future_complete(self.node, get_current_solution_space_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_current_solution_space_future.done(), "aux_control/get_current_solution_space service working is not done.")
@@ -1607,6 +1684,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Current Tool Flange Posx Client Test are starting...") # Debug
 		""" Get Current Tool Flange Posx """
 		get_current_tool_flange_posx_cli = self.node.create_client(GetCurrentToolFlangePosx, "aux_control/get_current_tool_flange_posx")
+		get_current_tool_flange_posx_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_current_tool_flange_posx_future = get_current_tool_flange_posx_cli.call_async(GetCurrentToolFlangePosx.Request(ref=0))
 		rclpy.spin_until_future_complete(self.node, get_current_tool_flange_posx_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_current_tool_flange_posx_future.done(), "aux_control/get_current_tool_flange_posx service working is not done.")
@@ -1621,6 +1699,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Current Joint Velocigy Client Test are starting...") # Debug
 		""" Get Current Velj """
 		get_current_velj_cli = self.node.create_client(GetCurrentVelj, "aux_control/get_current_velj")
+		get_current_velj_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_current_velj_future = get_current_velj_cli.call_async(GetCurrentVelj.Request())
 		rclpy.spin_until_future_complete(self.node, get_current_velj_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_current_velj_future.done(), "aux_control/get_current_velj service working is not done.")
@@ -1635,6 +1714,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Current Task Space Velocigy Client Test are starting...") # Debug
 		""" Get Current Velx """
 		get_current_velx_cli = self.node.create_client(GetCurrentVelx, "aux_control/get_current_velx")
+		get_current_velx_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_current_velx_future = get_current_velx_cli.call_async(GetCurrentVelx.Request(ref=0))
 		rclpy.spin_until_future_complete(self.node, get_current_velx_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_current_velx_future.done(), "aux_control/get_current_velx service working is not done.")
@@ -1649,6 +1729,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Desired Joint Position Client Test are starting...") # Debug
 		""" Get Desired Posj """
 		get_desired_posj_cli = self.node.create_client(GetDesiredPosj, "aux_control/get_desired_posj")
+		get_desired_posj_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_desired_posj_future = get_desired_posj_cli.call_async(GetDesiredPosj.Request())
 		rclpy.spin_until_future_complete(self.node, get_desired_posj_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_desired_posj_future.done(), "aux_control/get_desired_posj service working is not done.")
@@ -1663,6 +1744,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Desired Task Space Position Client Test are starting...") # Debug
 		""" Get Desired Posx """
 		get_desired_posx_cli = self.node.create_client(GetDesiredPosx, "aux_control/get_desired_posx")
+		get_desired_posx_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_desired_posx_future = get_desired_posx_cli.call_async(GetDesiredPosx.Request(ref=0))
 		rclpy.spin_until_future_complete(self.node, get_desired_posx_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_desired_posx_future.done(), "aux_control/get_desired_posx service working is not done.")
@@ -1677,6 +1759,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Desired Joint Velocity Client Test are starting...") # Debug
 		""" Get Desired Velj """
 		get_desired_velj_cli = self.node.create_client(GetDesiredVelj, "aux_control/get_desired_velj")
+		get_desired_velj_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_desired_velj_future = get_desired_velj_cli.call_async(GetDesiredVelj.Request())
 		rclpy.spin_until_future_complete(self.node, get_desired_velj_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_desired_velj_future.done(), "aux_control/get_desired_velj service working is not done.")
@@ -1691,6 +1774,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get Desired Task Space Velocity Client Test are starting...") # Debug
 		""" Get Desired Velx """
 		get_desired_velx_cli = self.node.create_client(GetDesiredVelx, "aux_control/get_desired_velx")
+		get_desired_velx_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_desired_velx_future = get_desired_velx_cli.call_async(GetDesiredVelx.Request(ref=0))
 		rclpy.spin_until_future_complete(self.node, get_desired_velx_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_desired_velx_future.done(), "aux_control/get_desired_velx service working is not done.")
@@ -1705,6 +1789,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		print("Get External Torque Client Test are starting...") # Debug
 		""" Get External Torque """
 		get_external_torque_cli = self.node.create_client(GetExternalTorque, "aux_control/get_external_torque")
+		get_external_torque_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_external_torque_future = get_external_torque_cli.call_async(GetExternalTorque.Request())
 		rclpy.spin_until_future_complete(self.node, get_external_torque_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_external_torque_future.done(), "aux_control/get_external_torque service working is not done.")
@@ -1723,6 +1808,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		get_orientation_error_req.xd = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		get_orientation_error_req.xc = [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]
 		get_orientation_error_req.axis = 0
+		get_orientation_error_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_orientation_error_future = get_orientation_error_cli.call_async(get_orientation_error_req)
 		rclpy.spin_until_future_complete(self.node, get_orientation_error_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_orientation_error_future.done(), "aux_control/get_orientation_error service working is not done.")
@@ -1739,6 +1825,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		get_solution_space_cli = self.node.create_client(GetSolutionSpace, "aux_control/get_solution_space")
 		get_solution_space_req = GetSolutionSpace.Request()
 		get_solution_space_req.pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+		get_solution_space_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_solution_space_future = get_solution_space_cli.call_async(get_solution_space_req)
 		rclpy.spin_until_future_complete(self.node, get_solution_space_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_solution_space_future.done(), "aux_control/get_solution_space service working is not done.")
@@ -1756,6 +1843,7 @@ class TestDsrAuxCtrlCli(unittest.TestCase):
 		get_tool_force_cli = self.node.create_client(GetToolForce, "aux_control/get_tool_force")
 		get_tool_force_req = GetToolForce.Request()
 		get_tool_force_req.ref = 0
+		get_tool_force_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_tool_force_future = get_tool_force_cli.call_async(get_tool_force_req)
 		rclpy.spin_until_future_complete(self.node, get_tool_force_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_tool_force_future.done(), "aux_control/get_tool_force service working is not done.")
@@ -1848,6 +1936,7 @@ class TestDsrToolCli(unittest.TestCase):
 
 		""" Set Current Tool """
 		set_current_tool_cli = self.node.create_client(SetCurrentTool, "tool/set_current_tool")
+		set_current_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_current_tool_future = set_current_tool_cli.call_async(SetCurrentTool.Request(name="tool1"))
 		rclpy.spin_until_future_complete(self.node, set_current_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_current_tool_future.done(), "tool/set_current_tool service working is not done.")
@@ -1859,6 +1948,7 @@ class TestDsrToolCli(unittest.TestCase):
 
 		""" Get Current Tool """
 		get_current_tool_cli = self.node.create_client(GetCurrentTool, "tool/get_current_tool")
+		get_current_tool_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_current_tool_future = get_current_tool_cli.call_async(GetCurrentTool.Request())
 		rclpy.spin_until_future_complete(self.node, get_current_tool_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_current_tool_future.done(), "tool/get_current_tool service working is not done.")
@@ -2572,6 +2662,19 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		print("Clear For IO Test!!")
 		TestDsrIOCtrlCli._lock.release()
 
+	# Ctrl-box digital IO state topic
+	def test_ctrl_box_digital_io_state_topic(self):
+		print("Ctrl-Box Digital IO State Topic Test are starting...") # Debug
+		received = []
+		sub = self.node.create_subscription(UInt8MultiArray, "io/ctrl_box_digital_input_state", received.append, 10)
+		deadline = time.monotonic() + SRV_CALL_TIMEOUT
+		while not received and time.monotonic() < deadline:
+			rclpy.spin_once(self.node, timeout_sec=0.1)
+		self.node.destroy_subscription(sub)
+		self.assertTrue(received, "io/ctrl_box_digital_input_state published nothing.")
+		self.assertEqual(len(received[0].data), 32, "io/ctrl_box_digital_input_state should carry DI[16] + DO[16].")
+		self.assertTrue(all(v in (0, 1) for v in received[0].data), "io/ctrl_box_digital_input_state values must be 0 or 1.")
+
 	# Set Control Box Analog Input Type
 	def test_set_ctrl_box_analog_input_type_cli(self):
 		print("Set Control Box Analog Input Type Client Test are starting...") # Debug
@@ -2581,6 +2684,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		set_crtl_box_analog_input_type_req = SetCtrlBoxAnalogInputType.Request()
 		set_crtl_box_analog_input_type_req.channel = 1
 		set_crtl_box_analog_input_type_req.mode = 0
+		set_crtl_box_analog_input_type_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_crtl_box_analog_input_type_future = set_crtl_box_analog_input_type_cli.call_async(set_crtl_box_analog_input_type_req)
 		rclpy.spin_until_future_complete(self.node, set_crtl_box_analog_input_type_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_crtl_box_analog_input_type_future.done(), "io/set_ctrl_box_analog_input_type service working is not done.")
@@ -2612,6 +2716,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		get_crtl_box_analog_input_cli = self.node.create_client(GetCtrlBoxAnalogInput, "io/get_ctrl_box_analog_input")
 		get_crtl_box_analog_input_req = GetCtrlBoxAnalogInput.Request()
 		get_crtl_box_analog_input_req.channel = 1
+		get_crtl_box_analog_input_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_crtl_box_analog_input_future = get_crtl_box_analog_input_cli.call_async(get_crtl_box_analog_input_req)
 		rclpy.spin_until_future_complete(self.node, get_crtl_box_analog_input_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_crtl_box_analog_input_future.done(), "io/get_ctrl_box_analog_input service working is not done.")
@@ -2629,6 +2734,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		set_crtl_box_analog_output_type_req = SetCtrlBoxAnalogOutputType.Request()
 		set_crtl_box_analog_output_type_req.channel = 1
 		set_crtl_box_analog_output_type_req.mode = 0
+		set_crtl_box_analog_output_type_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_crtl_box_analog_output_type_future = set_crtl_box_analog_output_type_cli.call_async(set_crtl_box_analog_output_type_req)
 		rclpy.spin_until_future_complete(self.node, set_crtl_box_analog_output_type_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_crtl_box_analog_output_type_future.done(), "io/set_ctrl_box_analog_output_type service working is not done.")
@@ -2646,6 +2752,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		set_crtl_box_analog_output_type_req = SetCtrlBoxAnalogOutputType.Request()
 		set_crtl_box_analog_output_type_req.channel = 1
 		set_crtl_box_analog_output_type_req.mode = 0
+		set_crtl_box_analog_output_type_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_crtl_box_analog_output_type_future = set_crtl_box_analog_output_type_cli.call_async(set_crtl_box_analog_output_type_req)
 		rclpy.spin_until_future_complete(self.node, set_crtl_box_analog_output_type_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_crtl_box_analog_output_type_future.done(), "io/set_ctrl_box_analog_output_type service working is not done.")
@@ -2660,6 +2767,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		get_crtl_box_analog_output_req = SetCtrlBoxAnalogOutput.Request()
 		get_crtl_box_analog_output_req.channel = 1
 		get_crtl_box_analog_output_req.value = 5.2
+		get_crtl_box_analog_output_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_crtl_box_analog_output_future = get_crtl_box_analog_output_cli.call_async(get_crtl_box_analog_output_req)
 		rclpy.spin_until_future_complete(self.node, get_crtl_box_analog_output_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_crtl_box_analog_output_future.done(), "io/set_ctrl_box_analog_output service working is not done.")
@@ -2677,6 +2785,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		set_ctrl_box_digital_output_req = SetCtrlBoxDigitalOutput.Request()
 		set_ctrl_box_digital_output_req.index = 1 # 1 ~ 16
 		set_ctrl_box_digital_output_req.value = 0 # 0 : ON
+		set_ctrl_box_digital_output_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_ctrl_box_digital_output_future = set_ctrl_box_digital_output_cli.call_async(set_ctrl_box_digital_output_req)
 		rclpy.spin_until_future_complete(self.node, set_ctrl_box_digital_output_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_ctrl_box_digital_output_future.done(), "io/set_ctrl_box_digital_output service working is not done.")
@@ -2694,6 +2803,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		set_tool_digital_output_req = SetToolDigitalOutput.Request()
 		set_tool_digital_output_req.index = 1 # 1 ~ 6
 		set_tool_digital_output_req.value = 0 # 0 : ON
+		set_tool_digital_output_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		set_tool_digital_output_future = set_tool_digital_output_cli.call_async(set_tool_digital_output_req)
 		rclpy.spin_until_future_complete(self.node, set_tool_digital_output_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(set_tool_digital_output_future.done(), "io/set_ctrl_box_digital_output service working is not done.")
@@ -2710,6 +2820,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		get_ctrl_box_digital_input_cli = self.node.create_client(GetCtrlBoxDigitalInput, "io/get_ctrl_box_digital_input")
 		get_ctrl_box_digital_input_req = GetCtrlBoxDigitalInput.Request()
 		get_ctrl_box_digital_input_req.index = 1 # 1 ~ 16
+		get_ctrl_box_digital_input_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_ctrl_box_digital_input_future = get_ctrl_box_digital_input_cli.call_async(get_ctrl_box_digital_input_req)
 		rclpy.spin_until_future_complete(self.node, get_ctrl_box_digital_input_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_ctrl_box_digital_input_future.done(), "io/get_ctrl_box_digital_input service working is not done.")
@@ -2726,6 +2837,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		get_ctrl_box_digital_output_cli = self.node.create_client(GetCtrlBoxDigitalOutput, "io/get_ctrl_box_digital_output")
 		get_ctrl_box_digital_output_req = GetCtrlBoxDigitalOutput.Request()
 		get_ctrl_box_digital_output_req.index = 1 # 1 ~ 16
+		get_ctrl_box_digital_output_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_ctrl_box_digital_output_future = get_ctrl_box_digital_output_cli.call_async(get_ctrl_box_digital_output_req)
 		rclpy.spin_until_future_complete(self.node, get_ctrl_box_digital_output_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_ctrl_box_digital_output_future.done(), "io/get_ctrl_box_digital_output service working is not done.")
@@ -2742,6 +2854,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		get_tool_digital_input_cli = self.node.create_client(GetToolDigitalInput, "io/get_tool_digital_input")
 		get_tool_digital_input_req = GetToolDigitalInput.Request()
 		get_tool_digital_input_req.index = 1 # 1 ~ 6
+		get_tool_digital_input_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_tool_digital_input_future = get_tool_digital_input_cli.call_async(get_tool_digital_input_req)
 		rclpy.spin_until_future_complete(self.node, get_tool_digital_input_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_tool_digital_input_future.done(), "io/get_tool_digital_input service working is not done.")
@@ -2758,6 +2871,7 @@ class TestDsrIOCtrlCli(unittest.TestCase):
 		get_tool_digital_output_cli = self.node.create_client(GetToolDigitalOutput, "io/get_tool_digital_output")
 		get_tool_digital_output_req = GetToolDigitalOutput.Request()
 		get_tool_digital_output_req.index = 1 # 1 ~ 6
+		get_tool_digital_output_cli.wait_for_service(timeout_sec=SRV_CALL_TIMEOUT)
 		get_tool_digital_output_future = get_tool_digital_output_cli.call_async(get_tool_digital_output_req)
 		rclpy.spin_until_future_complete(self.node, get_tool_digital_output_future, timeout_sec=SRV_CALL_TIMEOUT)
 		self.assertTrue(get_tool_digital_output_future.done(), "io/get_tool_digital_output service working is not done.")

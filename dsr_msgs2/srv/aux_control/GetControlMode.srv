@@ -4,5 +4,5 @@
 # This service returns the current control mode.
 
 ---
-int8    control_mode        # Control mode : Position control mode(3), Torque control mode(4)
+int8    control_mode        # Control mode : Position control mode(3), Torque control mode(4); the controller can also report servo off(0), servo on(1) or hold(2), and 0 is returned before the first monitoring data
 bool    success 
