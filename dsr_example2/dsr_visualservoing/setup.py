@@ -39,7 +39,7 @@ setup(
 
     ],  
     install_requires=['setuptools'],
-    tests_require=['pytest'],
+    extras_require={'test': ['pytest']},
     zip_safe=True,
     maintainer='Chemin Ahn',
     maintainer_email='chemx3937@gmail.com',

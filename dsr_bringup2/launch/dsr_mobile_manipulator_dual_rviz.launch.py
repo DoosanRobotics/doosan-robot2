@@ -381,7 +381,7 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager", "--controller-manager-timeout", "120"],
+        arguments=["dsr_controller2", "-c", "controller_manager", "--controller-manager-timeout", "120", "--param-file", robot_controllers],
     )
 
     # Dual-arm MoveIt trajectory controller (FollowJointTrajectory action server)
@@ -389,14 +389,14 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dual_dsr_moveit_controller", "-c", "controller_manager", "--activate", "--controller-manager-timeout", "120"],
+        arguments=["dual_dsr_moveit_controller", "-c", "controller_manager", "--controller-manager-timeout", "120", "--param-file", robot_controllers],
     )
 
     mobile_base_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["diff_drive_controller", "-c", "controller_manager", "--activate", "--controller-manager-timeout", "120"],
+        arguments=["diff_drive_controller", "-c", "controller_manager", "--controller-manager-timeout", "120", "--param-file", mobile_base_controllers],
     )
 
     # Delay control_node after both config nodes

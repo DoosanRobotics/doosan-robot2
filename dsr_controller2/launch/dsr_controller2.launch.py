@@ -37,7 +37,11 @@ ARGUMENTS = [
     ),
     DeclareLaunchArgument('name',  default_value = '',     description = 'NAME_SPACE'     ),
     DeclareLaunchArgument('tf_prefix', default_value = '', description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
-    ]	
+    DeclareLaunchArgument('host',  default_value = '127.0.0.1', description = 'ROBOT_IP'       ),
+    DeclareLaunchArgument('port',  default_value = '12345',     description = 'ROBOT_PORT'     ),
+    DeclareLaunchArgument('mode',  default_value = 'virtual',   description = 'OPERATION MODE' ),
+    DeclareLaunchArgument('update_rate', default_value = '100', description = 'CONTROLLER UPDATE RATE (Hz), matching dsr_controller2.yaml'),
+    ]
 
 def generate_launch_description():
     # Get URDF via xacro
@@ -52,6 +56,12 @@ def generate_launch_description():
                     "m1013.urdf.xacro",
                 ]
             ),
+            " color:=", LaunchConfiguration('color'),
+            " host:=", LaunchConfiguration('host'),
+            " port:=", LaunchConfiguration('port'),
+            " mode:=", LaunchConfiguration('mode'),
+            " model:=", LaunchConfiguration('model'),
+            " update_rate:=", LaunchConfiguration('update_rate'),
         ]
     )
 
@@ -73,12 +83,6 @@ def generate_launch_description():
         executable="ros2_control_node",
         namespace=LaunchConfiguration('name'),
         parameters=[robot_description, robot_controllers],
-        remappings=[
-            (
-                "/forward_position_controller/commands",
-                "/position_commands",
-            ),
-        ],
         output="both",
     )
     robot_state_pub_node = Node(
@@ -115,22 +119,9 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "/controller_manager"],
+        arguments=["dsr_controller2", "-c", "/controller_manager", "--param-file", robot_controllers],
     )
     
-    joint_trajectory_controller_spawner = Node(
-        package="controller_manager",
-        namespace=LaunchConfiguration('name'),
-        executable="spawner",
-        arguments=["dsr_joint_trajectory", "-c", "/controller_manager"],
-    )
-
-    # joint_state_publisher_spawner = Node(
-    #     package="controller_manager",
-    #     executable="spawner",
-    #     arguments=["dsr_joint_publisher", "--controller-manager", "/controller_manager"],
-    # )
-
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -147,22 +138,12 @@ def generate_launch_description():
         )
     )
 
-    # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_robot_controller_spawner_after_joint_trajectory_controller_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[joint_trajectory_controller_spawner],
-        )
-    )
-
     nodes = [
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,
-        # joint_state_publisher_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
-        # delay_robot_controller_spawner_after_joint_trajectory_controller_spawner,
     ]
 
     return LaunchDescription(ARGUMENTS + nodes)

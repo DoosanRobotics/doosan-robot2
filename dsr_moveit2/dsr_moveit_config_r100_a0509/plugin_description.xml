@@ -3,6 +3,6 @@
       name="robotiq_2f85_gripper/GripperControllerPanel"
       type="dsr_moveit_config_r100_a0509::GripperControllerPanel"
       base_class_type="rviz_common::Panel">
-    <description>Gripper open/close buttons using control_msgs/GripperCommand action.</description>
+    <description>Gripper open/close buttons using control_msgs/ParallelGripperCommand action.</description>
   </class>
 </library>

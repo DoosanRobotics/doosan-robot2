@@ -21,17 +21,19 @@ import os
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler,DeclareLaunchArgument
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, PythonExpression
 from launch.conditions import IfCondition
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import IncludeLaunchDescription
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import OpaqueFunction
 from launch.launch_context import LaunchContext
+from dsr_bringup2.utils import read_update_rate
 
 
 def print_launch_configuration_value(context, *args, **kwargs):
@@ -57,11 +59,14 @@ def generate_launch_description():
         DeclareLaunchArgument('R',   default_value = '0',     description = 'Location Roll on Gazebo'    ),
         DeclareLaunchArgument('P',   default_value = '0',     description = 'Location Pitch on Gazebo'    ),
         DeclareLaunchArgument('Y',   default_value = '0',     description = 'Location Yaw on Gazebo'    ),
+        DeclareLaunchArgument('rt_host', default_value = '',  description = 'ROBOT_RT_IP'    ),
         DeclareLaunchArgument('tf_prefix', default_value = '', description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
     xacro_path = os.path.join( get_package_share_directory('dsr_description2'), 'xacro')
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
+    mode = LaunchConfiguration("mode")
+    update_rate = str(read_update_rate())
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -75,10 +80,17 @@ def generate_launch_description():
                 ]
             ),
             ".urdf.xacro",
+            " name:=", LaunchConfiguration('name'),
+            " host:=", LaunchConfiguration('host'),
+            " rt_host:=", LaunchConfiguration('rt_host'),
+            " port:=", LaunchConfiguration('port'),
+            " mode:=", LaunchConfiguration('mode'),
+            " model:=", LaunchConfiguration('model'),
+            " update_rate:=", update_rate,
         ]
     )
 
-    robot_description = {"robot_description": robot_description_content}
+    robot_description = {"robot_description": ParameterValue(robot_description_content, value_type=str)}
 
     robot_controllers = PathJoinSubstitution(
         [
@@ -110,6 +122,7 @@ def generate_launch_description():
             {"rt_host":  LaunchConfiguration('rt_host')      },
             #parameters_file_path       # 파라미터 설정을 동일이름으로 launch 파일과 yaml 파일에서 할 경우 yaml 파일로 셋팅된다.    
         ],
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'virtual'"])),
         output="screen",
     )
 
@@ -117,6 +130,9 @@ def generate_launch_description():
         package="dsr_bringup2",
         executable="gazebo_connection",
         namespace=LaunchConfiguration('name'),
+        parameters=[
+            {"model":   LaunchConfiguration('model') },
+        ],
         output="log",
     )
 
@@ -167,16 +183,8 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager", "--param-file", robot_controllers],
     )
-
-    joint_trajectory_controller_spawner = Node(
-        package="controller_manager",
-        namespace=LaunchConfiguration('name'),
-        executable="spawner",
-        arguments=["dsr_joint_trajectory", "-c", "controller_manager"],
-    )
-
 
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -228,7 +236,7 @@ def generate_launch_description():
         gazebo_connection_node,
         robot_state_pub_node,
         rgbd_camera_bridge,
-        robot_controller_spawner,
+        joint_state_broadcaster_spawner,
         delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
         included_launch_after_robot_controller_spawner,

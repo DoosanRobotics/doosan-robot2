@@ -15,7 +15,7 @@ find_package(ament_cmake REQUIRED)
 # ------------------------------------
 # DRFL Target
 # ------------------------------------
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64" OR CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "arm64")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
   set(R_ARCH "arm64")
 else()
   set(R_ARCH "x86_64")
@@ -23,6 +23,10 @@ endif()
 
 # Locate the correct libDRFL.a in the source tree
 set(DRFL_LIB_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/lib/$ENV{ROS_DISTRO}/${R_ARCH}/libDRFL.a")
+if(NOT EXISTS "${DRFL_LIB_SOURCE}")
+  message(FATAL_ERROR
+    "libDRFL.a not found for ROS_DISTRO=$ENV{ROS_DISTRO}, arch=${R_ARCH}: expected ${DRFL_LIB_SOURCE}")
+endif()
 
 # Create an interface library 'drfl'
 add_library(drfl INTERFACE)

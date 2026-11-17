@@ -38,7 +38,6 @@
 #include "rclcpp/timer.hpp"
 #include "rclcpp_lifecycle/lifecycle_publisher.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
-#include "realtime_tools/realtime_buffer.h"
 #include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
@@ -211,6 +210,7 @@
 //RT
 #include "dsr_msgs2/srv/connect_rt_control.hpp"
 #include "dsr_msgs2/srv/disconnect_rt_control.hpp"
+#include "dsr_msgs2/srv/set_rt_thread_priority.hpp"
 #include "dsr_msgs2/srv/get_rt_control_input_data_list.hpp"
 #include "dsr_msgs2/srv/get_rt_control_input_version_list.hpp"
 #include "dsr_msgs2/srv/get_rt_control_output_data_list.hpp"
@@ -231,8 +231,11 @@
 #include "dsr_msgs2/action/jog_h2r.hpp"
 #include "dsr_msgs2/action/movej_h2r.hpp"
 #include "dsr_msgs2/action/movel_h2r.hpp"
+#include "unique_identifier_msgs/msg/uuid.hpp"
+#include "dsr_controller2/h2r_keepalive.hpp"
 
 #include "std_msgs/msg/float32_multi_array.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 
 
 #include "../../../dsr_common2/include/DRFLEx.h"
@@ -319,7 +322,13 @@
 
 // digital I/O
 #define DR_DIO_MIN_INDEX    1
-#define DR_DIO_MAX_INDEX    20 // Input IO :16 -> 20 , Output IO : 16   
+// Control box digital inputs: 16 on v2 controllers, 20 on v3.
+#if DRCF_VERSION == 2
+#define DR_DI_MAX_INDEX     16
+#else
+#define DR_DI_MAX_INDEX     20
+#endif
+#define DR_DO_MAX_INDEX     16
 
 // tool digital I/O
 #define DR_TDIO_MIN_INDEX   1
@@ -530,6 +539,7 @@ namespace DRFL_CALLBACKS {
   void OnProgramStoppedCB(const PROGRAM_STOP_CAUSE /*iStopCause*/);
   void OnMonitoringCtrlIOCB (const LPMONITORING_CTRLIO pCtrlIO);
   void OnMonitoringCtrlIOExCB (const LPMONITORING_CTRLIO_EX pCtrlIO);
+  void OnMonitoringCtrlIOEx2CB (const LPMONITORING_CTRLIO_EX2 pCtrlIO);
   void OnMonitoringDataCB(const LPMONITORING_DATA pData);
   void OnMonitoringDataExCB(const LPMONITORING_DATA_EX pData);
   void OnMonitoringModbusCB (const LPMONITORING_MODBUS pModbus);
@@ -744,6 +754,7 @@ protected:
   //----- RT
   rclcpp::Service<dsr_msgs2::srv::ConnectRtControl>::SharedPtr              m_nh_connect_rt_control;
   rclcpp::Service<dsr_msgs2::srv::DisconnectRtControl>::SharedPtr           m_nh_disconnect_rt_control;
+  rclcpp::Service<dsr_msgs2::srv::SetRtThreadPriority>::SharedPtr           m_nh_set_rt_thread_priority;
   rclcpp::Service<dsr_msgs2::srv::GetRtControlOutputVersionList>::SharedPtr m_nh_get_rt_control_output_version_list;
   rclcpp::Service<dsr_msgs2::srv::GetRtControlInputVersionList>::SharedPtr  m_nh_get_rt_control_input_version_list;
   rclcpp::Service<dsr_msgs2::srv::GetRtControlInputDataList>::SharedPtr     m_nh_get_rt_control_input_data_list;
@@ -764,6 +775,12 @@ protected:
   rclcpp_action::Server<dsr_msgs2::action::MovejH2r>::SharedPtr             m_nh_srv_movej_h2r;
   rclcpp_action::Server<dsr_msgs2::action::MovelH2r>::SharedPtr             m_nh_srv_movel_h2r;
 
+  // Holds the single active H2R goal; its thread refreshes the controller's deadman only while the client keeps publishing the goal id on motion/h2r_keepalive.
+  rclcpp::CallbackGroup::SharedPtr                                          h2r_keepalive_cb_group_;
+  rclcpp::Subscription<unique_identifier_msgs::msg::UUID>::SharedPtr        m_sub_h2r_keepalive;
+  dsr_controller2::H2rKeepAlive                                             h2r_keepalive_;
+  std::chrono::milliseconds                                                 h2r_keepalive_timeout_{200};
+
   // Real-time data publishing members and parameters for periodic Float64MultiArray topic output.
   bool use_rt_topic_pub_{false};
   std::vector<std::string> rt_topic_keys_;
@@ -773,10 +790,15 @@ protected:
   void publish_read_data_rt_selected();
   static bool extract_field(LPRT_OUTPUT_DATA_LIST temp,const std::string& key,std::vector<float>& out);
 
+  rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr ctrl_io_pub_;
+  rclcpp::TimerBase::SharedPtr ctrl_io_timer_;
+  void publish_ctrl_io_state();
+
 private:
   static constexpr const char* PARAM_USE_RT_TOPIC_PUB = "use_rt_topic_pub";
   static constexpr const char* PARAM_RT_TOPIC_KEYS    = "rt_topic_keys";
   static constexpr const char* PARAM_RT_TIMER_MS      = "rt_timer_ms";
+  static constexpr const char* PARAM_H2R_KEEPALIVE_TIMEOUT_MS = "h2r_keepalive_timeout_ms";
 };
 }  // namespace dsr_controller2
 

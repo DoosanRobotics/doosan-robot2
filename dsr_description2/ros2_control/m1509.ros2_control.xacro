@@ -5,6 +5,8 @@
   name
   host:=0.0.0.0
   rt_host:=0.0.0.0
+  rt_thread_policy:=''
+  rt_thread_priority:=''
   port:=12345
   mode:=real
   model:=m1509
@@ -21,6 +23,8 @@
         <plugin>dsr_hardware2/DRHWInterface</plugin>
         <param name="host">${host}</param>
         <param name="rt_host">${rt_host}</param>
+        <param name="rt_thread_policy">${rt_thread_policy}</param>
+        <param name="rt_thread_priority">${rt_thread_priority}</param>
         <param name="port">${port}</param>
         <param name="mode">${mode}</param>
         <param name="model">${model}</param>
@@ -39,7 +43,9 @@
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
-        <state_interface name="velocity"/>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
       </joint>
 
       <joint name="joint_2">
@@ -54,7 +60,9 @@
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
-        <state_interface name="velocity"/>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
       </joint>
 
       <joint name="joint_3">
@@ -69,7 +77,9 @@
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
-        <state_interface name="velocity"/>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
       </joint>
 
       <joint name="joint_4">
@@ -84,7 +94,9 @@
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
-        <state_interface name="velocity"/>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
       </joint>
 
       <joint name="joint_5">
@@ -99,7 +111,9 @@
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
-        <state_interface name="velocity"/>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
       </joint>
 
       <joint name="joint_6">
@@ -114,7 +128,9 @@
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
-        <state_interface name="velocity"/>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
       </joint>
 
 

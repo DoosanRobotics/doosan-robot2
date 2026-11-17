@@ -42,10 +42,7 @@ def include_launch_description(context):
     # launch file path
     included_launch_file_path = os.path.join(package_path_str, 'launch', 'start.launch.py')
 
-    # Return IncludeLaunchDescription 
-    return [IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(included_launch_file_path),
-        launch_arguments={
+    launch_arguments = {
             'mode': LaunchConfiguration('mode'), 
             'name': LaunchConfiguration('name'),
             'color': LaunchConfiguration('color'),
@@ -53,8 +50,20 @@ def include_launch_description(context):
             'host': LaunchConfiguration('host'),
             'port': LaunchConfiguration('port'),
             'rt_host': LaunchConfiguration('rt_host'),
+            'rt_thread_policy': LaunchConfiguration('rt_thread_policy'),
+            'rt_thread_priority': LaunchConfiguration('rt_thread_priority'),
             'gripper': LaunchConfiguration('gripper'), # [modified]
-        }.items(),
+    }
+    # An empty dynamic_yaml must not reach start.launch.py (includes share this context), so each model package keeps its own default.
+    if LaunchConfiguration('dynamic_yaml').perform(context):
+        launch_arguments['dynamic_yaml'] = LaunchConfiguration('dynamic_yaml')
+    else:
+        context.launch_configurations.pop('dynamic_yaml', None)
+
+    # Return IncludeLaunchDescription 
+    return [IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(included_launch_file_path),
+        launch_arguments=launch_arguments.items(),
     )]
 
 def generate_launch_description():
@@ -67,7 +76,10 @@ def generate_launch_description():
         DeclareLaunchArgument('color', default_value='white', description='ROBOT_COLOR'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
-        DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotique)'), # [modified]
+        DeclareLaunchArgument('rt_thread_policy', default_value='', description='RT thread policy: 1 SCHED_FIFO, 2 SCHED_RR, 0 SCHED_OTHER, empty keeps the default'),
+        DeclareLaunchArgument('rt_thread_priority', default_value='', description='RT thread priority for rt_thread_policy (1-99 for FIFO/RR, 0 for OTHER)'),
+        DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotiq_2f85)'), # [modified]
+        DeclareLaunchArgument('dynamic_yaml', default_value='', description='Use dynamic controller.yaml (true|false), empty keeps the model package default'),
     ]
 
     # Use OpaqueFunction to dynamically compute the path at launch time and include launch

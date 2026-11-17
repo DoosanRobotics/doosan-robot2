@@ -4,9 +4,9 @@
 
 int32       robot_state             # 0 : STATE_INITIALIZING,   1 : STATE_STANDBY,   2 : STATE_MOVING,    3 : STATE_SAFE_OFF
                                     # 4 : STATE_TEACHING,       5 : STATE_SAFE_STOP, 6 : STATE_EMERGENCY_STOP,
-                                    # 7 : STATE_EMERGENCY_STOP, 8 : STATE_HOMMING,   9 : STATE_RECOVERY,  10: STATE_SAFE_STOP2,     
-                                    # 11: STATE_SAFE_OFF2,      12: STATE_RESERVED1, 13: STATE_RESERVED2, 14: STATE_RESERVED3,
-                                    # 15: STATE_NOT_READY       16: STATE_LAST
+                                    # 7 : STATE_HOMMING,        8 : STATE_RECOVERY,  9 : STATE_SAFE_STOP2, 10: STATE_SAFE_OFF2,
+                                    # 11: STATE_RESERVED1,      12: STATE_RESERVED2, 13: STATE_RESERVED3, 14: STATE_RESERVED4,
+                                    # 15: STATE_NOT_READY
 string      robot_state_str         # Convert robot_state id to string
 
 int8        actual_mode             # position control: 0, torque control: 1
@@ -41,11 +41,11 @@ int8[5]     actual_bt               # cockpit(robot button) info.
 std_msgs/Float64MultiArray[] rotation_matrix  # Rotation Matrix [3][3]
 
 
-int8[16]    ctrlbox_digital_input   # Digital Input in Control Box(0 ~ 15 ; 0 : ON, 1 : OFF)
-int8[16]    ctrlbox_digital_output  # Digital Output in Control Box(0 ~ 15 ; 0 : ON, 1 : OFF)
+int8[16]    ctrlbox_digital_input   # Digital Input in Control Box(0 ~ 15 ; 0 : OFF, 1 : ON)
+int8[16]    ctrlbox_digital_output  # Digital Output in Control Box(0 ~ 15 ; 0 : OFF, 1 : ON)
 
-int8[6]     flange_digital_input    # Digital Input in Flange(0 ~ 5 ; 0 : ON, 1 : OFF) x1 port : 0 ~ 2, x2 port : 3 ~ 5
-int8[6]     flange_digital_output   # Digital Output in Flange(0 ~ 5 ; 0 : ON, 1 : OFF)
+int8[6]     flange_digital_input    # Digital Input in Flange(0 ~ 5 ; 0 : OFF, 1 : ON) x1 port : 0 ~ 2, x2 port : 3 ~ 5
+int8[6]     flange_digital_output   # Digital Output in Flange(0 ~ 5 ; 0 : OFF, 1 : ON)
 
 ModbusState[] modbus_state          # Custom msg for modbus state(refer to ModbusState.msg)
 int32 	    access_control          # 
@@ -65,8 +65,8 @@ float64[6]  f_world_ext_target_torque                # External Task Force/Torqu
 float64[6]  f_target_pos_world                       # World target Position [mm, degree]
 float64[6]  f_target_vel_world                       # World target Velocity [mm/sec, degree/sec]
 std_msgs/Float64MultiArray[] f_rotation_matrix_world # World rotation matrix [3][3]
-int8        i_actual_user_coord_num                  # Actual user coord number ## 101 ~ 120
-int8        i_coord_ref                              # Coordinate Reference(base : 0  world : 2)
+int16       i_actual_user_coord_num                  # Actual user coord number ## 101 ~ 200
+int16       i_coord_ref                              # Coordinate Reference(base : 0  world : 2)
 std_msgs/Float64MultiArray[] f_current_pos_user      # User position Actual Value [2][6] : (0:tool, 1:flange) [mm, degree]
 float64[6]  f_current_vel_user                       # User velocity Actual Value [mm/sec, degree/sec]
 float64[6]  f_user_ext_task_torque                   # External Task Force/Torque [N, Nm]

@@ -50,6 +50,7 @@ def generate_launch_description():
         DeclareLaunchArgument('color',        default_value = 'white',          description = 'ROBOT_COLOR'             ),
         DeclareLaunchArgument('gui',          default_value = 'false',          description = 'Start RViz2'             ),
         DeclareLaunchArgument('gz',           default_value = 'true',           description = 'USE GAZEBO SIM'          ),
+        DeclareLaunchArgument('headless',     default_value = 'false',          description = 'Run Gazebo server only (no Gazebo GUI)'),
         DeclareLaunchArgument('x',            default_value = '0',              description = 'Location x on Gazebo '   ),
         DeclareLaunchArgument('y',            default_value = '0',              description = 'Location y on Gazebo'    ),
         DeclareLaunchArgument('z',            default_value = '0',              description = 'Location z on Gazebo'    ),
@@ -175,7 +176,7 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager", "--param-file", robot_controllers],
     )
 
     # Delay rviz start after `joint_state_broadcaster`
@@ -218,6 +219,8 @@ def generate_launch_description():
         launch_arguments={'use_gazebo': LaunchConfiguration('gz'), 
                           'name' : LaunchConfiguration('name'),
                           'color' : LaunchConfiguration('color'),
+                          'model' : LaunchConfiguration('model'),
+                          'headless' : LaunchConfiguration('headless'),
                           'x' :LaunchConfiguration('x'),
                           'y' :LaunchConfiguration('y'),
                           'z' :LaunchConfiguration('z'),

@@ -37,6 +37,7 @@ ARGUMENTS =[
     DeclareLaunchArgument('model',        default_value = 'm1013', description = 'ROBOT_MODEL'             ),
     DeclareLaunchArgument('color',        default_value = 'white', description = 'ROBOT_COLOR'             ),
     DeclareLaunchArgument('gui',          default_value = 'false', description = 'Start RViz2'             ),
+    DeclareLaunchArgument('headless',     default_value = 'false', description = 'Run Gazebo server only (no Gazebo GUI)'),
     DeclareLaunchArgument('use_gazebo',   default_value = 'true',  description = 'Start Gazebo'            ),
     DeclareLaunchArgument('x',            default_value = '0',     description = 'Location x on Gazebo '   ),
     DeclareLaunchArgument('y',            default_value = '0',     description = 'Location y on Gazebo'    ),
@@ -58,7 +59,14 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             [FindPackageShare("ros_gz_sim"), "/launch/gz_sim.launch.py"]
         ),
-        launch_arguments={"gz_args": " -r -v 3 empty.sdf"}.items(),
+        launch_arguments={
+            "gz_args": PythonExpression([
+                "' -r -s -v 3 empty.sdf' if '", LaunchConfiguration("headless"), "'.lower() == 'true' else ' -r -v 3 empty.sdf'"
+            ]),
+            "on_exit_shutdown": PythonExpression([
+                "'true' if '", LaunchConfiguration("headless"), "'.lower() == 'true' else 'false'"
+            ]),
+        }.items(),
     )
 
     gz_spawn_entity = Node(
@@ -134,11 +142,20 @@ def generate_launch_description():
     )
         # condition=LaunchConfigurationEquals('use_sim_time', 'false')  
     
+    controller_params_file = PathJoinSubstitution([
+        FindPackageShare("dsr_controller2"), "config",
+        PythonExpression(["'dsr_controller2_gz_p3020.yaml' if '", LaunchConfiguration("model"), "' == 'p3020' else 'dsr_controller2_gz.yaml'"]),
+    ])
+
     dsr_position_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
-        arguments=["dsr_position_controller", "--controller-manager", "controller_manager"],
+        arguments=[
+            "dsr_position_controller",
+            "--controller-manager", "controller_manager",
+            "--param-file", controller_params_file,
+        ],
     )
     rviz_node = Node(
         package="rviz2",

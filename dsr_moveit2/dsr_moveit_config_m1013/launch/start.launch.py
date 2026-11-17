@@ -21,8 +21,9 @@ import re
 import tempfile
 
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration, TimerAction
-from launch.event_handlers import OnProcessExit
+from launch.actions import ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration, TimerAction, EmitEvent
+from launch.event_handlers import OnProcessExit, OnShutdown
+from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution, FindExecutable
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
@@ -41,12 +42,14 @@ def generate_robot_description_action(context, *args, **kwargs):
     name = LaunchConfiguration('name').perform(context)
     host = LaunchConfiguration('host').perform(context)
     rt_host = LaunchConfiguration('rt_host').perform(context)
+    rt_thread_policy = LaunchConfiguration('rt_thread_policy').perform(context)
+    rt_thread_priority = LaunchConfiguration('rt_thread_priority').perform(context)
     port = LaunchConfiguration('port').perform(context)
     mode = LaunchConfiguration('mode').perform(context)
     update_rate = read_update_rate() # get update_rate from yaml
 
     # Parse URDF to extract active and passive joints
-    urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, name, host, rt_host, port, mode, update_rate)
+    urdf_xml, active_joints, passive_joints = parse_joints_from_urdf(model, color, name, host, rt_host, port, mode, update_rate, LaunchConfiguration('gripper').perform(context), rt_thread_policy=rt_thread_policy, rt_thread_priority=rt_thread_priority)
     print(f"[DEBUG] model={model}, color={color}, name={name}, host={host}, rt_host={rt_host}, port={port}, mode={mode}, update_rate={update_rate}")
     print(f"[DEBUG] active_joints={active_joints}")
     print(f"[DEBUG] passive_joints={passive_joints}")
@@ -84,7 +87,7 @@ def generate_robot_description_action(context, *args, **kwargs):
 
 def rviz_and_move_group_fn(context):
     model_value = LaunchConfiguration('model').perform(context)
-    ns_value = LaunchConfiguration('name').perform(context)
+    ns_value = LaunchConfiguration('name').perform(context).strip('/')
     gui = LaunchConfiguration('gui').perform(context).lower() == 'true'
 
     package_name = f"dsr_moveit_config_{model_value}"
@@ -144,6 +147,29 @@ def rviz_and_move_group_fn(context):
         f'Move Group Namespace: {target_ns}', 
         content
     )
+    # Move Group Namespace 는 scene/trajectory 토픽에는 적용되지 않으므로 같은 네임스페이스로 직접 지정
+    new_content = re.sub(
+        r'Planning Scene Topic:\s*/?monitored_planning_scene',
+        f'Planning Scene Topic: {target_ns}/monitored_planning_scene',
+        new_content
+    )
+    new_content = re.sub(
+        r'Trajectory Topic:\s*/?display_planned_path',
+        f'Trajectory Topic: {target_ns}/display_planned_path',
+        new_content
+    )
+    # The gripper panel binds to this exact action, so each robot's RViz drives its own gripper.
+    new_content = re.sub(
+        r'(\n( *)Name: Gripper Control\n)',
+        lambda m: f"{m.group(1)}{m.group(2)}Action Name: {target_ns}/gripper_position_controller/gripper_cmd\n",
+        new_content
+    )
+
+    # MoveIt RViz 플러그인은 기본 planning pipeline 을 "<Move Group Namespace>default_planning_pipeline"
+    # (구분자 없이 이어 붙인 이름)의 파라미터로 읽는다. 네임스페이스가 있으면 그 이름으로도 넘겨 주어야
+    # 기본 선택이 launch 에서 지정한 pipeline(ompl)이 된다. 안 넘기면 pilz 가 선택되고 planner 가 비어 계획이 실패한다.
+    if target_ns:
+        rviz_params.append({f"{target_ns}default_planning_pipeline": moveit_config.planning_pipelines["default_planning_pipeline"]})
 
     tmp_rviz = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.rviz')
     tmp_rviz.write(new_content)
@@ -157,7 +183,7 @@ def rviz_and_move_group_fn(context):
         executable="rviz2",
         name="rviz2_moveit",
         output="log",
-        arguments=["-d", rviz_full_config],
+        arguments=["-d", tmp_rviz_path],
         parameters=rviz_params,
     )
 
@@ -170,7 +196,16 @@ def rviz_and_move_group_fn(context):
             ]
         )
     )
-    return [run_move_group_node, rviz_node, cleanup_rviz_file]
+
+    def _remove_tmp_rviz(context):
+        if os.path.exists(tmp_rviz_path):
+            os.remove(tmp_rviz_path)
+        return []
+
+    cleanup_rviz_on_shutdown = RegisterEventHandler(
+        OnShutdown(on_shutdown=[OpaqueFunction(function=_remove_tmp_rviz)])
+    )
+    return [run_move_group_node, rviz_node, cleanup_rviz_file, cleanup_rviz_on_shutdown]
 
 # sets up the parameters for the controller manager node, if 'gripper' argument is setted, it additionally loads the 'gripper_controller.yaml' file
 def control_node_fn(context):
@@ -195,16 +230,25 @@ def gripper_spawner_fn(context):
     if LaunchConfiguration('gripper').perform(context) != 'robotiq_2f85':
         return []
 
-    return [Node(
+    gripper_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
         arguments=[
             "gripper_position_controller",
             "-c", "controller_manager",
+            "--param-file",
+            os.path.join(get_package_share_directory("dsr_controller2"), "config", "gripper_controller.yaml"),
         ],
         output="screen",
-    )]
+    )
+
+    def _on_gripper_exit(event, context):
+        if event.returncode != 0:
+            return [LogInfo(msg=f">> [GRIPPER FAILED] gripper_position_controller spawner exited with code {event.returncode}"), EmitEvent(event=Shutdown(reason="gripper spawner failed"))]
+        return []
+
+    return [gripper_spawner, RegisterEventHandler(OnProcessExit(target_action=gripper_spawner, on_exit=_on_gripper_exit))]
 
 def generate_launch_description():
     ARGUMENTS = [
@@ -217,6 +261,8 @@ def generate_launch_description():
         DeclareLaunchArgument('gui',   default_value='true', description='Start RViz2'),
         DeclareLaunchArgument('gz',    default_value='false', description='USE GAZEBO SIM'),
         DeclareLaunchArgument('rt_host', default_value='', description='ROBOT_RT_IP'),
+        DeclareLaunchArgument('rt_thread_policy', default_value='', description='RT thread policy: 1 SCHED_FIFO, 2 SCHED_RR, 0 SCHED_OTHER, empty keeps the default'),
+        DeclareLaunchArgument('rt_thread_priority', default_value='', description='RT thread priority for rt_thread_policy (1-99 for FIFO/RR, 0 for OTHER)'),
         DeclareLaunchArgument('dynamic_yaml', default_value='false', description='Use dynamic controller.yaml'),
         DeclareLaunchArgument('gripper', default_value='none', description='GRIPPER (none|robotiq_2f85)'),
         DeclareLaunchArgument('tf_prefix', default_value='', description='PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
@@ -281,7 +327,8 @@ def generate_launch_description():
         arguments=[
             "dsr_controller2",
             "-c", "controller_manager",
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--param-file", LaunchConfiguration('controller_yaml'),
         ],
     )
 
@@ -293,54 +340,75 @@ def generate_launch_description():
         arguments=[
             "dsr_moveit_controller",
             "-c", "controller_manager",
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--param-file", LaunchConfiguration('controller_yaml'),
         ],
     )
 
     # MoveGroup + (optional) RViz
     rviz_and_move_group = OpaqueFunction(function=rviz_and_move_group_fn)
 
-    # A) Once joint_state_broadcaster is active, spawn dsr_controller2 (arm controller).
+    # A) Once joint_state_broadcaster exits with code 0, spawn dsr_controller2 (arm controller).
+    def _step1_on_exit(event, context):
+        if event.returncode != 0:
+            return [LogInfo(msg=f">> [STEP 1 FAILED] joint_state_broadcaster spawner exited with code {event.returncode}"), EmitEvent(event=Shutdown(reason="STEP 1 failed"))]
+        return [
+            LogInfo(msg=">> [STEP 1 COMPLETED] joint_state_broadcaster active. Starting dsr_controller2..."),
+            robot_controller_spawner,
+        ]
+
     delay_robot_controller_after_joint_state = RegisterEventHandler(
         OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[
-                LogInfo(msg=">> [STEP 1 COMPLETED] joint_state_broadcaster active. Starting dsr_controller2..."),
-                robot_controller_spawner
-            ],
+            on_exit=_step1_on_exit,
         )
     )
 
-    # B) After dsr_controller2 becomes active, (conditionally) spawn the gripper position controller.
+    # B) After dsr_controller2 exits with code 0, (conditionally) spawn the gripper position controller.
+    def _step2_on_exit(event, context):
+        if event.returncode != 0:
+            return [LogInfo(msg=f">> [STEP 2 FAILED] dsr_controller2 spawner exited with code {event.returncode}"), EmitEvent(event=Shutdown(reason="STEP 2 failed"))]
+        return [
+            LogInfo(msg=">> [STEP 2] dsr_controller2 active. (cond) starting gripper_position_controller..."),
+            OpaqueFunction(function=gripper_spawner_fn),
+        ]
+
     delay_gripper_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
-            on_exit=[
-                LogInfo(msg=">> [STEP 2] dsr_controller2 active. (cond) starting gripper_position_controller..."),
-                OpaqueFunction(function=gripper_spawner_fn),
-            ],
+            on_exit=_step2_on_exit,
         )
     )
 
-    # C) After dsr_controller2 becomes active, spawn dsr_moveit_controller (MoveIt-compatible trajectory controller).
+    # C) After dsr_controller2 exits with code 0, spawn dsr_moveit_controller (MoveIt-compatible trajectory controller).
+    def _step3_on_exit(event, context):
+        if event.returncode != 0:
+            return []  # _step2_on_exit watches the same spawner and reports the failure.
+        return [
+            LogInfo(msg=">> [STEP 3 COMPLETED] dsr_controller2 active. Starting dsr_moveit_controller..."),
+            dsr_moveit_controller_spawner,
+        ]
+
     delay_dsr_moveit_controller_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
-            on_exit=[
-                LogInfo(msg=">> [STEP 3 COMPLETED] dsr_controller2 active. Starting dsr_moveit_controller..."),
-                dsr_moveit_controller_spawner,
-            ],
+            on_exit=_step3_on_exit,
         )
     )
 
-    # D) After dsr_moveit_controller is active, start MoveGroup (and RViz if gui=true).
+    # D) After dsr_moveit_controller exits with code 0, start MoveGroup (and RViz if gui=true).
+    def _step4_on_exit(event, context):
+        if event.returncode != 0:
+            return [LogInfo(msg=f">> [STEP 4 FAILED] dsr_moveit_controller spawner exited with code {event.returncode}"), EmitEvent(event=Shutdown(reason="STEP 4 failed"))]
+        return [
+            LogInfo(msg=">> [STEP 4 COMPLETED] dsr_moveit_controller active. Launching MoveGroup (+ RViz if gui=true)..."),
+            rviz_and_move_group,
+        ]
+
     delay_rviz_after_moveit_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=dsr_moveit_controller_spawner,
-            on_exit=[
-                LogInfo(msg=">> [STEP 4 COMPLETED] dsr_moveit_controller active. Launching MoveGroup (+ RViz if gui=true)..."),
-                rviz_and_move_group
-            ],
+            on_exit=_step4_on_exit,
         )
     )
 

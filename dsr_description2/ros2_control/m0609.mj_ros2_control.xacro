@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+<robot name="m0609" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:macro name="mj_joint" params="name">
+        <joint name="${name}">
+            <command_interface name="position"/>
+            <state_interface name="position">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+            <state_interface name="velocity">
+                <param name="initial_value">0.0</param>
+            </state_interface>
+        </joint>
+    </xacro:macro>
+
+    <xacro:macro name="m0609_mj_ros2_control" params="
+    namespace:=''
+    gripper:=none
+    mujoco_model
+    headless:=false
+    update_rate:=''
+    ">
+
+    <ros2_control name="MujocoSystem" type="system">
+        <hardware>
+            <plugin>mujoco_ros2_control/MujocoSystemInterface</plugin>
+            <param name="mujoco_model">${mujoco_model}</param>
+            <param name="headless">${headless}</param>
+            <param name="pids_config_file">$(find dsr_description2)/mujoco_models/m0609/pids.yaml</param>
+        </hardware>
+
+        <xacro:mj_joint name="joint_1"/>
+        <xacro:mj_joint name="joint_2"/>
+        <xacro:mj_joint name="joint_3"/>
+        <xacro:mj_joint name="joint_4"/>
+        <xacro:mj_joint name="joint_5"/>
+        <xacro:mj_joint name="joint_6"/>
+
+        <xacro:if value="${gripper == '2f85'}">
+            <xacro:include filename="$(find dsr_description2)/ros2_control/robotiq_2f85.mj_ros2_control.xacro"/>
+        </xacro:if>
+
+    </ros2_control>
+
+    <xacro:if value="${gripper == '2f85'}">
+        <xacro:include filename="$(find dsr_description2)/xacro/robotiq_2f85.xacro"/>
+    </xacro:if>
+
+    </xacro:macro>
+</robot>

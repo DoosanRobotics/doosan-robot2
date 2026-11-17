@@ -2,6 +2,6 @@
 # change_collision_sensitivity
 #____________________________________________________________________________________________
 
-int8 sensitivity   # 0 ~ 100 
+int8 sensitivity   # 1 ~ 100 
 ---
 bool success

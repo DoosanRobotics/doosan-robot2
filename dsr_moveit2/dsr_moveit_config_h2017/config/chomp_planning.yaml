@@ -25,7 +25,7 @@ smoothness_cost_acceleration: 1.0
 smoothness_cost_jerk: 0.0
 ridge_factor: 0.01
 use_pseudo_inverse: false
-pseudo_inverse_ridge_factor: 1e-4
+pseudo_inverse_ridge_factor: 1.0e-4
 joint_update_limit: 0.1
 collision_clearance: 0.2
 collision_threshold: 0.07

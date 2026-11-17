@@ -161,7 +161,7 @@ WholeBodyController::on_configure(const rclcpp_lifecycle::State &)
       whole_joint_state_topic_, whole_joint_state_qos);
     arm_joint_state_sub_ = get_node()->create_subscription<sensor_msgs::msg::JointState>(
       arm_joint_state_topic_, arm_joint_state_qos,
-      [this](const sensor_msgs::msg::JointState::SharedPtr msg) {
+      [this](sensor_msgs::msg::JointState::ConstSharedPtr msg) {
         if (!msg) {
           return;
         }

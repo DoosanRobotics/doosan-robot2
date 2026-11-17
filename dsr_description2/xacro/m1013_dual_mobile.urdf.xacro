@@ -5,6 +5,16 @@
   <xacro:arg name="color"          default="white"/>
   <xacro:arg name="namespace"      default=""/>
 
+  <!-- controller connection per arm -->
+  <xacro:arg name="host"             default="127.0.0.1"/>
+  <xacro:arg name="port"             default="12345"/>
+  <xacro:arg name="rt_host"          default=""/>
+  <xacro:arg name="update_rate"      default="100"/>
+  <xacro:arg name="arm2_host"        default="127.0.0.1"/>
+  <xacro:arg name="arm2_port"        default="12348"/>
+  <xacro:arg name="arm2_rt_host"     default=""/>
+  <xacro:arg name="arm2_update_rate" default="100"/>
+
   <!-- gripper control argument -->
   <xacro:arg name="gripper"              default="none"/>         <!-- none | robotiq_2f85 -->
   <xacro:arg name="left_gripper_prefix"  default="left_"/>
@@ -185,8 +195,10 @@
         <param name="rate">100</param>
         <param name="standby">5000</param>
         <param name="command">true</param>
-        <param name="host">127.0.0.1</param>
-        <param name="port">12345</param>
+        <param name="host">$(arg host)</param>
+        <param name="port">$(arg port)</param>
+        <param name="rt_host">$(arg rt_host)</param>
+        <param name="update_rate">$(arg update_rate)</param>
         <param name="mode">$(arg mode)</param>
         <param name="model">m1013</param>
         <param name="gripper">$(arg gripper)</param>
@@ -199,8 +211,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="left_joint_2">
         <command_interface name="position">
@@ -208,8 +220,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="left_joint_3">
         <command_interface name="position">
@@ -217,8 +229,8 @@
           <param name="max">2.7925</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="left_joint_4">
         <command_interface name="position">
@@ -226,8 +238,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="left_joint_5">
         <command_interface name="position">
@@ -235,8 +247,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="left_joint_6">
         <command_interface name="position">
@@ -244,8 +256,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
     </ros2_control>
 
@@ -257,8 +269,10 @@
         <param name="rate">100</param>
         <param name="standby">5000</param>
         <param name="command">true</param>
-        <param name="host">127.0.0.1</param>
-        <param name="port">12348</param>
+        <param name="host">$(arg arm2_host)</param>
+        <param name="port">$(arg arm2_port)</param>
+        <param name="rt_host">$(arg arm2_rt_host)</param>
+        <param name="update_rate">$(arg arm2_update_rate)</param>
         <param name="mode">$(arg mode)</param>
         <param name="model">m1013</param>
         <param name="gripper">$(arg gripper)</param>
@@ -271,8 +285,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="right_joint_2">
         <command_interface name="position">
@@ -280,8 +294,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="right_joint_3">
         <command_interface name="position">
@@ -289,8 +303,8 @@
           <param name="max">2.7925</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="right_joint_4">
         <command_interface name="position">
@@ -298,8 +312,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="right_joint_5">
         <command_interface name="position">
@@ -307,8 +321,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
       <joint name="right_joint_6">
         <command_interface name="position">
@@ -316,8 +330,8 @@
           <param name="max">6.2832</param>
         </command_interface>
         <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
+        <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="velocity"><param name="initial_value">0.0</param></state_interface>
       </joint>
     </ros2_control>
   </xacro:unless>

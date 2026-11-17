@@ -21,8 +21,9 @@ import re
 import tempfile
 
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration, TimerAction
-from launch.event_handlers import OnProcessExit
+from launch.actions import ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument, LogInfo, OpaqueFunction, SetLaunchConfiguration, TimerAction, EmitEvent
+from launch.event_handlers import OnProcessExit, OnShutdown
+from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution, FindExecutable, PythonExpression
 from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import Node
@@ -33,6 +34,24 @@ from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
 from dsr_bringup2.controller_config import adjust_dsr_controller_yaml, parse_joints_from_urdf
 from dsr_bringup2.utils import read_update_rate
+
+
+_reported_failures = set()
+
+
+def _only_on_success(actions):
+    """OnProcessExit callback: run actions if the spawner succeeded, otherwise log and shut the launch down."""
+    def _on_exit(event, context):
+        if event.returncode != 0:
+            # Several handlers can watch the same spawner, so each failed process is reported once.
+            if event.pid in _reported_failures:
+                return []
+            _reported_failures.add(event.pid)
+            msg = f"{event.process_name} ({' '.join(event.cmd[1:2])}) exited with code {event.returncode}"
+            return [LogInfo(msg=f">> [FAILED] {msg}"), EmitEvent(event=Shutdown(reason=msg))]
+        return actions
+    return _on_exit
+
 
 # Generate robot_description and select controller YAML based on the URDF model.
 def generate_robot_description_action(context, *args, **kwargs):
@@ -212,19 +231,42 @@ def rviz_and_move_group_fn(context):
 
     rviz_base = os.path.join(get_package_share_directory(package_name), "launch")
     rviz_full_config = os.path.join(rviz_base, "moveit.rviz")
+
+    # The gripper panel binds to this exact action, so each robot's RViz drives its own gripper.
+    with open(rviz_full_config, 'r') as f:
+        content = f.read()
+    target_ns = f"/{ns_value}" if ns_value else ""
+    content = re.sub(
+        r'(\n( *)Name: Gripper Control\n)',
+        lambda m: f"{m.group(1)}{m.group(2)}Action Name: {target_ns}/gripper_position_controller/gripper_cmd\n",
+        content
+    )
+    tmp_rviz = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.rviz')
+    tmp_rviz.write(content)
+    tmp_rviz.close()
+    tmp_rviz_path = tmp_rviz.name
+
+    def _remove_tmp_rviz(context):
+        if os.path.exists(tmp_rviz_path):
+            os.remove(tmp_rviz_path)
+        return []
+
+    cleanup_rviz_on_shutdown = RegisterEventHandler(
+        OnShutdown(on_shutdown=[OpaqueFunction(function=_remove_tmp_rviz)])
+    )
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
         name="rviz2_moveit",
         output="log",
-        arguments=["-d", rviz_full_config, "--ros-args", "--log-level", "fatal"],
+        arguments=["-d", tmp_rviz_path, "--ros-args", "--log-level", "fatal"],
         parameters=rviz_params,
         remappings=[
             ("goal_pose", "/goal_pose"),
             ("initialpose", "/initialpose"),
         ],
     )
-    actions = [run_move_group_node]
+    actions = [run_move_group_node, cleanup_rviz_on_shutdown]
     if gui:
         # Delay RViz startup so first rendered pose reflects settled joint states.
         actions.append(TimerAction(period=1.0, actions=[rviz_node]))
@@ -270,16 +312,20 @@ def gripper_spawner_fn(context):
     if LaunchConfiguration('gripper').perform(context) != 'robotiq_2f85':
         return []
 
-    return [Node(
+    gripper_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
         arguments=[
             "gripper_position_controller",
             "-c", "controller_manager",
+            "--param-file",
+            os.path.join(get_package_share_directory("dsr_controller2"), "config", "gripper_controller.yaml"),
         ],
         output="screen",
-    )]
+    )
+
+    return [gripper_spawner, RegisterEventHandler(OnProcessExit(target_action=gripper_spawner, on_exit=_only_on_success([])))]
 
 
 def rviz_refresh_helper_fn(context):
@@ -496,7 +542,8 @@ def generate_launch_description():
         arguments=[
             "dsr_controller2",
             "-c", "controller_manager",
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--param-file", LaunchConfiguration('controller_yaml'),
         ],
         condition=UnlessCondition(is_r100_m1509_dual),
     )
@@ -509,8 +556,8 @@ def generate_launch_description():
         arguments=[
             "dsr_moveit_controller",
             "-c", controller_manager_path,
-            "--activate",
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--param-file", LaunchConfiguration("controller_yaml"),
         ],
     )
 
@@ -533,8 +580,8 @@ def generate_launch_description():
         arguments=[
             "dual_dsr_moveit_controller",
             "-c", controller_manager_path,
-            "--activate",
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--param-file", LaunchConfiguration("controller_yaml"),
         ],
     )
 
@@ -546,7 +593,8 @@ def generate_launch_description():
         arguments=[
             "dsr_controller2",
             "-c", controller_manager_path,
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--param-file", LaunchConfiguration("controller_yaml"),
         ],
     )
 
@@ -557,8 +605,8 @@ def generate_launch_description():
         arguments=[
             "diff_drive_controller",
             "-c", controller_manager_path,
-            "--activate",
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--param-file", LaunchConfiguration("controller_yaml"),
         ],
     )
 
@@ -569,8 +617,8 @@ def generate_launch_description():
         arguments=[
             "whole_body_controller",
             "-c", controller_manager_path,
-            "--activate",
-            "--controller-manager-timeout", "120"
+            "--controller-manager-timeout", "120",
+            "--param-file", LaunchConfiguration("controller_yaml"),
         ],
     )
 
@@ -583,10 +631,10 @@ def generate_launch_description():
     delay_robot_controller_after_joint_state = RegisterEventHandler(
         OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 LogInfo(msg=">> [STEP 1 COMPLETED] joint_state_broadcaster active. Starting dsr_controller2..."),
                 robot_controller_spawner
-            ],
+            ]),
         )
     ,
         condition=UnlessCondition(is_r100_m1509_dual),
@@ -596,10 +644,10 @@ def generate_launch_description():
     delay_gripper_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 LogInfo(msg=">> [STEP 2] dsr_controller2 active. (cond) starting gripper_position_controller..."),
                 OpaqueFunction(function=gripper_spawner_fn),
-            ],
+            ]),
         )
     )
 
@@ -607,10 +655,10 @@ def generate_launch_description():
     delay_dsr_moveit_controller_after_robot_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=robot_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 LogInfo(msg=">> [STEP 3 COMPLETED] dsr_controller2 active. Starting dsr_moveit_controller..."),
                 dsr_moveit_controller_spawner,
-            ],
+            ]),
         )
     )
 
@@ -618,15 +666,24 @@ def generate_launch_description():
     delay_dsr_moveit_controller_after_joint_state = RegisterEventHandler(
         OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 LogInfo(msg=">> [STEP 1 COMPLETED] joint_state_broadcaster active. Starting dsr_moveit_controller..."),
                 dsr_moveit_controller_spawner,
-            ],
+            ]),
         ),
         condition=IfCondition(is_r100_m1509),
     )
 
     # For r100_m1509_dual: delay spawners to ensure controller_manager is up
+    # The timer starts these two spawners, so no other handler reports their failure.
+    r100_spawner_failure_handlers = [
+        RegisterEventHandler(
+            OnProcessExit(target_action=spawner, on_exit=_only_on_success([])),
+            condition=IfCondition(is_r100_m1509_dual),
+        )
+        for spawner in (r100_joint_state_broadcaster_spawner, r100_robot_controller_spawner)
+    ]
+
     delayed_r100_spawners = TimerAction(
         period=1.0,
         actions=[
@@ -652,12 +709,12 @@ def generate_launch_description():
     delay_left_init_motion_after_whole_body = RegisterEventHandler(
         OnProcessExit(
             target_action=r100_whole_body_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 TimerAction(
                     period=0.2,
                     actions=[left_init_motion_once],
                 )
-            ],
+            ]),
         ),
         condition=IfCondition(is_dual_and_init_and_whole),
     )
@@ -665,12 +722,12 @@ def generate_launch_description():
     delay_left_init_motion_after_dual_moveit = RegisterEventHandler(
         OnProcessExit(
             target_action=r100_dual_moveit_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 TimerAction(
                     period=0.2,
                     actions=[left_init_motion_once],
                 )
-            ],
+            ]),
         ),
         condition=IfCondition(is_dual_and_init_and_no_whole),
     )
@@ -678,10 +735,10 @@ def generate_launch_description():
     delay_diff_drive_controller_after_dual_moveit = RegisterEventHandler(
         OnProcessExit(
             target_action=r100_dual_moveit_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 LogInfo(msg=">> [WB] dual_dsr_moveit_controller active. Starting diff_drive_controller..."),
                 r100_diff_drive_controller_spawner,
-            ],
+            ]),
         ),
         condition=IfCondition(is_dual_and_whole_enabled),
     )
@@ -689,7 +746,7 @@ def generate_launch_description():
     delay_whole_body_controller_after_diff_drive = RegisterEventHandler(
         OnProcessExit(
             target_action=r100_diff_drive_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 TimerAction(
                     period=0.3,
                     actions=[
@@ -697,7 +754,7 @@ def generate_launch_description():
                         r100_whole_body_controller_spawner,
                     ],
                 )
-            ],
+            ]),
         ),
         condition=IfCondition(is_dual_and_whole_enabled),
     )
@@ -706,10 +763,10 @@ def generate_launch_description():
     delay_rviz_after_moveit_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=dsr_moveit_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 LogInfo(msg=">> [STEP 4 COMPLETED] dsr_moveit_controller active. Launching MoveGroup (+ RViz if gui=true)..."),
                 rviz_and_move_group
-            ],
+            ]),
         )
     , condition=UnlessCondition(is_r100_m1509_dual))
 
@@ -717,10 +774,10 @@ def generate_launch_description():
     delay_rviz_after_r100_moveit_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=r100_dual_moveit_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 LogInfo(msg=">> [STEP 4 COMPLETED] dual moveit controller active. Launching MoveGroup (+ RViz if gui=true)..."),
                 rviz_and_move_group
-            ],
+            ]),
         ),
         condition=IfCondition(is_dual_and_no_init_and_no_whole),
     )
@@ -728,10 +785,10 @@ def generate_launch_description():
     delay_rviz_after_whole_body_no_init = RegisterEventHandler(
         OnProcessExit(
             target_action=r100_whole_body_controller_spawner,
-            on_exit=[
+            on_exit=_only_on_success([
                 LogInfo(msg=">> [WB] whole_body_controller active. Launching MoveGroup (+ RViz if gui=true)..."),
                 rviz_and_move_group
-            ],
+            ]),
         ),
         condition=IfCondition(is_dual_and_no_init_and_whole),
     )
@@ -740,6 +797,7 @@ def generate_launch_description():
     delay_rviz_after_left_init_motion = RegisterEventHandler(
         OnProcessExit(
             target_action=left_init_motion_once,
+            # A CLI goal, not a spawner: MoveGroup and RViz start whatever its exit code.
             on_exit=[
                 TimerAction(
                     period=0.5,
@@ -765,6 +823,7 @@ def generate_launch_description():
         delay_dsr_moveit_controller_after_robot_controller,
         delay_dsr_moveit_controller_after_joint_state,
         delayed_r100_spawners,
+        *r100_spawner_failure_handlers,
         delay_left_init_motion_after_whole_body,
         delay_left_init_motion_after_dual_moveit,
         delay_diff_drive_controller_after_dual_moveit,

@@ -1,9 +1,9 @@
 #____________________________________________________________________________________________
 # get_current_rotm(ref)  
 #____________________________________________________________________________________________
-# This service returns the direction and matrix of the current tool based on the ref coordinate.
+# This service returns the direction and matrix of the current tool in the BASE coordinate.
 
-int8        ref               # DR_BASE(0), DR_WORLD(2)
+int16       ref               # ignored; the result is always in DR_BASE(0)
 ---
 std_msgs/Float64MultiArray[] rot_matrix  # target[3][3] Rotation matrix
 bool        success

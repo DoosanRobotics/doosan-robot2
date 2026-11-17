@@ -15,9 +15,13 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <build_depend>control_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
   <build_depend>rclcpp</build_depend>
   <build_depend>rclcpp_action</build_depend>
+  <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
+  <build_depend>tf2</build_depend>
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>control_msgs</exec_depend>
@@ -32,8 +36,6 @@
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>transmission_interface</exec_depend>
-  <exec_depend>position_controllers</exec_depend>
-  <exec_depend>velocity_controllers</exec_depend>
   <exec_depend>xacro</exec_depend>
   <depend>dsr_description2</depend>
 

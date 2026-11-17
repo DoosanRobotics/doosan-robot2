@@ -15,6 +15,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp_lifecycle
   geometry_msgs
   trajectory_msgs
+  sensor_msgs
 )
 
 find_package(ament_cmake REQUIRED)
@@ -33,7 +34,18 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
-ament_target_dependencies(${PROJECT_NAME} PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  control_msgs::control_msgs
+  controller_interface::controller_interface
+  hardware_interface::hardware_interface
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
+  rclcpp_lifecycle::rclcpp_lifecycle
+  geometry_msgs::geometry_msgs
+  trajectory_msgs::trajectory_msgs
+  sensor_msgs::sensor_msgs
+)
 
 pluginlib_export_plugin_description_file(controller_interface dsr_mobile_wbc2_plugins.xml)
 

@@ -22,16 +22,16 @@
   <depend>rclcpp_lifecycle</depend>
   <depend>rclcpp</depend>
   <depend>rcpputils</depend>
-  <depend>realtime_tools</depend>
   <depend>trajectory_msgs</depend> 
   <depend>moveit_msgs</depend> 
   <depend>yaml-cpp</depend> 
   <depend>libpoco-dev</depend>
   <depend>dsr_common2</depend>
+  <depend>dsr_msgs2</depend>
+  <depend>controller_manager</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
   
-  <build_depend>dsr_msgs2</build_depend>
-
-  <exec_depend>controller_manager</exec_depend>
   <exec_depend>joint_state_broadcaster</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>
   <exec_depend>launch_ros</exec_depend>

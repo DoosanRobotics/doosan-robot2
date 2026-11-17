@@ -50,9 +50,8 @@ public:
     int m_nVersionDRCF;
     bool m_bCommand_;
     std::array<float, NUM_JOINT> m_fCmd_;
-    CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
-    std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
-    std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
+    CallbackReturn on_init(const hardware_interface::HardwareComponentInterfaceParams & params) override;
+    CallbackReturn on_configure(const rclcpp_lifecycle::State & previous_state) override;
     return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
     return_type write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override;
     ~DRHWInterface();
@@ -61,21 +60,16 @@ protected:
     /// The size of this vector is (standard_interfaces_.size() x nr_joints)
     std::vector<double> joint_position_command_;
     std::vector<double> joint_velocities_command_;
-    std::vector<double> joint_effort_command_; /* not used*/
     std::vector<double> pre_joint_position_command_;
-    std::vector<double> joint_position_;
-    std::vector<double> joint_velocities_;
-    std::vector<double> joint_effort_; /* not used*/
+    // Indexed like info_.joints; null where the URDF does not declare the interface.
+    std::vector<hardware_interface::StateInterface::SharedPtr> joint_position_state_handles_;
+    std::vector<hardware_interface::StateInterface::SharedPtr> joint_velocity_state_handles_;
+    std::vector<hardware_interface::CommandInterface::SharedPtr> joint_position_command_handles_;
+    std::vector<hardware_interface::CommandInterface::SharedPtr> joint_velocity_command_handles_;
 
     std::vector<double> ft_states_;
     std::vector<double> ft_command_;
     std::vector<std::vector<float>> init_joint_position_command;
-
-    std::unordered_map<std::string, std::vector<std::string>> joint_interfaces = {
-        {"position", {}}, {"velocity", {}}, {"effort", {}}};
-    
-    std::unordered_map<std::string, std::vector<std::string>> joint_comm_interfaces = {
-        {"position", {}}, {"velocity", {}}, {"effort", {}}};
 
     std::vector<int> hw_mapping_;   // URDF joints -> hardware joints mapping
     DRAFramework::CDRFLEx m_Drfl;
@@ -85,6 +79,9 @@ protected:
 private:
     std::string drcf_ip_;
     std::string drcf_rt_ip_;
+    // Empty policy keeps the DRFL default scheduling for the RT threads.
+    std::string rt_thread_policy_;
+    std::string rt_thread_priority_;
     std::string mode_;
     // Freshness tracking for the RT stream (see read()).
     double      last_rt_time_stamp_ = -1.0;
@@ -94,8 +91,8 @@ private:
     // Must outlive the throttled log in read(); the macro binds it by reference.
     rclcpp::Clock rt_log_clock_{RCL_STEADY_TIME};
     std::string model_;
-    int drcf_port_;
-    int update_rate_;
+    int drcf_port_{12345};
+    int update_rate_{100};
     std::unordered_set<size_t> ignored_joints_;
 };
 }

@@ -110,8 +110,12 @@ find_available_cpuset() {
 }
 
 # run
+# The lock keeps emulators started at the same time (e.g. dual-arm launches) from picking the same CPU set.
+exec 9>"/tmp/dsr_emulator_cpuset.lock"
+flock 9
 DOCKER_CPUS=$(find_available_cpuset 4)
 docker run -dit --rm --name $container_name --env ROBOT_MODEL=${2^^} --cpuset-cpus "$DOCKER_CPUS" -p $server_port:12345 $emulator_image
+flock -u 9
 
 #echo command
 echo "docker run -dit --rm --name $container_name --env ROBOT_MODEL=${2^^} --cpuset-cpus $DOCKER_CPUS -p $server_port:12345 $emulator_image"

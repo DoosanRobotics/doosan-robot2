@@ -45,7 +45,7 @@ class CameraPublisher(Node):
             self.publisher_.publish(ros_image)
             self.get_logger().info('Publishing Image')
         else:
-            self.get_logger().warn("Can't read the image.")
+            self.get_logger().warning("Can't read the image.")
 
     def destroy(self):
         self.cap.release()

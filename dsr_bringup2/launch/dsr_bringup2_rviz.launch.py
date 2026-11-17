@@ -52,6 +52,8 @@ def generate_launch_description():
         DeclareLaunchArgument('gui',        default_value = 'true',           description = 'Start RViz2'    ),
         DeclareLaunchArgument('gz',         default_value = 'false',          description = 'USE GAZEBO SIM' ),
         DeclareLaunchArgument('rt_host',    default_value = '',               description = 'ROBOT_RT_IP'    ),
+        DeclareLaunchArgument('rt_thread_policy', default_value = '', description = 'RT thread policy: 1 SCHED_FIFO, 2 SCHED_RR, 0 SCHED_OTHER, empty keeps the default'),
+        DeclareLaunchArgument('rt_thread_priority', default_value = '', description = 'RT thread priority for rt_thread_policy (1-99 for FIFO/RR, 0 for OTHER)'),
         DeclareLaunchArgument('remap_tf',   default_value = 'false',          description = 'REMAP TF'       ),
         DeclareLaunchArgument('tf_prefix',  default_value = '',               description = 'PREFIX FOR TF FRAME NAMES (e.g. "dsr01/")'),
     ]
@@ -77,6 +79,8 @@ def generate_launch_description():
             " name:=", LaunchConfiguration('name'),
             " host:=", LaunchConfiguration('host'),
             " rt_host:=", LaunchConfiguration('rt_host'),
+            " rt_thread_policy:=", LaunchConfiguration('rt_thread_policy'),
+            " rt_thread_priority:=", LaunchConfiguration('rt_thread_priority'),
             " port:=", LaunchConfiguration('port'),
             " mode:=", LaunchConfiguration('mode'),
             " model:=", LaunchConfiguration('model'),
@@ -145,6 +149,8 @@ def generate_launch_description():
                 " name:=", LaunchConfiguration('name'),
                 " host:=", LaunchConfiguration('host'),
                 " rt_host:=", LaunchConfiguration('rt_host'),
+                " rt_thread_policy:=", LaunchConfiguration('rt_thread_policy'),
+                " rt_thread_priority:=", LaunchConfiguration('rt_thread_priority'),
                 " port:=", LaunchConfiguration('port'),
                 " mode:=", LaunchConfiguration('mode'),
                 " model:=", LaunchConfiguration('model'),
@@ -192,16 +198,9 @@ def generate_launch_description():
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager", "--param-file", robot_controllers[0]],
     )
     
-    # joint_trajectory_controller_spawner = Node(
-    #     package="controller_manager",
-    #     # namespace=LaunchConfiguration('name'),
-    #     executable="spawner",
-    #     arguments=["dsr_joint_trajectory", "-c", "dsr/controller_manager", "-n", "dsr"],
-    # )
-
     # Delay start of robot_controller after `joint_state_broadcaster`
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(

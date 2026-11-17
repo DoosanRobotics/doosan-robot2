@@ -31,11 +31,15 @@ def generate_launch_description():
         DeclareLaunchArgument('name',  default_value = 'dsr01',     description = 'NAME_SPACE'     ),
     ]
 
+    dsr_controller2_yaml = PathJoinSubstitution([
+        FindPackageShare("dsr_controller2"), "config", "dsr_controller2.yaml"
+    ])
+
     robot_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager", "--param-file", dsr_controller2_yaml],
     )
 
     joint_state_broadcaster_spawner = Node(

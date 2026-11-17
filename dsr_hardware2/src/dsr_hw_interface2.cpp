@@ -32,6 +32,9 @@
 #include <mutex>
 #include <unistd.h>     
 #include <math.h>
+#include <cmath>
+#include <tuple>
+#include <limits>
 
 #include "dsr_hardware2/dsr_hw_interface2.h"
 #include "dsr_hardware2/util.hpp"
@@ -63,6 +66,30 @@ constexpr double g_k_dt_window_hi = 1.5;
 // 100 Hz default rate. Scaled up for slower loops where one period is longer.
 constexpr double g_k_rt_stale_timeout_s = 0.1;
 
+// Parses a whole decimal integer, so "1.5", "2x" and "" are rejected.
+static bool parse_whole_int(const std::string& text, int& value)
+{
+    if (text.empty()) return false;
+    try {
+        size_t used = 0;
+        const int parsed = std::stoi(text, &used);
+        if (used != text.size()) return false;
+        value = parsed;
+        return true;
+    } catch (const std::exception &) {
+        return false;
+    }
+}
+
+// The rt_thread_policy and rt_thread_priority pairs DRFL accepts on Linux.
+static bool rt_thread_sched_in_range(int policy, int priority)
+{
+    if (policy == -1) return true;                                    // restore the default
+    if (policy == 0) return priority == 0;                            // SCHED_OTHER
+    if (policy == 1 || policy == 2) return priority >= 1 && priority <= 99;  // SCHED_FIFO, SCHED_RR
+    return false;
+}
+
 std::map<std::string, CDRFLEx*> g_drfl_instances;
 std::mutex g_drfl_map_mutex;
 CDRFLEx* g_active_drfl = nullptr;
@@ -87,12 +114,13 @@ void* get_drfl(const char* robot_name = nullptr){
 
 namespace dsr_hardware2{
 
-CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & info)
+CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareComponentInterfaceParams & params)
 {
-    if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS)
+    if (hardware_interface::SystemInterface::on_init(params) != CallbackReturn::SUCCESS)
     {
         return CallbackReturn::ERROR;
     }
+    const auto & info = params.hardware_info;
 
     for(auto parameter : info.hardware_parameters) {
         if("host" == parameter.first) {
@@ -101,6 +129,10 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         } else if("rt_host" == parameter.first) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "rt_host : %s", parameter.second.c_str());
             drcf_rt_ip_ = parameter.second;
+        } else if("rt_thread_policy" == parameter.first) {
+            rt_thread_policy_ = parameter.second;
+        } else if("rt_thread_priority" == parameter.first) {
+            rt_thread_priority_ = parameter.second;
         } else if("port" == parameter.first) {
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"), "port : %s", parameter.second.c_str());
             drcf_port_ = std::stoi(parameter.second);
@@ -120,6 +152,50 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
                  key : %s, value : %s",parameter.first.c_str(), parameter.second.c_str());
         }
     }
+    if(mode_ != "real" && mode_ != "virtual") {
+        RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                "[on_init] Invalid 'mode' : '%s'. Use mode:=real or mode:=virtual.", mode_.c_str());
+        return CallbackReturn::ERROR;
+    }
+    // DRFL stores the RT thread scheduling here and applies it when connect_rt_control starts the RT
+    // threads, so a value it refuses fails before the driver takes control authority or changes the robot mode.
+    if (!rt_thread_policy_.empty() || !rt_thread_priority_.empty()) {
+        int policy = -1;
+        int priority = 0;
+        if (rt_thread_policy_.empty()) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] rt_thread_priority '%s' is set without rt_thread_policy. Set rt_thread_policy to "
+                    "1 (SCHED_FIFO), 2 (SCHED_RR) or 0 (SCHED_OTHER).", rt_thread_priority_.c_str());
+            return CallbackReturn::ERROR;
+        }
+        if (!parse_whole_int(rt_thread_policy_, policy) ||
+            (!rt_thread_priority_.empty() && !parse_whole_int(rt_thread_priority_, priority))) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] rt_thread_policy '%s' and rt_thread_priority '%s' must be whole integers",
+                    rt_thread_policy_.c_str(), rt_thread_priority_.c_str());
+            return CallbackReturn::ERROR;
+        }
+        if (!rt_thread_sched_in_range(policy, priority)) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] rt_thread_policy %d with rt_thread_priority %d is not valid. Use 1 (SCHED_FIFO) or "
+                    "2 (SCHED_RR) with priority 1-99, 0 (SCHED_OTHER) with priority 0, or -1 for the default.",
+                    policy, priority);
+            return CallbackReturn::ERROR;
+        }
+        if (mode_ == "virtual") {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] RT thread scheduling (policy %d, priority %d) is not used in virtual mode, which does "
+                    "not connect RT.", policy, priority);
+        } else if (!m_Drfl.set_rt_thread_priority(policy, priority)) {
+            RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] set_rt_thread_priority(%d, %d) refused. SCHED_FIFO (1) and SCHED_RR (2) need "
+                    "CAP_SYS_NICE or an RLIMIT_RTPRIO of at least the priority.", policy, priority);
+            return CallbackReturn::ERROR;
+        } else {
+            RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),
+                    "[RT] RT thread scheduling: policy %d, priority %d, applied when RT connects", policy, priority);
+        }
+    }
     const size_t expected_num_joints = (model_ == "p3020") ? g_k_p3020_num_joint : g_k_default_num_joint;
     if (model_ == "p3020") {
         ignored_joints_.insert(g_k_p3020_fixed_joint_index); // ignore joint 4 for p3020
@@ -135,9 +211,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     }
 
     // robot has 6 (or 5) joints and 2 interfaces
-    joint_position_.assign(expected_num_joints, 0);
-    joint_velocities_.assign(expected_num_joints, 0);
-    joint_position_command_.assign(expected_num_joints, 0);
+    joint_position_command_.assign(expected_num_joints, std::numeric_limits<double>::quiet_NaN());
     joint_velocities_command_.assign(expected_num_joints, 0);
 
     if(expected_num_joints != info_.joints.size()) {
@@ -164,7 +238,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
                     "[on_init] Not Implemented effort interface.. ignored");
                 continue;
             }
-            joint_interfaces[interface.name].push_back(joint.name);
         }
         for (const auto & interface : joint.command_interfaces)
         {
@@ -176,7 +249,6 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
                             "[on_init] Not Implemented effort interface.. ignored");
                 continue;
             }
-            joint_comm_interfaces[interface.name].push_back(joint.name);
         }
     }
 
@@ -192,6 +264,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     for (size_t retry = 0; retry < 120; ++retry) {
         is_connected = m_Drfl.open_connection(drcf_ip_, drcf_port_);
         if(!is_connected) {
+            m_Drfl.close_connection();
             RCLCPP_INFO(rclcpp::get_logger("dsr_hw_interface2"),"Connecting failure.. retry...");
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             continue;
@@ -290,7 +363,7 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
         // pass silently as a pre-3.0 controller.
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"),
                 "Controller version came back empty; assuming %d. The RT stream "
-                "address is chosen from this value - set 'rt_host' explicitly.",
+                "address is chosen from this value, so RT connects to 'host'.",
                 m_nVersionDRCF);
     }
                  
@@ -350,15 +423,21 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     if(mode_ != "virtual") {
         // Where the RT stream is reachable depends on the controller generation:
         //   < 3.0    rt_host is ignored, RT is reachable on the robot IP.
-        //   3.0-3.3  RT is reachable at 192.168.137.50 by default.
-        //   >= 3.4   RT is reachable on the robot IP, so an unset rt_host follows host.
-        // An explicit rt_host always wins from 3.0 up.
+        //   3.0-3.3  RT is reachable at rt_host, 192.168.137.50 when unset.
+        //   >= 3.4   rt_host is ignored, RT is reachable on the robot IP.
         const bool rt_ip_set = !drcf_rt_ip_.empty() && drcf_rt_ip_ != g_k_unset_rt_ip;
         std::string rt_ip = drcf_ip_;
-        if(m_nVersionDRCF >= g_k_drcf_v3) {
+        if(m_nVersionDRCF >= g_k_drcf_v3_4) {
+            if(rt_ip_set && drcf_rt_ip_ != drcf_ip_) {
+                RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
+                        "[RT] controller %d serves the RT stream on the robot IP. "
+                        "'rt_host' (%s) is ignored, connecting to %s.",
+                        m_nVersionDRCF, drcf_rt_ip_.c_str(), rt_ip.c_str());
+            }
+        } else if(m_nVersionDRCF >= g_k_drcf_v3) {
             if(rt_ip_set) {
                 rt_ip = drcf_rt_ip_;
-            } else if(m_nVersionDRCF < g_k_drcf_v3_4) {
+            } else {
                 rt_ip = g_k_legacy_rt_ip;
                 RCLCPP_WARN(rclcpp::get_logger("dsr_hw_interface2"),
                         "[RT] controller %d is older than 3.4, where the RT stream is not "
@@ -405,45 +484,39 @@ CallbackReturn DRHWInterface::on_init(const hardware_interface::HardwareInfo & i
     return CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::StateInterface> DRHWInterface::export_state_interfaces()
+CallbackReturn DRHWInterface::on_configure(const rclcpp_lifecycle::State & previous_state)
 {
-  std::vector<hardware_interface::StateInterface> state_interfaces;
-
-    for(size_t i=0; i<joint_interfaces["position"].size(); i++) {
-        state_interfaces.emplace_back(joint_interfaces["position"][i], "position", &joint_position_[i]);
+    if (hardware_interface::SystemInterface::on_configure(previous_state) != CallbackReturn::SUCCESS)
+    {
+        return CallbackReturn::ERROR;
     }
-    // TODO(songms, yurirocha15) support velocity control.
-    for(size_t i=0; i<joint_interfaces["velocity"].size(); i++) {
-        state_interfaces.emplace_back(joint_interfaces["velocity"][i], "velocity", &joint_velocities_[i]);
+    // The framework owns the interfaces declared in the URDF and has exported them by now.
+    const size_t num_joints = info_.joints.size();
+    joint_position_state_handles_.assign(num_joints, nullptr);
+    joint_velocity_state_handles_.assign(num_joints, nullptr);
+    joint_position_command_handles_.assign(num_joints, nullptr);
+    joint_velocity_command_handles_.assign(num_joints, nullptr);
+    for(size_t i=0; i<num_joints; i++) {
+        const std::string prefix = info_.joints[i].name + "/";
+        if(has_state(prefix + hardware_interface::HW_IF_POSITION)) {
+            joint_position_state_handles_[i] = get_state_interface_handle(prefix + hardware_interface::HW_IF_POSITION);
+        }
+        if(has_state(prefix + hardware_interface::HW_IF_VELOCITY)) {
+            joint_velocity_state_handles_[i] = get_state_interface_handle(prefix + hardware_interface::HW_IF_VELOCITY);
+        }
+        if(has_command(prefix + hardware_interface::HW_IF_POSITION)) {
+            joint_position_command_handles_[i] = get_command_interface_handle(prefix + hardware_interface::HW_IF_POSITION);
+        }
+        if(has_command(prefix + hardware_interface::HW_IF_VELOCITY)) {
+            joint_velocity_command_handles_[i] = get_command_interface_handle(prefix + hardware_interface::HW_IF_VELOCITY);
+        }
     }
-    // TODO(songms, yurirocha15) support effort control.
-    for(size_t i=0; i<joint_interfaces["effort"].size(); i++) {
-        state_interfaces.emplace_back(joint_interfaces["effort"][i], "effort", &joint_effort_[i]);
-    }
-  return state_interfaces;
-}
-
-std::vector<hardware_interface::CommandInterface> DRHWInterface::export_command_interfaces()
-{
-  std::vector<hardware_interface::CommandInterface> command_interfaces;
     pre_joint_position_command_ = joint_position_command_;
-    for(size_t i=0; i<joint_comm_interfaces["position"].size(); i++) {
-        command_interfaces.emplace_back(joint_comm_interfaces["position"][i], "position", &joint_position_command_[i]);
-    }
-    for(size_t i=0; i<joint_comm_interfaces["velocity"].size(); i++) {
-        command_interfaces.emplace_back(joint_comm_interfaces["velocity"][i], "velocity", &joint_velocities_command_[i]);
-    }
-    // TODO(songms, yurirocha15) support effort control.
-    for(size_t i=0; i<joint_comm_interfaces["effort"].size(); i++) {
-        command_interfaces.emplace_back(joint_comm_interfaces["effort"][i], "effort", &joint_effort_command_[i]);
-    }
-  return command_interfaces;
+    return CallbackReturn::SUCCESS;
 }
-
 
 return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-    const size_t expected_num_joints = joint_position_.size();
     if(mode_ == "real") {
         const LPRT_OUTPUT_DATA_LIST data = m_Drfl.read_data_rt();
         if(nullptr == data) {
@@ -483,8 +556,15 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
             if (ignored_joints_.find(idx_control) != ignored_joints_.end()) {
                 continue;
             }
-            joint_position_[idx_ros] = static_cast<float>(data->actual_joint_position[idx_control] * (M_PI / 180.0f));
-            joint_velocities_[idx_ros] = static_cast<float>(data->actual_joint_velocity[idx_control] * (M_PI / 180.0f));
+            // These state interfaces are declared double, and set_value throws when the value type does not match the handle.
+            if(joint_position_state_handles_[idx_ros]) {
+                std::ignore = set_state(joint_position_state_handles_[idx_ros],
+                        static_cast<double>(static_cast<float>(data->actual_joint_position[idx_control] * (M_PI / 180.0f))), false);
+            }
+            if(joint_velocity_state_handles_[idx_ros]) {
+                std::ignore = set_state(joint_velocity_state_handles_[idx_ros],
+                        static_cast<double>(static_cast<float>(data->actual_joint_velocity[idx_control] * (M_PI / 180.0f))), false);
+            }
             idx_ros++;
         }
     }else if(mode_ == "virtual") {
@@ -498,7 +578,14 @@ return_type DRHWInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
             if (ignored_joints_.find(idx_control) != ignored_joints_.end()) {
                 continue;
             }
-            joint_position_[idx_ros++] = deg2rad(pose->_fPosition[idx_control]);
+            if(joint_position_state_handles_[idx_ros]) {
+                std::ignore = set_state(joint_position_state_handles_[idx_ros],
+                        static_cast<double>(deg2rad(pose->_fPosition[idx_control])), false);
+            }
+            if(joint_velocity_state_handles_[idx_ros]) {
+                std::ignore = set_state(joint_velocity_state_handles_[idx_ros], 0.0, false);
+            }
+            idx_ros++;
         }
     }else {
         RCLCPP_ERROR(rclcpp::get_logger("dsr_hw_interface2"), 
@@ -519,7 +606,8 @@ bool positionCommandRunning(const std::vector<double>& lhs, const std::vector<do
     for(size_t i=0; i<lhs.size(); i++) {
         var += abs(lhs[i] - rhs[i]);
     }
-    return var >= 0.0001;
+    // A NaN previous command (nothing sent yet) counts as a change.
+    return std::isnan(var) || var >= 0.0001;
 }
 
 vector<vector<float>> joint_position_commands;
@@ -541,6 +629,22 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     //         ,joint_velocities_command_[3]
     //         ,joint_velocities_command_[4]
     //         ,joint_velocities_command_[5]);
+
+    // A failed try-lock keeps the cached command. The cache starts as NaN, so no position is sent until every commanded joint has a valid one.
+    bool position_command_valid = true;
+    for(size_t i=0; i<joint_position_command_.size(); i++) {
+        double value = 0.0;
+        if(joint_position_command_handles_[i] && get_command(joint_position_command_handles_[i], value, false)) {
+            joint_position_command_[i] = value;
+        }
+        if(joint_position_command_handles_[i] && std::isnan(joint_position_command_[i])) {
+            position_command_valid = false;
+        }
+        if(joint_velocity_command_handles_[i] && get_command(joint_velocity_command_handles_[i], value, false)
+                && !std::isnan(value)) {
+            joint_velocities_command_[i] = value;
+        }
+    }
 
     // Measure CPU loop duration for REAL servo timing
     auto now_cpu = std::chrono::steady_clock::now();
@@ -599,7 +703,7 @@ return_type DRHWInterface::write(const rclcpp::Time &, const rclcpp::Duration &d
     // Accumulate simulated time
     total_time_sec_ += effective_dt;
 
-    if (positionCommandRunning(pre_joint_position_command_, joint_position_command_))
+    if (position_command_valid && positionCommandRunning(pre_joint_position_command_, joint_position_command_))
     {
         if (idle_)
         {

@@ -65,8 +65,8 @@ planner_configs:
     goal_bias: 0.05  # When close to goal select goal, with this probability? default: 0.05
     max_states_failed: 10  # when to start increasing temp. default: 10
     temp_change_factor: 2.0  # how much to increase or decrease temp. default: 2.0
-    min_temperature: 10e-10  # lower limit of temp change. default: 10e-10
-    init_temperature: 10e-6  # initial temperature. default: 10e-6
+    min_temperature: 10.0e-10  # lower limit of temp change. default: 10e-10
+    init_temperature: 10.0e-6  # initial temperature. default: 10e-6
     frountier_threshold: 0.0  # dist new state to nearest neighbor to disqualify as frontier. default: 0.0 set in setup()
     frountierNodeRatio: 0.1  # 1/10, or 1 nonfrontier for every 10 frontier. default: 0.1
     k_constant: 0.0  # value used to normalize expression. default: 0.0 set in setup()
@@ -113,7 +113,7 @@ planner_configs:
     init_temperature: 100  # initial temperature. default: 100
     frountier_threshold: 0.0  # dist new state to nearest neighbor to disqualify as frontier. default: 0.0 set in setup()
     frountier_node_ratio: 0.1  # 1/10, or 1 nonfrontier for every 10 frontier. default: 0.1
-    cost_threshold: 1e300  # the cost threshold. Any motion cost that is not better will not be expanded. default: inf
+    cost_threshold: 1.0e+300  # the cost threshold. Any motion cost that is not better will not be expanded. default: inf
   LBTRRT:
     type: geometric::LBTRRT
     range: 0.0  # Max motion added to tree. ==> maxDistance_ default: 0.0, if 0.0, set on setup()

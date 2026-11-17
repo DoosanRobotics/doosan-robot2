@@ -167,13 +167,18 @@ def generate_launch_description():
             "dsr_moveit_controller",
             "--controller-manager",
             "/controller_manager",
+            "--param-file", ros2_controllers_path,
         ],
+    )
+
+    dsr_controller2_yaml = os.path.join(
+        get_package_share_directory("dsr_controller2"), "config", "dsr_controller2.yaml"
     )
 
     robot_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "/controller_manager"],
+        arguments=["dsr_controller2", "-c", "/controller_manager", "--param-file", dsr_controller2_yaml],
     )
 
     # Warehouse mongodb server

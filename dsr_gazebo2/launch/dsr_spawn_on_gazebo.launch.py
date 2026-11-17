@@ -24,14 +24,14 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, LaunchConfigurationEquals, UnlessCondition
 
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, PythonExpression
 
 from launch_ros.actions import Node, SetRemap
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 
 
-ARGUMENTS =[ 
+ARGUMENTS =[
     DeclareLaunchArgument('name',         default_value = '',      description = 'NAME_SPACE'              ),
     DeclareLaunchArgument('model',        default_value = 'm1013', description = 'ROBOT_MODEL'             ),
     DeclareLaunchArgument('color',        default_value = 'white', description = 'ROBOT_COLOR'             ),
@@ -151,11 +151,20 @@ def generate_launch_description():
     )
         # condition=LaunchConfigurationEquals('use_sim_time', 'false')  
     
+    controller_params_file = PathJoinSubstitution([
+        FindPackageShare("dsr_controller2"), "config",
+        PythonExpression(["'dsr_controller2_gz_p3020.yaml' if '", LaunchConfiguration("model"), "' == 'p3020' else 'dsr_controller2_gz.yaml'"]),
+    ])
+
     dsr_position_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
-        arguments=["dsr_position_controller", "--controller-manager", "controller_manager"],
+        arguments=[
+            "dsr_position_controller",
+            "--controller-manager", "controller_manager",
+            "--param-file", controller_params_file,
+        ],
     )
     rviz_node = Node(
         package="rviz2",

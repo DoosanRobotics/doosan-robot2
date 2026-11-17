@@ -25,9 +25,8 @@ then
 fi
 
 
-## all container names have 'emulator' as suffix to detect and run it. see run_drcf.sh  
-if docker ps -a --format '{{.Names}}' | grep -q emulator; then
-    echo "$emulator_name is already installed"
+if docker image inspect "$emulator_image" > /dev/null 2>&1; then
+    echo "$emulator_image is already installed"
 else
     # Pull dsr_emulator image
     pulling "pull dsr_emulator version : $emulator_version" "$emulator_image"

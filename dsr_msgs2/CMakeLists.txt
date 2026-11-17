@@ -175,6 +175,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "srv/ConnectRtControl.srv"
   "srv/DisconnectRtControl.srv"
+  "srv/SetRtThreadPriority.srv"
   "srv/GetRtControlInputDataList.srv"
   "srv/GetRtControlInputVersionList.srv"
   "srv/GetRtControlOutputDataList.srv"

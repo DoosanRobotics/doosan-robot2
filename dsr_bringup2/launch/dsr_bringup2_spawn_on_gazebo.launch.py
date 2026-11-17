@@ -67,6 +67,7 @@ def generate_launch_description():
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
     mode = LaunchConfiguration("mode")
+    run_emulator = LaunchConfiguration("run_emulator")
     update_rate = str(read_update_rate()) # get update_rate from yaml
     show_git_info() # print git info
     # Get URDF via xacro
@@ -169,14 +170,13 @@ def generate_launch_description():
         namespace=LaunchConfiguration('name'),
         executable="spawner",
         arguments=["joint_state_broadcaster", "-c", "controller_manager"],
-        parameters=[PathJoinSubstitution([FindPackageShare("dsr_controller2"), "config", "joint_state_broadcaster.yaml"])]
     )
 
     robot_controller_spawner = Node(
         package="controller_manager",
         namespace=LaunchConfiguration('name'),
         executable="spawner",
-        arguments=["dsr_controller2", "-c", "controller_manager"],
+        arguments=["dsr_controller2", "-c", "controller_manager", "--param-file", robot_controllers],
     )
 
     # Delay rviz start after `joint_state_broadcaster`
@@ -216,7 +216,7 @@ def generate_launch_description():
     # launch_arguments를 사용하여 namespace를 설정합니다.
     included_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(included_launch_file_path),
-        launch_arguments={'use_gazebo': LaunchConfiguration('gz'), 
+        launch_arguments={'use_gazebo': LaunchConfiguration('gz'),
                           'name' : LaunchConfiguration('name'),
                           'color' : LaunchConfiguration('color'),
                           'x' :LaunchConfiguration('x'),

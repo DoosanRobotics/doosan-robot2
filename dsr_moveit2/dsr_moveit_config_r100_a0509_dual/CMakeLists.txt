@@ -7,8 +7,16 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
+# rviz_common 이 링크한 Qt 에 맞춘다 (Humble/Jazzy: Qt5, Lyrical: Qt6)
+get_target_property(_dsr_rviz_libs rviz_common::rviz_common INTERFACE_LINK_LIBRARIES)
+if(_dsr_rviz_libs MATCHES "Qt6")
+  set(DSR_QT Qt6)
+else()
+  set(DSR_QT Qt5)
+endif()
+find_package(${DSR_QT} REQUIRED COMPONENTS Widgets)
 find_package(control_msgs REQUIRED)
+find_package(rclcpp_action REQUIRED)
 
 # Add this for Qt MOC (Meta-Object Compiler)
 set(CMAKE_AUTOMOC ON)
@@ -18,14 +26,13 @@ add_library(gripper_button_panel SHARED
   src/dsr_gripper_button_rviz2.cpp
 )
 target_link_libraries(gripper_button_panel PUBLIC
-  Qt5::Widgets
-)
-ament_target_dependencies(gripper_button_panel PUBLIC
-  rclcpp
-  std_msgs
-  rviz_common
-  pluginlib
-  control_msgs
+  ${DSR_QT}::Widgets
+  rclcpp::rclcpp
+  std_msgs::std_msgs
+  rviz_common::rviz_common
+  pluginlib::pluginlib
+  control_msgs::control_msgs
+  rclcpp_action::rclcpp_action
 )
 
 # Install the compiled library

@@ -28,7 +28,6 @@ set(CONTROLLER_INCLUDE_DEPENDS
   pluginlib
   rcpputils
   controller_interface
-  realtime_tools
   trajectory_msgs
 )
 
@@ -85,11 +84,19 @@ target_include_directories(dsr_hardware2 PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/dsr_hardware2>
 )
-target_link_libraries(dsr_hardware2 yaml-cpp dsr_common2::drfl)
-ament_target_dependencies(
-  dsr_hardware2 
-  ${HW_IF_INCLUDE_DEPENDS}
-  ${CONTROLLER_INCLUDE_DEPENDS}
+target_link_libraries(dsr_hardware2 PUBLIC
+  yaml-cpp::yaml-cpp
+  dsr_common2::drfl
+  pluginlib::pluginlib
+  rcpputils::rcpputils
+  hardware_interface::hardware_interface
+  dsr_msgs2::dsr_msgs2
+  moveit_msgs::moveit_msgs
+  sensor_msgs::sensor_msgs
+  controller_manager::controller_manager
+  ament_index_cpp::ament_index_cpp
+  controller_interface::controller_interface
+  trajectory_msgs::trajectory_msgs
 )
 
 

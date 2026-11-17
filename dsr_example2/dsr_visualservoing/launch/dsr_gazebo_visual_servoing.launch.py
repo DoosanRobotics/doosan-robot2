@@ -24,7 +24,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition
 
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, PythonExpression
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -131,11 +131,20 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster", "--controller-manager", "controller_manager"],
     )
     
+    controller_params_file = PathJoinSubstitution([
+        FindPackageShare("dsr_controller2"), "config",
+        PythonExpression(["'dsr_controller2_gz_p3020.yaml' if '", LaunchConfiguration("model"), "' == 'p3020' else 'dsr_controller2_gz.yaml'"]),
+    ])
+
     dsr_position_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         namespace=PathJoinSubstitution([LaunchConfiguration('name'), "gz"]),
-        arguments=["dsr_position_controller", "--controller-manager", "controller_manager"],
+        arguments=[
+            "dsr_position_controller",
+            "--controller-manager", "controller_manager",
+            "--param-file", controller_params_file,
+        ],
     )
     rviz_node = Node(
         package="rviz2",

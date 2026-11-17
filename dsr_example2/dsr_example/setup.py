@@ -17,15 +17,15 @@ setup(
     maintainer_email='mincheol710313@gmail.com',
     description='TODO: Package description',
     license='Apache License 2.0',    
-    tests_require=['pytest'],
+    extras_require={'test': ['pytest']},
     entry_points={
         'console_scripts': [
                 'dance = dsr_example.demo.dance_m1013:main',
                 'single_robot_simple = dsr_example.simple.single_robot_simple:main',
-                'test = dsr_example.simple.test:main',
-                'test2 = dsr_example.simple.test2:main',
                 'test_action_movej_h2r = dsr_example.simple.test_action_movej_h2r:main',
                 'test_action_movel_h2r = dsr_example.simple.test_action_movel_h2r:main',
+                'test_action_jog_h2r = dsr_example.simple.test_action_jog_h2r:main',
+                'slope_demo = dsr_example.demo.slope_demo:main',
         ],
     },
 )
